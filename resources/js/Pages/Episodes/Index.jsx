@@ -1,24 +1,30 @@
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
+import Table from '@/Components/Table';
 import { Head, Link, router, usePage } from '@inertiajs/react';
 import { useState } from 'react';
 import { getEpisodeImageUrl } from '@/Utils/imageHelper';
-import { Table, Button, Space, Tag, Input, Popconfirm } from 'antd';
-import { SearchOutlined, PlusOutlined, EditOutlined, DeleteOutlined, EyeOutlined } from '@ant-design/icons';
-import 'antd/dist/reset.css';
-import '../../../css/antd-custom.css';
+import { Button } from '@/Components/ui/button';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/Components/ui/card';
+import { Plus, Film, Pencil, Trash2 } from 'lucide-react';
 
 export default function Index({ episodes }) {
     const [loading, setLoading] = useState(false);
-    const [searchText, setSearchText] = useState('');
+    const [currentPage, setCurrentPage] = useState(1);
     const { baseImagePath } = usePage().props;
+    
+    const pageSize = 25;
 
     const handleDelete = (id) => {
-        setLoading(true);
-        router.delete(route('episodes.destroy', id), {
-            preserveScroll: true,
-            onSuccess: () => {},
-            onFinish: () => setLoading(false),
-        });
+        if (confirm('Are you sure to delete this episode?')) {
+            setLoading(true);
+            router.delete(route('episodes.destroy', id), {
+                preserveScroll: true,
+                onSuccess: () => {
+                    alert('Episode deleted successfully');
+                },
+                onFinish: () => setLoading(false),
+            });
+        }
     };
 
     // Status color mapping
@@ -57,183 +63,139 @@ export default function Index({ episodes }) {
             title: 'Title',
             dataIndex: 'title',
             key: 'title',
-            width: 200,
-            sorter: (a, b) => a.title.localeCompare(b.title),
-            filteredValue: searchText ? [searchText] : null,
-            onFilter: (value, record) => {
-                // Strip HTML tags from description for search
-                const plainDesc = record.desc?.replace(/<[^>]*>/g, '') || '';
-                return (
-                    record.title.toLowerCase().includes(value.toLowerCase()) ||
-                    plainDesc.toLowerCase().includes(value.toLowerCase()) ||
-                    record.episode_type?.toLowerCase().includes(value.toLowerCase())
-                );
-            },
-            render: (title, record) => (
-                <div>
-                    <div className="font-semibold text-gray-900 text-sm mb-1">{title}</div>
-                    <div className="text-xs text-gray-500 line-clamp-2">
-                        {(() => {
-                            // Strip HTML tags and get plain text
-                            const plainText = record.desc?.replace(/<[^>]*>/g, '') || '';
-                            const truncated = plainText.substring(0, 80);
-                            return truncated + (plainText.length > 80 ? '...' : '');
-                        })()}
-                    </div>
+            sorter: true,
+            render: (title) => (
+                <div className="text-sm font-medium text-gray-900">{title}</div>
+            ),
+        },
+        {
+            title: 'Description',
+            dataIndex: 'desc',
+            key: 'desc',
+            ellipsis: true,
+            render: (desc) => (
+                <div className="max-w-md text-sm text-gray-500">
+                    {desc?.substring(0, 100)}
+                    {desc?.length > 100 ? '...' : ''}
                 </div>
             ),
         },
         {
-            title: 'Date & Time',
+            title: 'Date',
             dataIndex: 'date_time',
             key: 'date_time',
-            width: 150,
-            sorter: (a, b) => new Date(a.date_time) - new Date(b.date_time),
-            render: (date) => (
-                <div className="text-sm">
-                    <div className="flex items-center text-gray-700">
-                        <i className="fa fa-calendar mr-2 text-gray-400"></i>
-                        {date}
-                    </div>
-                </div>
-            ),
+            sorter: true,
         },
         {
             title: 'Status',
             dataIndex: 'video_status',
-            key: 'video_status',
-            width: 100,
-            filters: [
-                { text: 'Live', value: 'live' },
-                { text: 'Scheduled', value: 'schedule' },
-                { text: 'Archive', value: 'archive' },
-                { text: 'New', value: 'new' },
-            ],
-            onFilter: (value, record) => record.video_status === value,
+            key: 'status',
             render: (status) => (
-                <Tag color={getStatusColor(status)} className="uppercase font-medium">
+                <span
+                    className={`inline-flex rounded-full px-2 py-1 text-xs font-semibold ${
+                        status === 'live'
+                            ? 'bg-green-100 text-green-800'
+                            : status === 'archive'
+                            ? 'bg-gray-100 text-gray-800'
+                            : 'bg-yellow-100 text-yellow-800'
+                    }`}
+                >
                     {status}
-                </Tag>
+                </span>
             ),
         },
         {
             title: 'Type',
-            dataIndex: 'episode_type' ,
-            key: 'episode_type',
-            width: 100,
-            render: (type) => (
-                <div className="text-sm text-gray-700">
-                    <i className="fa fa-tag mr-2 text-gray-400"></i>
-                    {(type=='evening' || type=='afternoon')?'Non-Sponsored' :'Sponsored'}
-                </div>
-            ),
+            dataIndex: 'type_display',
+            key: 'type',
         },
         {
             title: 'Actions',
             key: 'actions',
-            width: 80,
+            width: '100px',
             align: 'center',
             render: (_, record) => (
-                <Space size="middle">
-                    <Link
-                        href={route('episodes.edit', record.id)}
-                        className="text-[#00895f] hover:text-emerald-700 transition-colors"
-                    >
-                        <Button
-                            type="text"
-                            icon={<EditOutlined />}
-                            size="small"
-                            className="hover:bg-emerald-50"
-                        >
-                            
+                <div className="flex items-center justify-center gap-3">
+                    <Link href={route('episodes.edit', record.id)}>
+                        <Button variant="ghost" size="sm">
+                            <Pencil className="h-4 w-4" />
                         </Button>
                     </Link>
-                    <Popconfirm
-                        title="Delete Episode"
-                        description="Are you sure to delete this episode?"
-                        onConfirm={() => handleDelete(record.id)}
-                        okText="Yes"
-                        cancelText="No"
-                        okButtonProps={{ danger: true }}
+                    <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => handleDelete(record.id)}
                     >
-                        <Button
-                            type="text"
-                            danger
-                            icon={<DeleteOutlined />}
-                            size="small"
-                            className="hover:bg-red-50"
-                        >
-                           
-                        </Button>
-                    </Popconfirm>
-                </Space>
+                        <Trash2 className="h-4 w-4 text-destructive" />
+                    </Button>
+                </div>
             ),
         },
+
     ];
 
     return (
-        <AuthenticatedLayout>
+        <AuthenticatedLayout
+            header={
+                <h2 className="text-xl font-semibold leading-tight text-gray-800">
+                    Episodes
+                </h2>
+            }
+        >
             <Head title="Episodes" />
 
-            <div className="py-8">
-                <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-                    {/* Header */}
-                    <div className="mb-6 flex items-center justify-between">
-                        <div>
-                            <h1 className="text-2xl font-bold text-gray-900">Episodes</h1>
-                           
-                        </div>
-                        <Link href={route('episodes.create')}>
-                            <Button
-                                type="primary"
-                                icon={<PlusOutlined />}
-                                size="small"
-                                className="bg-[#00895f] hover:bg-emerald-700 px-3 py-2 h-10"
-                            >
-                                Add Episode
-                            </Button>
-                        </Link>
-                    </div>
+            <div className="py-12">
+                <div className="mx-auto max-w-7xl sm:px-6 lg:px-8">
+                    {/* Header Card */}
+                    <Card className="mb-6 border-0 shadow-lg">
+                        <CardHeader>
+                            <div className="flex items-center justify-between">
+                                <div>
+                                    <CardTitle className="flex items-center gap-2">
+                                        <Film className="h-6 w-6 text-primary" />
+                                        Episodes Management
+                                    </CardTitle>
+                                    <CardDescription className="mt-2">
+                                        Manage your episode content and broadcasts
+                                    </CardDescription>
+                                </div>
+                                <Link href={route('episodes.create')}>
+                                    <Button size="lg">
+                                        <Plus className="mr-2 h-4 w-4" />
+                                        Add Episode
+                                    </Button>
+                                </Link>
+                            </div>
+                        </CardHeader>
+                    </Card>
 
-                    {/* Search Bar */}
-                    <div className="mb-4">
-                        <Input
-                            placeholder="Search by title, description, or type..."
-                            prefix={<SearchOutlined className="text-gray-400" />}
-                            size="large"
-                            value={searchText}
-                            onChange={(e) => setSearchText(e.target.value)}
-                            allowClear
-                            className="max-w-md"
-                        />
-                    </div>
-
-                    {/* Ant Design Table */}
-                    <div className="bg-white rounded-lg shadow-sm p-2">
-                        <Table
-                            columns={columns}
-                            dataSource={episodes}
-                            rowKey="id"
-                            loading={loading}
-                            pagination={{
-                                pageSize: 25,
-                                showSizeChanger: true,
-                                showQuickJumper: true,
-                                showTotal: (total, range) => `${range[0]}-${range[1]} of ${total} episodes`,
-                                pageSizeOptions: ['10', '25', '50', '100'],
-                            }}                           
-                            size="middle"
-                            locale={{
-                                emptyText: (
-                                    <div className="py-12 text-center">
-                                        <i className="fa fa-video-camera text-5xl text-gray-300 mb-4"></i>
-                                        <p className="text-gray-500 text-lg font-medium">No episodes found</p>
-                                        <p className="text-gray-400 text-sm mt-2">Start by creating your first episode</p>
-                                    </div>
-                                ),
-                            }}
-                        />
-                    </div>
+                    {/* Table Card */}
+                    <Card className="overflow-hidden border-0 shadow-md">
+                        <CardContent className="p-6">
+                            <Table
+                                columns={columns}
+                                dataSource={episodes}
+                                loading={loading}
+                                bordered
+                                showSearch={true}
+                                searchPlaceholder="Search episodes by title, description..."
+                                searchableColumns={['title', 'desc', 'episode_type']}
+                                showExport={true}
+                                exportFileName="episodes"
+                                filters={{
+                                    video_status: ['live', 'schedule', 'archive', 'new'],
+                                    episode_type: [],
+                                }}
+                                pagination={{
+                                    current: currentPage,
+                                    pageSize: pageSize,
+                                    total: episodes.length,
+                                    onChange: (page) => setCurrentPage(page),
+                                }}
+                                emptyText="No episodes found."
+                            />
+                        </CardContent>
+                    </Card>
                 </div>
             </div>
         </AuthenticatedLayout>

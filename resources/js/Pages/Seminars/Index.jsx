@@ -1,8 +1,11 @@
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { Head, Link, router, usePage } from '@inertiajs/react';
 import { useState } from 'react';
-import { Table, Button, Space, Tag, Input, Popconfirm } from 'antd';
-import { SearchOutlined, PlusOutlined, EditOutlined, DeleteOutlined } from '@ant-design/icons';
+import { Table, Space, Tag, Input, Popconfirm } from 'antd';
+import { SearchOutlined } from '@ant-design/icons';
+import { Button } from '@/Components/ui/button';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/Components/ui/card';
+import { Plus, Video, Pencil, Trash2 } from 'lucide-react';
 import 'antd/dist/reset.css';
 import '../../../css/antd-custom.css';
 
@@ -157,17 +160,11 @@ export default function Index({ seminars }) {
             width: 80,
             align: 'center',
             render: (_, record) => (
-                <Space size="middle">
-                    <Link
-                        href={route('seminars.edit', record.id)}
-                        className="text-[#00895f] hover:text-emerald-700 transition-colors"
-                    >
-                        <Button
-                            type="text"
-                            icon={<EditOutlined />}
-                            size="small"
-                            className="hover:bg-emerald-50"
-                        />
+                <Space size="small">
+                    <Link href={route('seminars.edit', record.id)}>
+                        <Button variant="ghost" size="sm">
+                            <Pencil className="h-4 w-4" />
+                        </Button>
                     </Link>
                     <Popconfirm
                         title="Delete Seminar"
@@ -177,13 +174,9 @@ export default function Index({ seminars }) {
                         cancelText="No"
                         okButtonProps={{ danger: true }}
                     >
-                        <Button
-                            type="text"
-                            danger
-                            icon={<DeleteOutlined />}
-                            size="small"
-                            className="hover:bg-red-50"
-                        />
+                        <Button variant="ghost" size="sm">
+                            <Trash2 className="h-4 w-4 text-destructive" />
+                        </Button>
                     </Popconfirm>
                 </Space>
             ),
@@ -196,22 +189,28 @@ export default function Index({ seminars }) {
 
             <div className="py-8">
                 <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-                    {/* Header */}
-                    <div className="mb-6 flex items-center justify-between">
-                        <div>
-                            <h1 className="text-2xl font-bold text-gray-900">Seminars</h1>
-                        </div>
-                        <Link href={route('seminars.create')}>
-                            <Button
-                                type="primary"
-                                icon={<PlusOutlined />}
-                                size="small"
-                                className="bg-[#00895f] hover:bg-emerald-700 px-3 py-2 h-10"
-                            >
-                                Add Seminar
-                            </Button>
-                        </Link>
-                    </div>
+                    {/* Header Card */}
+                    <Card className="mb-6 border-0 shadow-lg">
+                        <CardHeader>
+                            <div className="flex items-center justify-between">
+                                <div>
+                                    <CardTitle className="flex items-center gap-2">
+                                        <Video className="h-6 w-6 text-primary" />
+                                        Seminars Management
+                                    </CardTitle>
+                                    <CardDescription className="mt-2">
+                                        Manage your seminar content and schedule
+                                    </CardDescription>
+                                </div>
+                                <Link href={route('seminars.create')}>
+                                    <Button size="lg">
+                                        <Plus className="mr-2 h-4 w-4" />
+                                        Add Seminar
+                                    </Button>
+                                </Link>
+                            </div>
+                        </CardHeader>
+                    </Card>
 
                     {/* Search Bar */}
                     <div className="mb-4">
@@ -226,33 +225,45 @@ export default function Index({ seminars }) {
                         />
                     </div>
 
-                    {/* Ant Design Table */}
-                    <div className="bg-white rounded-lg shadow-sm border border-gray-200">
-                        <Table
-                            columns={columns}
-                            dataSource={seminars}
-                            rowKey="id"
-                            loading={loading}
-                            pagination={{
-                                pageSize: 25,
-                                showSizeChanger: true,
-                                showQuickJumper: true,
-                                showTotal: (total, range) => `${range[0]}-${range[1]} of ${total} seminars`,
-                                pageSizeOptions: ['10', '25', '50', '100'],
-                            }}
-                            bordered
-                            size="middle"
-                            locale={{
-                                emptyText: (
-                                    <div className="py-12 text-center">
-                                        <i className="fa fa-video-camera text-5xl text-gray-300 mb-4"></i>
-                                        <p className="text-gray-500 text-lg font-medium">No seminars found</p>
-                                        <p className="text-gray-400 text-sm mt-2">Start by creating your first seminar</p>
-                                    </div>
-                                ),
-                            }}
-                        />
-                    </div>
+                    {/* Table Card */}
+                    <Card className="border-0 shadow-md">
+                        <CardContent className="p-0">
+                            <Table
+                                columns={columns}
+                                dataSource={seminars}
+                                rowKey="id"
+                                loading={loading}
+                                pagination={{
+                                    pageSize: 25,
+                                    showSizeChanger: true,
+                                    showQuickJumper: true,
+                                    showTotal: (total, range) => `${range[0]}-${range[1]} of ${total} seminars`,
+                                    pageSizeOptions: ['10', '25', '50', '100'],
+                                }}
+                                bordered
+                                size="middle"
+                                locale={{
+                                    emptyText: (
+                                        <div className="py-16 text-center">
+                                            <div className="flex flex-col items-center">
+                                                <div className="flex h-20 w-20 items-center justify-center rounded-full bg-muted mb-4">
+                                                    <Video className="h-10 w-10 text-muted-foreground" />
+                                                </div>
+                                                <p className="text-lg font-semibold text-foreground mb-2">No seminars found</p>
+                                                <p className="text-sm text-muted-foreground mb-4">Start by creating your first seminar</p>
+                                                <Link href={route('seminars.create')}>
+                                                    <Button>
+                                                        <Plus className="mr-2 h-4 w-4" />
+                                                        Add Seminar
+                                                    </Button>
+                                                </Link>
+                                            </div>
+                                        </div>
+                                    ),
+                                }}
+                            />
+                        </CardContent>
+                    </Card>
                 </div>
             </div>
         </AuthenticatedLayout>

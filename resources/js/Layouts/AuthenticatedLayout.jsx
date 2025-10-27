@@ -21,11 +21,13 @@ export default function AuthenticatedLayout({ children }) {
 
     return (
         <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-emerald-50/30">
-            {/* Enhanced Top Bar with Theme Color and Gradient */}
-            <div className="bg-gradient-to-r from-white via-emerald-50/20 to-white border-b-2 border-[#00895f] shadow-lg backdrop-blur-sm">
+           
+
+            {/* Enhanced Navigation Bar with Glass Effect */}
+            <nav className="border-b border-gray-200 bg-white/95 backdrop-blur-md shadow-sm sticky top-0 z-40">
                 <div className="mx-auto max-w-7xl">
-                    <div className="flex items-center justify-between px-6 py-3">
-                        {/* Enhanced Logo with Glow Effect */}
+                    <div className="flex items-center justify-between px-6">
+                         {/* Enhanced Logo with Glow Effect */}
                         <div className="flex items-center">
                             <Link
                                 href={route('dashboard')}
@@ -35,89 +37,13 @@ export default function AuthenticatedLayout({ children }) {
                                     <img
                                         src="https://www.medtalks.in/uploads/img/logo.webp"
                                         alt="Medtalks India"
-                                        className="h-12 w-auto object-contain transition-all duration-300 group-hover:scale-105 relative z-10"
+                                        className="w-32  object-contain transition-all duration-300 group-hover:scale-105 relative z-10"
                                     />
                                     <div className="absolute inset-0 bg-[#00895f]/20 rounded-lg blur-lg opacity-0 group-hover:opacity-100 transition-opacity duration-300 -z-10"></div>
                                 </div>
                                
                             </Link>
                         </div>
-
-                        {/* Enhanced Right Side Icons */}
-                        <div className="flex items-center space-x-4">
-                            {/* Enhanced Profile Dropdown */}
-                            <Dropdown>
-                                <Dropdown.Trigger>
-                                    <button className="flex items-center space-x-3 rounded-xl border border-gray-200 bg-white/80 backdrop-blur-sm px-4 py-2 transition-all duration-200 hover:border-[#00895f] hover:shadow-lg hover:bg-white focus:outline-none focus:ring-2 focus:ring-[#00895f] focus:ring-offset-2 group">
-                                        
-                                        <div className="hidden text-left lg:block">
-                                            <div className="text-sm font-semibold text-gray-800 group-hover:text-[#00895f] transition-colors duration-200">{user.name}</div>
-                                            <div className="text-xs text-gray-500">Administrator</div>
-                                        </div>
-                                        <i className="fa fa-chevron-down hidden text-xs text-gray-500 lg:block transition-transform duration-200 group-hover:text-[#00895f]"></i>
-                                    </button>
-                                </Dropdown.Trigger>
-                                <Dropdown.Content>
-                                    <div className="border-b border-gray-100 bg-gradient-to-r from-emerald-50 to-teal-50 px-4 py-3">
-                                        <p className="text-sm font-semibold text-gray-900">{user.name}</p>
-                                        <p className="text-xs text-gray-600 truncate">{user.email}</p>
-                                    </div>
-                                    <Dropdown.Link href={route('profile.edit')}>
-                                        <div className="flex items-center space-x-3">
-                                            <div className="flex h-9 w-9 items-center justify-center rounded-full bg-emerald-100">
-                                                <i className="fa fa-user text-[#00895f]"></i>
-                                            </div>
-                                            <div>
-                                                <div className="text-sm font-medium text-gray-900">Profile</div>
-                                                <div className="text-xs text-gray-500">View and edit profile</div>
-                                            </div>
-                                        </div>
-                                    </Dropdown.Link>
-                                    <Dropdown.Link href="#">
-                                        <div className="flex items-center space-x-3">
-                                            <div className="flex h-9 w-9 items-center justify-center rounded-full bg-blue-100">
-                                                <i className="fa fa-cog text-blue-600"></i>
-                                            </div>
-                                            <div>
-                                                <div className="text-sm font-medium text-gray-900">Settings</div>
-                                                <div className="text-xs text-gray-500">Preferences</div>
-                                            </div>
-                                        </div>
-                                    </Dropdown.Link>
-                                    <Dropdown.Link href="#">
-                                        <div className="flex items-center space-x-3">
-                                            <div className="flex h-9 w-9 items-center justify-center rounded-full bg-yellow-100">
-                                                <i className="fa fa-lock text-yellow-600"></i>
-                                            </div>
-                                            <div>
-                                                <div className="text-sm font-medium text-gray-900">Lock screen</div>
-                                                <div className="text-xs text-gray-500">Secure your session</div>
-                                            </div>
-                                        </div>
-                                    </Dropdown.Link>
-                                    <div className="border-t border-gray-100"></div>
-                                    <Dropdown.Link href={route('logout')} method="post" as="button">
-                                        <div className="flex items-center space-x-3">
-                                            <div className="flex h-9 w-9 items-center justify-center rounded-full bg-red-100">
-                                                <i className="fa fa-power-off text-red-600"></i>
-                                            </div>
-                                            <div>
-                                                <div className="text-sm font-medium text-red-600">Logout</div>
-                                                <div className="text-xs text-gray-500">Sign out of your account</div>
-                                            </div>
-                                        </div>
-                                    </Dropdown.Link>
-                                </Dropdown.Content>
-                            </Dropdown>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            {/* Enhanced Navigation Bar with Glass Effect */}
-            <nav className="border-b border-gray-200 bg-white/95 backdrop-blur-md shadow-sm sticky top-0 z-40">
-                <div className="mx-auto max-w-7xl">
-                    <div className="flex items-center justify-between px-6">
                         {/* Desktop Navigation */}
                         <div className="hidden md:flex md:space-x-2">
                             {/* Dashboard */}
@@ -130,7 +56,6 @@ export default function AuthenticatedLayout({ children }) {
                                         ? 'text-[#00895f] font-medium'
                                         : 'text-gray-700 hover:text-[#00895f] font-normal'
                                     }`}>
-                                    <i className="fa fa-dashboard text-base"></i>
                                     <span>Dashboard</span>
                                 </div>
                             </NavLink>
@@ -145,7 +70,7 @@ export default function AuthenticatedLayout({ children }) {
                                         ? 'text-[#00895f] font-medium'
                                         : 'text-gray-700 hover:text-[#00895f] font-normal'
                                     }`}>
-                                    <i className="fa fa-th-large text-base"></i>
+                                  
                                     <span>Content</span>
                                     <i className={`fa fa-angle-down text-xs transition-transform duration-200 ${openDesktopDropdown === 'content' ? 'rotate-180' : ''
                                         }`}></i>
@@ -278,6 +203,73 @@ export default function AuthenticatedLayout({ children }) {
                                     />
                                 </svg>
                             </button>
+                        </div>
+                        {/* Enhanced Right Side Icons */}
+                        <div className="flex items-center space-x-4">
+                            {/* Enhanced Profile Dropdown */}
+                            <Dropdown>
+                                <Dropdown.Trigger>
+                                    <button className="flex items-center space-x-3 rounded-xl  px-4 py-2 transition-all duration-200 hover:shadow-lg hover:bg-white group">
+                                        
+                                        <div className="hidden text-left lg:block">
+                                            <div className="text-sm font-semibold text-gray-800 group-hover:text-[#00895f] transition-colors duration-200">{user.name}</div>
+                                            <div className="text-xs text-gray-500">Administrator</div>
+                                        </div>
+                                        <i className="fa fa-chevron-down hidden text-xs text-gray-500 lg:block transition-transform duration-200 group-hover:text-[#00895f]"></i>
+                                    </button>
+                                </Dropdown.Trigger>
+                                <Dropdown.Content>
+                                    <div className="border-b border-gray-100 bg-gradient-to-r from-emerald-50 to-teal-50 px-4 py-3">
+                                        <p className="text-sm font-semibold text-gray-900">{user.name}</p>
+                                        <p className="text-xs text-gray-600 truncate">{user.email}</p>
+                                    </div>
+                                    <Dropdown.Link href={route('profile.edit')}>
+                                        <div className="flex items-center space-x-3">
+                                            <div className="flex h-9 w-9 items-center justify-center rounded-full bg-emerald-100">
+                                                <i className="fa fa-user text-[#00895f]"></i>
+                                            </div>
+                                            <div>
+                                                <div className="text-sm font-medium text-gray-900">Profile</div>
+                                                <div className="text-xs text-gray-500">View and edit profile</div>
+                                            </div>
+                                        </div>
+                                    </Dropdown.Link>
+                                    <Dropdown.Link href="#">
+                                        <div className="flex items-center space-x-3">
+                                            <div className="flex h-9 w-9 items-center justify-center rounded-full bg-blue-100">
+                                                <i className="fa fa-cog text-blue-600"></i>
+                                            </div>
+                                            <div>
+                                                <div className="text-sm font-medium text-gray-900">Settings</div>
+                                                <div className="text-xs text-gray-500">Preferences</div>
+                                            </div>
+                                        </div>
+                                    </Dropdown.Link>
+                                    <Dropdown.Link href="#">
+                                        <div className="flex items-center space-x-3">
+                                            <div className="flex h-9 w-9 items-center justify-center rounded-full bg-yellow-100">
+                                                <i className="fa fa-lock text-yellow-600"></i>
+                                            </div>
+                                            <div>
+                                                <div className="text-sm font-medium text-gray-900">Lock screen</div>
+                                                <div className="text-xs text-gray-500">Secure your session</div>
+                                            </div>
+                                        </div>
+                                    </Dropdown.Link>
+                                    <div className="border-t border-gray-100"></div>
+                                    <Dropdown.Link href={route('logout')} method="post" as="button">
+                                        <div className="flex items-center space-x-3">
+                                            <div className="flex h-9 w-9 items-center justify-center rounded-full bg-red-100">
+                                                <i className="fa fa-power-off text-red-600"></i>
+                                            </div>
+                                            <div>
+                                                <div className="text-sm font-medium text-red-600">Logout</div>
+                                                <div className="text-xs text-gray-500">Sign out of your account</div>
+                                            </div>
+                                        </div>
+                                    </Dropdown.Link>
+                                </Dropdown.Content>
+                            </Dropdown>
                         </div>
                     </div>
                 </div>
