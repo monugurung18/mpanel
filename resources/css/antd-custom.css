@@ -1,0 +1,78 @@
+/* Ant Design Custom Theme - Emerald Green #00895f */
+
+/* Select Component */
+.ant-select-focused .ant-select-selector {
+    border-color: #00895f !important;
+    box-shadow: 0 0 0 2px rgba(0, 137, 95, 0.1) !important;
+}
+
+.ant-select:hover .ant-select-selector {
+    border-color: #00895f !important;
+}
+
+.ant-select-item-option-selected:not(.ant-select-item-option-disabled) {
+    background-color: #e6f7f1 !important;
+    color: #00895f !important;
+    font-weight: 600 !important;
+}
+
+.ant-select-item-option-active:not(.ant-select-item-option-disabled) {
+    background-color: #f0faf6 !important;
+}
+
+/* Tag styling for multi-select */
+.ant-select-multiple .ant-select-selection-item {
+    background-color: #e6f7f1 !important;
+    border-color: #00895f !important;
+    color: #00895f !important;
+    font-weight: 500 !important;
+}
+
+.ant-select-multiple .ant-select-selection-item-remove {
+    color: #00895f !important;
+}
+
+.ant-select-multiple .ant-select-selection-item-remove:hover {
+    color: #006845 !important;
+}
+
+/* Dropdown styling */
+.ant-select-dropdown {
+    border-radius: 8px !important;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06) !important;
+}
+
+/* Loading spinner */
+.ant-select-arrow .anticon-loading {
+    color: #00895f !important;
+}
+
+/* Clear button */
+.ant-select-clear {
+    color: #6b7280 !important;
+}
+
+.ant-select-clear:hover {
+    color: #00895f !important;
+}
+
+/* Placeholder */
+.ant-select-selection-placeholder {
+    color: #9ca3af !important;
+}
+
+/* Custom option render */
+.ant-select-item-option-content {
+    display: flex;
+    align-items: center;
+}
+
+/* Responsive tag count */
+.ant-select-selection-overflow-item-suffix {
+    font-size: 0.875rem;
+    color: #00895f;
+    font-weight: 600;
+}
+.ant-select-selection-item-content{
+    font-size: 12px;
+}
