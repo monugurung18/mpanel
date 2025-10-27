@@ -40,7 +40,6 @@ class SeminarController extends Controller
 
         return Inertia::render('Seminars/Index', [
             'seminars' => $seminars,
-            'baseImagePath' => url('storage/seminar'),
         ]);
     }
 
@@ -74,7 +73,7 @@ class SeminarController extends Controller
             'offline_url' => 'nullable|string',
             'video_status' => 'required|in:live,schedule,archive,new,deleted',
             'videoSource' => 'required|in:youTube,faceBook,mp4,other',
-            'schedule_timestamp' => 'nullable|date',
+            'schedule_timestamp' => 'required|date',
             'uploade_date' => 'nullable|string|max:150',
             'countdown' => 'nullable|in:yes,no',
             'countdowntime' => 'nullable|string|max:250',
@@ -206,7 +205,7 @@ class SeminarController extends Controller
             'offline_url' => 'nullable|string',
             'video_status' => 'required|in:live,schedule,archive,new,deleted',
             'videoSource' => 'required|in:youTube,faceBook,mp4,other',
-            'schedule_timestamp' => 'nullable|date',
+            'schedule_timestamp' => 'required|date',
             'uploade_date' => 'nullable|string|max:150',
             'countdown' => 'nullable|in:yes,no',
             'countdowntime' => 'nullable|string|max:250',

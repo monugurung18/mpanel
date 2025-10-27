@@ -2,17 +2,22 @@ import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import InputError from '@/Components/InputError';
 import InputLabel from '@/Components/InputLabel';
 import PrimaryButton from '@/Components/PrimaryButton';
+import SecondaryButton from '@/Components/SecondaryButton';
 import Input from '@/Components/Input';
 import Dropdown from '@/Components/Dropdown';
 import RichTextEditor from '@/Components/RichTextEditor';
 import { Head, Link, useForm, usePage } from '@inertiajs/react';
 import { useState, useEffect } from 'react';
 import { Select, Switch } from 'antd';
+import { getSeminarImageUrl } from '@/Utils/imageHelper';
 import 'antd/dist/reset.css';
 import '../../../css/antd-custom.css';
 
 export default function Form({ seminar, sponsorPages, specialities, educationPartners }) {
+    const { props } = usePage();
+    const { baseImagePath } = props;
     const isEditing = !!seminar;
+    const [currentStep, setCurrentStep] = useState(1);
 
     const [speakers, setSpeakers] = useState([]);
     const [loadingSpeakers, setLoadingSpeakers] = useState(false);
@@ -42,14 +47,55 @@ export default function Form({ seminar, sponsorPages, specialities, educationPar
         questionBox: seminar?.questionBox ?? '0',
         is_registered: seminar?.is_registered ?? false,
         education_partners: seminar?.education_partners || [],
+        hasMCQ: seminar?.hasMCQ || '',
+        re_attempts: seminar?.re_attempts || 0,
+        seminar_type: seminar?.seminar_type || '',
+        poll_link: seminar?.poll_link || '',
+        // Registration form configuration
+        reg_title_enabled: false,
+        reg_title_required: false,
+        reg_title_options: ['Dr.', 'Mr.', 'Miss.', 'Mrs.'],
+        reg_first_name_enabled: false,
+        reg_first_name_required: false,
+        reg_last_name_enabled: false,
+        reg_last_name_required: false,
+        reg_email_enabled: false,
+        reg_email_required: false,
+        reg_mobile_enabled: false,
+        reg_mobile_required: false,
+        reg_city_enabled: false,
+        reg_city_required: false,
+        reg_state_enabled: false,
+        reg_state_required: false,
+        reg_specialty_enabled: false,
+        reg_specialty_required: false,
+        reg_specialty_options: [],
+        reg_medical_reg_enabled: false,
+        reg_medical_reg_required: false,
+        reg_medical_council_enabled: false,
+        reg_medical_council_required: false,
+        reg_profession_enabled: false,
+        reg_profession_required: false,
+        reg_drl_code_enabled: false,
+        reg_drl_code_required: false,
+        reg_country_enabled: false,
+        reg_country_required: false,
+        theme_color: '#5d9cec',
+        allowed_by: 'email',
         image: null,
         s_image1: null,
         s_image2: null,
     });
 
-    const [imagePreview, setImagePreview] = useState(seminar?.video_image || null);
-    const [appBannerPreview, setAppBannerPreview] = useState(seminar?.s_image1 || null);
-    const [appSquarePreview, setAppSquarePreview] = useState(seminar?.s_image2 || null);
+    const [imagePreview, setImagePreview] = useState(
+        seminar?.video_image ? getSeminarImageUrl(seminar.video_image, baseImagePath) : null
+    );
+    const [appBannerPreview, setAppBannerPreview] = useState(
+        seminar?.s_image1 ? getSeminarImageUrl(seminar.s_image1, baseImagePath) : null
+    );
+    const [appSquarePreview, setAppSquarePreview] = useState(
+        seminar?.s_image2 ? getSeminarImageUrl(seminar.s_image2, baseImagePath) : null
+    );
 
     useEffect(() => {
         // Fetch speakers from API
@@ -92,8 +138,8 @@ export default function Form({ seminar, sponsorPages, specialities, educationPar
         };
 
         const rules = validationRules[type];
-        const setError = type === 'featured' ? setImageError : 
-                        type === 'appBanner' ? setAppBannerError : setAppSquareError;
+        const setError = type === 'featured' ? setImageError :
+            type === 'appBanner' ? setAppBannerError : setAppSquareError;
 
         // Validate file size (max 1MB)
         const maxSize = 1 * 1024 * 1024;
@@ -115,10 +161,10 @@ export default function Form({ seminar, sponsorPages, specialities, educationPar
         const img = new Image();
         const objectUrl = URL.createObjectURL(file);
         img.src = objectUrl;
-        
+
         img.onload = function () {
             URL.revokeObjectURL(objectUrl);
-            
+
             if (this.width !== rules.width || this.height !== rules.height) {
                 setError(`${rules.label} dimensions must be exactly ${rules.width} x ${rules.height} pixels. Current: ${this.width} x ${this.height}`);
                 e.target.value = '';
@@ -144,6 +190,55 @@ export default function Form({ seminar, sponsorPages, specialities, educationPar
             setError('Failed to load image. Please try another file.');
             e.target.value = '';
         };
+    };
+
+    const handleNext = () => {
+        if (currentStep < 3) {
+            setCurrentStep(currentStep + 1);
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+    };
+
+    const handlePrevious = () => {
+        if (currentStep > 1) {
+            setCurrentStep(currentStep - 1);
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+    };
+
+    const handleSaveAndContinue = (e) => {
+        e.preventDefault();
+
+        const formData = {
+            ...data,
+            speakerids: Array.isArray(data.speakerids) ? data.speakerids : [],
+            education_partners: Array.isArray(data.education_partners) ? data.education_partners : [],
+        };
+
+        if (isEditing) {
+            post(route('seminars.update', seminar.id), {
+                ...formData,
+                forceFormData: true,
+                _method: 'PUT',
+                preserveScroll: true,
+                onSuccess: () => {
+                    if (currentStep < 3) {
+                        handleNext();
+                    }
+                },
+            });
+        } else {
+            post(route('seminars.store'), {
+                ...formData,
+                forceFormData: true,
+                preserveScroll: true,
+                onSuccess: () => {
+                    if (currentStep < 3) {
+                        handleNext();
+                    }
+                },
+            });
+        }
     };
 
     const handleSubmit = (e) => {
@@ -189,12 +284,50 @@ export default function Form({ seminar, sponsorPages, specialities, educationPar
                                 </Link>
                             </div>
 
+                            {/* Step Wizard Navigation */}
+                            <div className="mb-6">
+                                <div className="flex items-center justify-between">
+                                    {[1, 2, 3].map((step) => (
+                                        <div key={step} className="flex flex-1 items-center">
+                                            <div className="flex flex-col items-center">
+                                                <button
+                                                    type="button"
+                                                    onClick={() => isEditing && setCurrentStep(step)}
+                                                    disabled={!isEditing && step > currentStep}
+                                                    className={`flex h-12 w-12 items-center justify-center rounded-full border-2 transition-all ${currentStep === step
+                                                        ? 'border-[#00895f] bg-[#00895f] text-white'
+                                                        : currentStep > step || isEditing
+                                                            ? 'border-[#00895f] bg-white text-[#00895f] cursor-pointer hover:bg-gray-50'
+                                                            : 'border-gray-300 bg-gray-100 text-gray-400 cursor-not-allowed'
+                                                        }`}
+                                                >
+                                                    <i className={`fa ${step === 1 ? 'fa-folder-open' :
+                                                        step === 2 ? 'fa-users' :
+                                                            'fa-list-alt'
+                                                        } text-lg`}></i>
+                                                </button>
+                                                <span className="mt-2 text-xs font-medium text-gray-600">
+                                                    Step {step}
+                                                </span>
+                                            </div>
+                                            {step < 3 && (
+                                                <div
+                                                    className={`mx-4 h-1 flex-1 ${currentStep > step ? 'bg-[#00895f]' : 'bg-gray-300'
+                                                        }`}
+                                                />
+                                            )}
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+
                             <hr className="my-4" />
 
-                            <form onSubmit={handleSubmit} className="space-y-6">
-                                <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
-                                    {/* Left Column */}
-                                    <div className="space-y-6">
+                            <form onSubmit={currentStep === 3 ? handleSubmit : handleSaveAndContinue} className="space-y-6">
+                                {/* Step 1: Basic Information */}
+                                {currentStep === 1 && (
+                                    <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
+
                                         {/* Title */}
                                         <div>
                                             <InputLabel htmlFor="seminar_title" value="Seminar Title *" />
@@ -240,48 +373,6 @@ export default function Form({ seminar, sponsorPages, specialities, educationPar
                                             />
                                         </div>
 
-                                        {/* Description */}
-                                        <div className="col-span-2">
-                                            <InputLabel value="Description *" />
-                                            <RichTextEditor
-                                                value={data.seminar_desc}
-                                                onChange={(content) => setData('seminar_desc', content)}
-                                                placeholder="Enter seminar description with rich formatting..."
-                                                error={errors.seminar_desc}
-                                                height={200}
-                                            />
-                                        </div>
-
-                                        {/* Live Stream URL */}
-                                        <div>
-                                            <InputLabel htmlFor="stream_url" value="Live Stream URL" />
-                                            <Input
-                                                id="stream_url"
-                                                type="text"
-                                                value={data.stream_url}
-                                                onChange={(e) => setData('stream_url', e.target.value)}
-                                                error={errors.stream_url}
-                                                icon="fa-video-camera"
-                                                placeholder="https://youtube.com/live/..."
-                                                size="lg"
-                                            />
-                                        </div>
-
-                                        {/* Archive Video URL */}
-                                        <div>
-                                            <InputLabel htmlFor="offline_url" value="Archive Video URL" />
-                                            <Input
-                                                id="offline_url"
-                                                type="text"
-                                                value={data.offline_url}
-                                                onChange={(e) => setData('offline_url', e.target.value)}
-                                                error={errors.offline_url}
-                                                icon="fa-archive"
-                                                placeholder="https://youtube.com/watch/..."
-                                                size="lg"
-                                            />
-                                        </div>
-
                                         {/* Video Status */}
                                         <div>
                                             <InputLabel htmlFor="video_status" value="Video Status *" />
@@ -300,25 +391,137 @@ export default function Form({ seminar, sponsorPages, specialities, educationPar
                                                 size="lg"
                                             />
                                         </div>
-
-                                        {/* Video Source */}
-                                        <div>
-                                            <InputLabel htmlFor="videoSource" value="Video Source *" />
-                                            <Dropdown
-                                                options={[
-                                                    { value: 'youTube', label: 'YouTube' },
-                                                    { value: 'faceBook', label: 'Facebook' },
-                                                    { value: 'mp4', label: 'MP4' },
-                                                    { value: 'other', label: 'Other' },
-                                                ]}
-                                                value={data.videoSource}
-                                                onChange={(value) => setData('videoSource', value)}
-                                                placeholder="Select source"
-                                                icon="fa-play-circle"
-                                                error={errors.videoSource}
-                                                size="lg"
+                                        {/* Description */}
+                                        <div className="col-span-2">
+                                            <InputLabel value="Description *" />
+                                            <RichTextEditor
+                                                value={data.seminar_desc}
+                                                onChange={(content) => setData('seminar_desc', content)}
+                                                placeholder="Enter seminar description with rich formatting..."
+                                                error={errors.seminar_desc}
+                                                height={200}
                                             />
                                         </div>
+                                        <div className="col-span-2 mt-8">
+                                            <div className="grid grid-cols-2 gap-6">
+
+                                                <div>
+                                                    <InputLabel value="Featured Image (700 x 393, Max 1MB)" />
+                                                    <div className="mt-2 rounded-md border-2 border-dashed border-gray-300 p-4">
+                                                        {!imagePreview ? (
+                                                            <div className="text-center">
+                                                                <div className="mb-4">
+                                                                    <i className="fa fa-cloud-upload text-4xl text-gray-400"></i>
+                                                                </div>
+                                                                <p className="mb-2 text-sm font-medium text-gray-700">
+                                                                    Seminar Featured Image
+                                                                </p>
+                                                                <p className="mb-1 text-xs text-gray-500">
+                                                                    Dimensions: <span className="font-semibold">700 x 393 pixels</span>
+                                                                </p>
+                                                                <p className="mb-4 text-xs text-gray-500">
+                                                                    Max Size: <span className="font-semibold">1MB</span>
+                                                                </p>
+                                                                <label className="cursor-pointer rounded-md bg-[#00895f] px-4 py-2 text-sm text-white hover:bg-emerald-700">
+                                                                    <i className="fa fa-upload mr-2"></i>
+                                                                    Upload Featured Image
+                                                                    <input
+                                                                        type="file"
+                                                                        className="hidden"
+                                                                        accept="image/*"
+                                                                        onChange={(e) => handleImageChange(e, 'featured')}
+                                                                    />
+                                                                </label>
+                                                            </div>
+                                                        ) : (
+                                                            <div className="relative">
+                                                                <img
+                                                                    src={imagePreview}
+                                                                    alt="Preview"
+                                                                    className="mx-auto max-h-64 rounded-md"
+                                                                />
+                                                                <button
+                                                                    type="button"
+                                                                    onClick={() => {
+                                                                        setData('image', null);
+                                                                        setImagePreview(null);
+                                                                    }}
+                                                                    className="mt-4 w-full rounded-md bg-red-600 px-4 py-2 text-white hover:bg-red-700"
+                                                                >
+                                                                    <i className="fa fa-trash mr-2"></i>
+                                                                    Remove Image
+                                                                </button>
+                                                            </div>
+                                                        )}
+                                                    </div>
+                                                    {imageError && (
+                                                        <div className="mt-2 flex items-center space-x-1 text-sm text-red-600">
+                                                            <i className="fa fa-exclamation-circle"></i>
+                                                            <span>{imageError}</span>
+                                                        </div>
+                                                    )}
+                                                    <InputError message={errors.image} className="mt-2" />
+                                                </div>
+
+                                                <div>
+                                                    {/* Live Stream URL */}
+                                                    <div className=''>
+                                                        <InputLabel htmlFor="stream_url" value="Live Stream URL" />
+                                                        <Input
+                                                            id="stream_url"
+                                                            type="text"
+                                                            value={data.stream_url}
+                                                            onChange={(e) => setData('stream_url', e.target.value)}
+                                                            error={errors.stream_url}
+                                                            icon="fa-video-camera"
+                                                            placeholder="https://youtube.com/live/..."
+                                                            size="lg"
+                                                        />
+                                                    </div>
+
+                                                    {/* Archive Video URL */}
+                                                    <div className='mt-4'>
+                                                        <InputLabel htmlFor="offline_url" value="Archive Video URL" />
+                                                        <Input
+                                                            id="offline_url"
+                                                            type="text"
+                                                            value={data.offline_url}
+                                                            onChange={(e) => setData('offline_url', e.target.value)}
+                                                            error={errors.offline_url}
+                                                            icon="fa-archive"
+                                                            placeholder="https://youtube.com/watch/..."
+                                                            size="lg"
+                                                        />
+                                                    </div>
+
+
+
+                                                    {/* Video Source */}
+                                                    <div className='mt-4'>
+                                                        <InputLabel htmlFor="videoSource" value="Video Source *" />
+                                                        <Dropdown
+                                                            options={[
+                                                                { value: 'youTube', label: 'YouTube' },
+                                                                { value: 'faceBook', label: 'Facebook' },
+                                                                { value: 'mp4', label: 'MP4' },
+                                                                { value: 'other', label: 'Other' },
+                                                            ]}
+                                                            value={data.videoSource}
+                                                            onChange={(value) => setData('videoSource', value)}
+                                                            placeholder="Select source"
+                                                            icon="fa-play-circle"
+                                                            error={errors.videoSource}
+                                                            size="lg"
+                                                        />
+                                                    </div>
+                                                </div>
+
+                                            </div>
+                                        </div>
+
+
+
+
 
                                         {/* Schedule DateTime */}
                                         <div>
@@ -389,145 +592,11 @@ export default function Form({ seminar, sponsorPages, specialities, educationPar
                                             />
                                             <InputError message={errors.education_partners} />
                                         </div>
-                                    </div>
 
-                                    {/* Right Column */}
-                                    <div className="space-y-6">
-                                        {/* Switches */}
-                                        <div className="rounded-lg border border-gray-200 p-4 space-y-3">
-                                            <h5 className="font-semibold text-gray-700 mb-3">Settings</h5>
-                                            
-                                            <div className="flex items-center justify-between">
-                                                <label className="text-sm text-gray-700">Show Archives</label>
-                                                <Switch
-                                                    checked={data.showArchive === '1'}
-                                                    onChange={(checked) => setData('showArchive', checked ? '1' : '0')}
-                                                    style={{ backgroundColor: data.showArchive === '1' ? '#00895f' : undefined }}
-                                                />
-                                            </div>
 
-                                            <div className="flex items-center justify-between">
-                                                <label className="text-sm text-gray-700">Featured</label>
-                                                <Switch
-                                                    checked={data.isFeatured === '1'}
-                                                    onChange={(checked) => setData('isFeatured', checked ? '1' : '0')}
-                                                    style={{ backgroundColor: data.isFeatured === '1' ? '#00895f' : undefined }}
-                                                />
-                                            </div>
 
-                                            <div className="flex items-center justify-between">
-                                                <label className="text-sm text-gray-700">Medtalks Copyright</label>
-                                                <Switch
-                                                    checked={data.featured === 1}
-                                                    onChange={(checked) => setData('featured', checked ? 1 : 0)}
-                                                    style={{ backgroundColor: data.featured === 1 ? '#00895f' : undefined }}
-                                                />
-                                            </div>
 
-                                            <div className="flex items-center justify-between">
-                                                <label className="text-sm text-gray-700">Business Sponsored</label>
-                                                <Switch
-                                                    checked={data.businessSponsered === '1'}
-                                                    onChange={(checked) => setData('businessSponsered', checked ? '1' : '0')}
-                                                    style={{ backgroundColor: data.businessSponsered === '1' ? '#00895f' : undefined }}
-                                                />
-                                            </div>
 
-                                            <div className="flex items-center justify-between">
-                                                <label className="text-sm text-gray-700">Chat Box</label>
-                                                <Switch
-                                                    checked={data.chatBox === '1'}
-                                                    onChange={(checked) => setData('chatBox', checked ? '1' : '0')}
-                                                    style={{ backgroundColor: data.chatBox === '1' ? '#00895f' : undefined }}
-                                                />
-                                            </div>
-
-                                            <div className="flex items-center justify-between">
-                                                <label className="text-sm text-gray-700">Question Box</label>
-                                                <Switch
-                                                    checked={data.questionBox === '1'}
-                                                    onChange={(checked) => setData('questionBox', checked ? '1' : '0')}
-                                                    style={{ backgroundColor: data.questionBox === '1' ? '#00895f' : undefined }}
-                                                />
-                                            </div>
-
-                                            <div className="flex items-center justify-between">
-                                                <label className="text-sm text-gray-700">Registration Required</label>
-                                                <Switch
-                                                    checked={data.is_registered}
-                                                    onChange={(checked) => setData('is_registered', checked)}
-                                                    style={{ backgroundColor: data.is_registered ? '#00895f' : undefined }}
-                                                />
-                                            </div>
-
-                                            <div className="flex items-center justify-between">
-                                                <label className="text-sm text-gray-700">Video Play Button</label>
-                                                <Switch
-                                                    checked={data.video_button}
-                                                    onChange={(checked) => setData('video_button', checked)}
-                                                    style={{ backgroundColor: data.video_button ? '#00895f' : undefined }}
-                                                />
-                                            </div>
-                                        </div>
-
-                                        {/* Featured Image */}
-                                        <div>
-                                            <InputLabel value="Featured Image (700 x 393, Max 1MB)" />
-                                            <div className="mt-2 rounded-md border-2 border-dashed border-gray-300 p-4">
-                                                {!imagePreview ? (
-                                                    <div className="text-center">
-                                                        <div className="mb-4">
-                                                            <i className="fa fa-cloud-upload text-4xl text-gray-400"></i>
-                                                        </div>
-                                                        <p className="mb-2 text-sm font-medium text-gray-700">
-                                                            Seminar Featured Image
-                                                        </p>
-                                                        <p className="mb-1 text-xs text-gray-500">
-                                                            Dimensions: <span className="font-semibold">700 x 393 pixels</span>
-                                                        </p>
-                                                        <p className="mb-4 text-xs text-gray-500">
-                                                            Max Size: <span className="font-semibold">1MB</span>
-                                                        </p>
-                                                        <label className="cursor-pointer rounded-md bg-[#00895f] px-4 py-2 text-sm text-white hover:bg-emerald-700">
-                                                            <i className="fa fa-upload mr-2"></i>
-                                                            Upload Featured Image
-                                                            <input
-                                                                type="file"
-                                                                className="hidden"
-                                                                accept="image/*"
-                                                                onChange={(e) => handleImageChange(e, 'featured')}
-                                                            />
-                                                        </label>
-                                                    </div>
-                                                ) : (
-                                                    <div className="relative">
-                                                        <img
-                                                            src={imagePreview}
-                                                            alt="Preview"
-                                                            className="mx-auto max-h-64 rounded-md"
-                                                        />
-                                                        <button
-                                                            type="button"
-                                                            onClick={() => {
-                                                                setData('image', null);
-                                                                setImagePreview(null);
-                                                            }}
-                                                            className="mt-4 w-full rounded-md bg-red-600 px-4 py-2 text-white hover:bg-red-700"
-                                                        >
-                                                            <i className="fa fa-trash mr-2"></i>
-                                                            Remove Image
-                                                        </button>
-                                                    </div>
-                                                )}
-                                            </div>
-                                            {imageError && (
-                                                <div className="mt-2 flex items-center space-x-1 text-sm text-red-600">
-                                                    <i className="fa fa-exclamation-circle"></i>
-                                                    <span>{imageError}</span>
-                                                </div>
-                                            )}
-                                            <InputError message={errors.image} className="mt-2" />
-                                        </div>
 
                                         {/* App Banner */}
                                         <div>
@@ -600,19 +669,187 @@ export default function Form({ seminar, sponsorPages, specialities, educationPar
                                             </div>
                                             {appSquareError && <div className="mt-1 text-xs text-red-600">{appSquareError}</div>}
                                         </div>
-                                    </div>
-                                </div>
 
-                                {/* Submit Button */}
+                                    </div>
+
+                                )}
+
+                                {/* Step 2: Speakers, Sponsors & Speciality */}
+                                {currentStep === 2 && (
+                                    <div className="space-y-6">
+                                        <h3 className="text-lg font-semibold text-gray-800">Other Details</h3>
+                                        <hr className="my-4" />
+
+                                        <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
+                                            {/* Speakers */}
+                                            <div>
+                                                <h4 className="mb-3 font-semibold text-gray-700">ADD Speakers</h4>
+                                                <Select
+                                                    mode="multiple"
+                                                    size="large"
+                                                    placeholder="Choose Speakers"
+                                                    value={data.speakerids}
+                                                    onChange={(value) => setData('speakerids', value)}
+                                                    loading={loadingSpeakers}
+                                                    options={speakers}
+                                                    className="w-full"
+                                                    style={{ width: '100%' }}
+                                                    filterOption={(input, option) =>
+                                                        option.label.toLowerCase().includes(input.toLowerCase())
+                                                    }
+                                                    showSearch
+                                                />
+                                                <InputError message={errors.speakerids} />
+                                            </div>
+
+                                            {/* Speciality */}
+                                            <div>
+                                                <h4 className="mb-3 font-semibold text-gray-700">Add Speciality</h4>
+                                                <Dropdown
+                                                    options={specialities}
+                                                    value={data.seminar_speciality}
+                                                    onChange={(value) => setData('seminar_speciality', value)}
+                                                    placeholder="Select Specialties"
+                                                    icon="fa-stethoscope"
+                                                    searchable
+                                                    error={errors.seminar_speciality}
+                                                    size="lg"
+                                                />
+                                            </div>
+                                        </div>
+                                    </div>
+                                )}
+
+                                {/* Step 3: Registration Form Configuration */}
+                                {currentStep === 3 && (
+                                    <div className="space-y-6">
+                                        <h3 className="text-lg font-semibold text-gray-800">Live Seminar Registration Form Builder</h3>
+                                        <hr className="my-4" />
+
+                                        <div className="rounded-lg border border-blue-200 bg-blue-50 p-4">
+                                            <p className="text-sm text-blue-800">
+                                                <i className="fa fa-info-circle mr-2"></i>
+                                                Configure which fields appear in the registration form and whether they're required.
+                                            </p>
+                                        </div>
+
+                                        {/* Registration Fields Configuration */}
+                                        <div className="space-y-3">
+                                            <div className="grid grid-cols-12 gap-4 border-b border-gray-300 pb-3">
+                                                <div className="col-span-8">
+                                                    <h5 className="font-semibold text-gray-700">Registration Fields</h5>
+                                                </div>
+                                                <div className="col-span-4 text-center">
+                                                    <h5 className="font-semibold text-gray-700">Required</h5>
+                                                </div>
+                                            </div>
+
+                                            {/* Registration fields - Title, First Name, Last Name, Email, Mobile, etc. */}
+                                            {/* Similar pattern for each field with enable/required toggles */}
+                                            
+                                            <div className="rounded-lg border border-yellow-200 bg-yellow-50 p-4 mt-4">
+                                                <p className="text-sm text-yellow-800">
+                                                    <i className="fa fa-wrench mr-2"></i>
+                                                    Registration form builder will be fully implemented with all fields from the PHP version.
+                                                </p>
+                                            </div>
+                                        </div>
+
+                                        {/* Additional Settings */}
+                                        <div className="mt-8 space-y-4">
+                                            <h4 className="text-md font-semibold text-gray-800">Additional Settings</h4>
+                                            
+                                            <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
+                                                {/* Theme Color */}
+                                                <div>
+                                                    <InputLabel htmlFor="theme_color" value="Theme Color" />
+                                                    <input
+                                                        type="color"
+                                                        id="theme_color"
+                                                        value={data.theme_color}
+                                                        onChange={(e) => setData('theme_color', e.target.value)}
+                                                        className="h-10 w-full rounded-md border border-gray-300"
+                                                    />
+                                                    <p className="mt-1 text-xs text-gray-500">
+                                                        Choose the primary color for the registration form
+                                                    </p>
+                                                </div>
+
+                                                {/* Allow Registration With */}
+                                                <div>
+                                                    <InputLabel value="Allow Registration With" />
+                                                    <div className="mt-2 space-y-2">
+                                                        <label className="flex items-center gap-2">
+                                                            <input
+                                                                type="radio"
+                                                                name="allowed_by"
+                                                                value="email"
+                                                                checked={data.allowed_by === 'email'}
+                                                                onChange={(e) => setData('allowed_by', e.target.value)}
+                                                                className="text-[#00895f] focus:ring-[#00895f]"
+                                                            />
+                                                            <span className="text-sm text-gray-700">Email</span>
+                                                        </label>
+                                                        <label className="flex items-center gap-2">
+                                                            <input
+                                                                type="radio"
+                                                                name="allowed_by"
+                                                                value="mobile"
+                                                                checked={data.allowed_by === 'mobile'}
+                                                                onChange={(e) => setData('allowed_by', e.target.value)}
+                                                                className="text-[#00895f] focus:ring-[#00895f]"
+                                                            />
+                                                            <span className="text-sm text-gray-700">Mobile</span>
+                                                        </label>
+                                                        <label className="flex items-center gap-2">
+                                                            <input
+                                                                type="radio"
+                                                                name="allowed_by"
+                                                                value="both"
+                                                                checked={data.allowed_by === 'both'}
+                                                                onChange={(e) => setData('allowed_by', e.target.value)}
+                                                                className="text-[#00895f] focus:ring-[#00895f]"
+                                                            />
+                                                            <span className="text-sm text-gray-700">Both (Email and Mobile)</span>
+                                                        </label>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                )}
+
+                                {/* Navigation Buttons */}
                                 <div className="flex items-center justify-between border-t pt-4">
-                                    <Link
-                                        href={route('seminars.index')}
-                                        className="text-gray-600 hover:text-gray-900"
-                                    >
-                                        Cancel
-                                    </Link>
+                                    <div>
+                                        {currentStep > 1 && (
+                                            <SecondaryButton type="button" onClick={handlePrevious}>
+                                                <i className="fa fa-arrow-left mr-2"></i>
+                                                Previous
+                                            </SecondaryButton>
+                                        )}
+                                        {currentStep === 1 && (
+                                            <Link
+                                                href={route('seminars.index')}
+                                                className="text-gray-600 hover:text-gray-900 bg-gray-100 hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-gray-400 focus:ring-offset-2 px-4 py-2 rounded-md text-sm font-medium"
+                                            >
+                                                Cancel
+                                            </Link>
+                                        )}
+                                    </div>
                                     <PrimaryButton processing={processing}>
-                                        {isEditing ? 'Update Seminar' : 'Create Seminar'}
+                                        {currentStep < 3 ? (
+                                            <>
+                                                <span className="mr-2">Save and Continue</span>
+
+                                                <i className="fa fa-arrow-right ml-2"></i>
+                                            </>
+                                        ) : (
+                                            <>
+                                                <i className="fa fa-save mr-2"></i>
+                                                {isEditing ? 'Update Seminar' : 'Create Seminar'}
+                                            </>
+                                        )}
                                     </PrimaryButton>
                                 </div>
                             </form>

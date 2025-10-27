@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\EpisodeController;
 use App\Http\Controllers\SeminarController;
+use App\Http\Controllers\PostController;
 use App\Http\Controllers\ProfileController;
 use Illuminate\Foundation\Application;
 use Illuminate\Support\Facades\Route;
@@ -32,6 +33,9 @@ Route::middleware('auth')->group(function () {
     // Seminar Management Routes
     Route::resource('seminars', SeminarController::class);
     Route::get('/api/seminar-speakers', [SeminarController::class, 'getSpeakers'])->name('api.seminar-speakers');
+    
+    // Post Management Routes
+    Route::resource('posts', PostController::class);
 });
 
 require __DIR__.'/auth.php';

@@ -107,6 +107,17 @@ export default function AuthenticatedLayout({ children }) {
                                                 <i className="fa fa-arrow-right text-gray-400 group-hover:text-[#00895f] group-hover:translate-x-1 transition-all duration-200"></i>
                                             </Link>
                                             <Link
+                                                href={route('posts.index')}
+                                                className="group flex items-center px-5 py-4 text-sm transition-all duration-200 hover:bg-gradient-to-r hover:from-orange-50 hover:to-amber-50 border-b border-gray-100 relative overflow-hidden"
+                                            >
+
+                                                <div className="flex-1">
+                                                    <div className="font-semibold text-gray-900 group-hover:text-[#00895f] transition-colors duration-200">Posts</div>
+                                                    <div className="text-xs text-gray-500 group-hover:text-gray-600">Manage articles and blog posts</div>
+                                                </div>
+                                                <i className="fa fa-arrow-right text-gray-400 group-hover:text-[#00895f] group-hover:translate-x-1 transition-all duration-200"></i>
+                                            </Link>
+                                            <Link
                                                 href="#"
                                                 className="group flex items-center px-5 py-4 text-sm transition-all duration-200 hover:bg-gradient-to-r hover:from-blue-50 hover:to-cyan-50 relative overflow-hidden"
                                             >
@@ -311,15 +322,21 @@ export default function AuthenticatedLayout({ children }) {
                                         </div>
                                     </ResponsiveNavLink>
                                     <ResponsiveNavLink
-                                        href="#"
+                                        href={route('seminars.index')}
                                         className="flex items-center space-x-3 pl-12 border-b border-gray-100"
                                     >
-                                        <div className="flex h-9 w-9 items-center justify-center rounded-full bg-white shadow-sm">
-                                            <i className="fa fa-graduation-cap text-purple-600 text-sm"></i>
-                                        </div>
                                         <div>
                                             <div className="font-semibold text-sm text-gray-900">Seminar</div>
                                             <div className="text-xs text-gray-600">Seminar management</div>
+                                        </div>
+                                    </ResponsiveNavLink>
+                                    <ResponsiveNavLink
+                                        href={route('posts.index')}
+                                        className="flex items-center space-x-3 pl-12 border-b border-gray-100"
+                                    >
+                                        <div>
+                                            <div className="font-semibold text-sm text-gray-900">Posts</div>
+                                            <div className="text-xs text-gray-600">Article management</div>
                                         </div>
                                     </ResponsiveNavLink>
                                     <ResponsiveNavLink

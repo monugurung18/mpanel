@@ -46,6 +46,45 @@ export const getSponsorBannerUrl = (filename, baseImagePath) => {
 };
 
 /**
+ * Get the seminar image URL
+ * 
+ * @param {string} filename - The image filename
+ * @param {string} baseImagePath - Base URL for images (from Inertia shared props)
+ * @returns {string} - Full seminar image URL
+ */
+export const getSeminarImageUrl = (filename, baseImagePath) => {
+    return getImageUrl(filename, 'seminar/orginal', baseImagePath);
+};
+
+/**
+ * Get the post image URL
+ * 
+ * @param {string} filename - The image filename
+ * @param {string} baseImagePath - Base URL for images (from Inertia shared props)
+ * @returns {string} - Full post image URL
+ */
+export const getPostImageUrl = (filename, baseImagePath) => {
+    return getImageUrl(filename, 'post/orginal', baseImagePath);
+};
+
+/**
+ * Get fallback image URL for missing images
+ * 
+ * @param {string} type - Type of fallback image ('seminar', 'episode', 'sponsor')
+ * @returns {string} - Fallback image URL or placeholder
+ */
+export const getFallbackImageUrl = (type = 'default') => {
+    const fallbacks = {
+        seminar: '/images/seminar-placeholder.png',
+        episode: '/images/episode-placeholder.png',
+        sponsor: '/images/sponsor-placeholder.png',
+        default: '/images/placeholder.png'
+    };
+    
+    return fallbacks[type] || fallbacks.default;
+};
+
+/**
  * Check if image URL is valid
  * 
  * @param {string} url - Image URL to check
