@@ -107,6 +107,9 @@ export default function Form({ post, categories, specialities, relatedPostsOptio
         const file = e.target.files[0];
         if (!file) return;
 
+        // Clear any previous errors for this field
+        clearErrorForField(field);
+
         // Validate file size (max 1MB)
         const maxSize = 1 * 1024 * 1024;
         if (file.size > maxSize) {
@@ -205,21 +208,37 @@ export default function Form({ post, categories, specialities, relatedPostsOptio
     const handleSubmit = (e) => {
         e.preventDefault();
 
-        const formData = {
-            ...data,
-            tags: Array.isArray(data.tags) ? data.tags : [],
-        };
+        // Check if there are any image errors before submitting
+        if (featuredError || squareError || bannerError || appError) {
+            console.error('Image validation errors prevent submission');
+            return;
+        }
+
+        // Build the form data, excluding null/undefined file uploads
+        const submitData = {};
+        
+        // Add all non-image fields
+        Object.keys(data).forEach(key => {
+            if (!['featuredThumbnail', 'SquareThumbnail', 'bannerImage', 's_image1'].includes(key)) {
+                submitData[key] = data[key];
+            }
+        });
+        
+        // Only add image fields if they are File objects
+        if (data.featuredThumbnail instanceof File) submitData.featuredThumbnail = data.featuredThumbnail;
+        if (data.SquareThumbnail instanceof File) submitData.SquareThumbnail = data.SquareThumbnail;
+        if (data.bannerImage instanceof File) submitData.bannerImage = data.bannerImage;
+        if (data.s_image1 instanceof File) submitData.s_image1 = data.s_image1;
+
+        // Ensure tags is properly formatted
+        submitData.tags = Array.isArray(data.tags) ? data.tags : [];
 
         if (isEditing) {
-            submitPut(route('posts.update', post.articleID), {
-                ...formData,
-            }, {
+            submitPut(route('posts.update', post.articleID), submitData, {
                 forceFormData: true,
             });
         } else {
-            submitPost(route('posts.store'), {
-                ...formData,
-            }, {
+            submitPost(route('posts.store'), submitData, {
                 forceFormData: true,
             });
         }
@@ -248,6 +267,31 @@ export default function Form({ post, categories, specialities, relatedPostsOptio
                             {/* Single-page form (no step wizard) */}
 
                             <hr className="my-4" />
+
+                            {/* Display global validation errors */}
+                            {Object.keys(errors).length > 0 && (
+                                <div className="mb-4 rounded-md bg-red-50 border-l-4 border-red-500 p-4">
+                                    <div className="flex">
+                                        <div className="flex-shrink-0">
+                                            <i className="fa fa-exclamation-circle text-red-400"></i>
+                                        </div>
+                                        <div className="ml-3">
+                                            <h3 className="text-sm font-medium text-red-800">
+                                                Please fix the following errors:
+                                            </h3>
+                                            <div className="mt-2 text-sm text-red-700">
+                                                <ul className="list-disc list-inside space-y-1">
+                                                    {Object.entries(errors).map(([field, message]) => (
+                                                        <li key={field}>
+                                                            <span className="font-semibold">{field}:</span> {message}
+                                                        </li>
+                                                    ))}
+                                                </ul>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            )}
 
                             <form onSubmit={handleSubmit} className="space-y-10">
                                 {/* Content */}

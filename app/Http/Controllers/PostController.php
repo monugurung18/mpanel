@@ -284,7 +284,7 @@ class PostController extends Controller
             'related_post_id' => 'nullable|array',
         ]);
 
-        // Handle image upload
+        // Handle image upload - only update if file is uploaded
         if ($request->hasFile('featuredThumbnail')) {
             // Delete old image
             if ($post->featuredThumbnail) {
@@ -303,6 +303,9 @@ class PostController extends Controller
             }
             $image->move($destinationPath, $filename);
             $validated['featuredThumbnail'] = $filename;
+        } else {
+            // Keep existing image if not uploading new one
+            unset($validated['featuredThumbnail']);
         }
         if ($request->hasFile('SquareThumbnail')) {
             if ($post->SquareThumbnail) {
@@ -315,6 +318,9 @@ class PostController extends Controller
             if (!file_exists($destinationPath)) mkdir($destinationPath, 0755, true);
             $image->move($destinationPath, $filename);
             $validated['SquareThumbnail'] = $filename;
+        } else {
+            // Keep existing image if not uploading new one
+            unset($validated['SquareThumbnail']);
         }
         if ($request->hasFile('bannerImage')) {
             if ($post->bannerImage) {
@@ -327,6 +333,9 @@ class PostController extends Controller
             if (!file_exists($destinationPath)) mkdir($destinationPath, 0755, true);
             $image->move($destinationPath, $filename);
             $validated['bannerImage'] = $filename;
+        } else {
+            // Keep existing image if not uploading new one
+            unset($validated['bannerImage']);
         }
         if ($request->hasFile('s_image1')) {
             if ($post->s_image1) {
@@ -339,6 +348,9 @@ class PostController extends Controller
             if (!file_exists($destinationPath)) mkdir($destinationPath, 0755, true);
             $image->move($destinationPath, $filename);
             $validated['s_image1'] = $filename;
+        } else {
+            // Keep existing image if not uploading new one
+            unset($validated['s_image1']);
         }
 
         // Convert tags array to comma-separated string

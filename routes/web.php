@@ -4,6 +4,7 @@ use App\Http\Controllers\EpisodeController;
 use App\Http\Controllers\SeminarController;
 use App\Http\Controllers\PostController;
 use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\MarketingCampaignController;
 use Illuminate\Foundation\Application;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
@@ -36,6 +37,9 @@ Route::middleware('auth')->group(function () {
     
     // Post Management Routes
     Route::resource('posts', PostController::class);
+    
+    // Marketing Campaign Routes
+    Route::resource('marketing-campaign', MarketingCampaignController::class);
 });
 
 require __DIR__.'/auth.php';
