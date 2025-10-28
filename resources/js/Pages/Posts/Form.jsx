@@ -28,7 +28,7 @@ export default function Form({ post, categories, specialities, relatedPostsOptio
     const { data, setData, post: submitPost, put: submitPut, errors, processing } = useForm({
         title: post?.title || '',
         custom_url: post?.custom_url || '',
-        postType: post?.postType || 'article',
+        postType: post?.postType || 'FAQ',
         theContent: post?.theContent || '',
         transcript: post?.transcript || '',
         videoLink: post?.videoLink || '',
@@ -479,7 +479,7 @@ export default function Form({ post, categories, specialities, relatedPostsOptio
                                     <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
                                         {/* Featured Image */}
                                         <div className="lg:col-span-1">
-                                            <InputLabel value="Featured Image (Max 1MB)" />
+                                            <InputLabel value="Featured Image 360*260 (Max 1MB)" />
                                             <div className="mt-2 rounded-md border-2 border-dashed border-gray-300 p-6">
                                                 {!imagePreview ? (
                                                     <div className="text-center">
@@ -508,7 +508,7 @@ export default function Form({ post, categories, specialities, relatedPostsOptio
                                                         <img
                                                             src={imagePreview}
                                                             alt="Preview"
-                                                            className="mx-auto max-h-96 rounded-md"
+                                                            className="mx-auto max-h-32 rounded-md"
                                                         />
                                                         <button
                                                             type="button"
@@ -524,27 +524,31 @@ export default function Form({ post, categories, specialities, relatedPostsOptio
                                                     </div>
                                                 )}
                                             </div>
-                                            {imageError && (
-                                                <div className="mt-2 flex items-center space-x-1 text-sm text-red-600">
-                                                    <i className="fa fa-exclamation-circle"></i>
-                                                    <span>{imageError}</span>
-                                                </div>
-                                            )}
-                                                {featuredError && (
+                                            {featuredError && (
                                                 <div className="mt-2 flex items-center space-x-1 text-sm text-red-600">
                                                     <i className="fa fa-exclamation-circle"></i>
                                                     <span>{featuredError}</span>
                                                 </div>
                                             )}
+                                             
                                         </div>
 
                                         {/* Square Thumbnail */}
                                         <div className="lg:col-span-1">
-                                            <InputLabel value="Square Thumbnail (Max 1MB)" />
-                                            <div className="mt-2 rounded-md border-2 border-dashed border-gray-300 p-6">
+                                            <InputLabel value="Square Thumbnail 600*600 (Max 1MB)" />
+                                            <div className="mt-2 rounded-md border-2 border-dashed border-gray-300 p-4">
                                                 {!squarePreview ? (
                                                     <div className="text-center">
-                                                        <label className="cursor-pointer rounded-md bg-gray-600 px-4 py-2 text-sm text-white hover:bg-gray-700">
+                                                        <div className="mb-4">
+                                                            <i className="fa fa-cloud-upload text-5xl text-gray-400"></i>
+                                                        </div>
+                                                        <p className="mb-2 text-sm font-medium text-gray-700">
+                                                            Upload Square Thumbnail Image
+                                                        </p>
+                                                        <p className="mb-4 text-xs text-gray-500">
+                                                            JPG, PNG, GIF, or WEBP (Max 1MB)
+                                                        </p>
+                                                        <label className="cursor-pointer rounded-md bg-[#00895f] px-4 py-2 text-sm text-white hover:bg-gray-700">
                                                             <i className="fa fa-upload mr-2"></i>
                                                             Choose Square Image
                                                             <input
@@ -557,15 +561,18 @@ export default function Form({ post, categories, specialities, relatedPostsOptio
                                                     </div>
                                                 ) : (
                                                     <div className="relative">
-                                                        <img src={squarePreview} alt="Square" className="mx-auto max-h-72 rounded-md" />
-                                                        <button
+                                                        <img src={squarePreview} alt="Square" className="mx-auto max-h-32 rounded-md" />
+                                                        <div className='flex justify-center'>
+<button
                                                             type="button"
                                                             onClick={() => { setData('SquareThumbnail', null); setSquarePreview(null); }}
-                                                            className="mt-4 w-full rounded-md bg-red-600 px-4 py-2 text-white hover:bg-red-700"
+                                                            className="mt-4 w-1/2 mx-auto rounded-md bg-red-600 px-4 py-2 text-white hover:bg-red-700"
                                                         >
                                                             <i className="fa fa-trash mr-2"></i>
                                                             Remove Image
                                                         </button>
+                                                        </div>
+                                                        
                                                     </div>
                                                 )}
                                             </div>
@@ -579,11 +586,20 @@ export default function Form({ post, categories, specialities, relatedPostsOptio
 
                                         {/* Banner Image */}
                                         <div className="lg:col-span-1">
-                                            <InputLabel value="Banner Image (Max 1MB)" />
+                                            <InputLabel value="Banner Image 1200*400 (Max 1MB)" />
                                             <div className="mt-2 rounded-md border-2 border-dashed border-gray-300 p-6">
                                                 {!bannerPreview ? (
                                                     <div className="text-center">
-                                                        <label className="cursor-pointer rounded-md bg-gray-600 px-4 py-2 text-sm text-white hover:bg-gray-700">
+                                                        <div className="mb-4">
+                                                            <i className="fa fa-cloud-upload text-5xl text-gray-400"></i>
+                                                        </div>
+                                                        <p className="mb-2 text-sm font-medium text-gray-700">
+                                                            Upload Banner Image
+                                                        </p>
+                                                        <p className="mb-4 text-xs text-gray-500">
+                                                            JPG, PNG, GIF, or WEBP (Max 1MB)
+                                                        </p>
+                                                        <label className="cursor-pointer rounded-md bg-[#00895f] px-4 py-2 text-sm text-white hover:bg-gray-700">
                                                             <i className="fa fa-upload mr-2"></i>
                                                             Choose Banner Image
                                                             <input
@@ -618,11 +634,20 @@ export default function Form({ post, categories, specialities, relatedPostsOptio
 
                                         {/* App Image */}
                                         <div className="lg:col-span-1">
-                                            <InputLabel value="App Image (Max 1MB)" />
+                                            <InputLabel value="App Image 770*550 (Max 1MB)" />
                                             <div className="mt-2 rounded-md border-2 border-dashed border-gray-300 p-6">
                                                 {!appImagePreview ? (
                                                     <div className="text-center">
-                                                        <label className="cursor-pointer rounded-md bg-gray-600 px-4 py-2 text-sm text-white hover:bg-gray-700">
+                                                        <div className="mb-4">
+                                                            <i className="fa fa-cloud-upload text-5xl text-gray-400"></i>
+                                                        </div>
+                                                        <p className="mb-2 text-sm font-medium text-gray-700">
+                                                            Upload App Image
+                                                        </p>
+                                                        <p className="mb-4 text-xs text-gray-500">
+                                                            JPG, PNG, GIF, or WEBP (Max 1MB)
+                                                        </p>
+                                                        <label className="cursor-pointer rounded-md bg-[#00895f] px-4 py-2 text-sm text-white hover:bg-gray-700">
                                                             <i className="fa fa-upload mr-2"></i>
                                                             Choose App Image
                                                             <input
