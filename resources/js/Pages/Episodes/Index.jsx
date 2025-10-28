@@ -136,9 +136,7 @@ export default function Index({ episodes }) {
                                         <Film className="h-6 w-6 text-primary" />
                                         Episodes Management
                                     </CardTitle>
-                                    <CardDescription className="mt-2">
-                                        Manage your episode content and broadcasts
-                                    </CardDescription>
+                                    
                                 </div>
                                 <Link href={route('episodes.create')}>
                                     <Button size="sm">
@@ -241,7 +239,9 @@ export default function Index({ episodes }) {
                                                     </TableCell>
                                                     <TableCell className="max-w-md">
                                                         <div className="line-clamp-2 text-sm text-muted-foreground">
-                                                            {episode.desc}
+                                                            <div contentEditable='true' dangerouslySetInnerHTML={{ __html: episode.desc || '' }}></div>
+ 
+                                                            
                                                         </div>
                                                     </TableCell>
                                                     <TableCell className="text-sm">

@@ -70,7 +70,12 @@ class Episode extends Model
      */
     public function getSpeakersIdsArrayAttribute()
     {
-        return $this->speakers_ids ? explode(',', $this->speakers_ids) : [];
+        if (!$this->speakers_ids) {
+            return [];
+        }
+        return array_map(function($id) {
+            return (string) trim($id);
+        }, explode(',', $this->speakers_ids));
     }
 
     /**
@@ -78,7 +83,12 @@ class Episode extends Model
      */
     public function getSpecialityIdsArrayAttribute()
     {
-        return $this->speciality_id ? explode(',', $this->speciality_id) : [];
+        if (!$this->speciality_id) {
+            return [];
+        }
+        return array_map(function($id) {
+            return (string) trim($id);
+        }, explode(',', $this->speciality_id));
     }
 
     /**

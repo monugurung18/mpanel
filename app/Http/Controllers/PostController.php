@@ -35,9 +35,9 @@ class PostController extends Controller
             ->values()
             ->toArray();
 
-        $specialities = DB::table('speciality')
-            ->select('s_id as value', 'speciality as label')
-            ->orderBy('speciality')
+        $specialities = DB::table('user_specialty')
+            ->select('no as value', 'title as label')
+            ->orderBy('title')
             ->get()
             ->toArray();
 

@@ -110,13 +110,19 @@ class EpisodeController extends Controller
      * Show the form for editing the specified episode.
      */
     public function edit(Episode $episode)
-    {
+    {  
+        // Get specialty IDs as array
+        $specialityIds = $episode->speciality_ids_array;
+        
+        // Get speaker IDs as array  
+        $speakerIds = $episode->speakers_ids_array;
+        
         return Inertia::render('Episodes/Form', [
             'episode' => [
                 'id' => $episode->id,
                 'title' => $episode->title,
                 'desc' => $episode->desc,
-                'speakers_ids' => $episode->speakers_ids,
+                'speakers_ids' => $speakerIds,
                 'episode_type' => $episode->episode_type,
                 'video_status' => $episode->video_status,
                 'videoSource' => $episode->videoSource,
@@ -125,7 +131,7 @@ class EpisodeController extends Controller
                 'feature_image_banner' => $episode->feature_image_banner,
                 'custom_url' => $episode->custom_url,
                 'episode_no' => $episode->episode_no,
-                'speciality_id' => $episode->speciality_id,
+                'speciality_id' => $specialityIds,
                 'question_required' => $episode->question_required,
                 'login_required' => $episode->login_required,
             ],

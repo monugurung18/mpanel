@@ -5,7 +5,7 @@ import PrimaryButton from '@/Components/PrimaryButton';
 import Input from '@/Components/Input';
 import Dropdown from '@/Components/Dropdown';
 import RichTextEditor from '@/Components/RichTextEditor';
-import { Head, Link, useForm, usePage } from '@inertiajs/react';
+import { Head, Link, useForm, usePage, router } from '@inertiajs/react';
 import { useState, useEffect } from 'react';
 import { getEpisodeImageUrl } from '@/Utils/imageHelper';
 import { Select } from 'antd';
@@ -27,11 +27,27 @@ export default function Form({ episode, sponsorPages, specialities }) {
         video_url: episode?.video_url || '',
         video_status: episode?.video_status || 'schedule',
         videoSource: episode?.videoSource || 'youTube',
-        date_time: episode?.date_time || '',
+        date_time: episode?.date_time ? (() => {
+            // Convert "2020-08-01 7:00:00 PM" to "2020-08-01T19:00" for datetime-local input
+            try {
+                const d = new Date(episode.date_time);
+                if (!isNaN(d.getTime())) {
+                    const year = d.getFullYear();
+                    const month = String(d.getMonth() + 1).padStart(2, '0');
+                    const day = String(d.getDate()).padStart(2, '0');
+                    const hours = String(d.getHours()).padStart(2, '0');
+                    const minutes = String(d.getMinutes()).padStart(2, '0');
+                    return `${year}-${month}-${day}T${hours}:${minutes}`;
+                }
+            } catch (e) {
+                console.error('Date parsing error:', e);
+            }
+            return '';
+        })() : '',
         episode_type: episode?.episode_type || '',
-        speakers_ids: episode?.speakers_ids ? episode.speakers_ids.split(',') : [],
+        speakers_ids: episode?.speakers_ids ? (Array.isArray(episode.speakers_ids) ? episode.speakers_ids.map(id => String(id).trim()) : episode.speakers_ids.split(',').map(id => String(id.trim()))) : [],
         episode_no: episode?.episode_no || '',
-        speciality_ids: episode?.speciality_id ? episode.speciality_id.split(',') : [],
+        speciality_ids: episode?.speciality_id ? (Array.isArray(episode.speciality_id) ? episode.speciality_id.map(id => String(id).trim()) : episode.speciality_id.split(',').map(id => String(id.trim()))) : [],
         question_required: episode?.question_required || false,
         login_required: episode?.login_required || false,
         image: null,
@@ -128,22 +144,42 @@ export default function Form({ episode, sponsorPages, specialities }) {
     const handleSubmit = (e) => {
         e.preventDefault();
 
-        // Convert arrays to comma-separated strings for backend
-        const formData = {
+        // Convert datetime-local to "2020-08-01 7:00:00 PM" format
+        const formatDateTime = (datetimeLocal) => {
+            if (!datetimeLocal) return '';
+            try {
+                const d = new Date(datetimeLocal);
+                if (isNaN(d.getTime())) return datetimeLocal;
+                
+                const year = d.getFullYear();
+                const month = String(d.getMonth() + 1).padStart(2, '0');
+                const day = String(d.getDate()).padStart(2, '0');
+                let hours = d.getHours();
+                const minutes = String(d.getMinutes()).padStart(2, '0');
+                const seconds = String(d.getSeconds()).padStart(2, '0');
+                const ampm = hours >= 12 ? 'PM' : 'AM';
+                hours = hours % 12 || 12; // Convert to 12-hour format
+                
+                return `${year}-${month}-${day} ${hours}:${minutes}:${seconds} ${ampm}`;
+            } catch (e) {
+                return datetimeLocal;
+            }
+        };
+
+        const submitData = {
             ...data,
-            speakers_ids: Array.isArray(data.speakers_ids) ? data.speakers_ids.join(',') : data.speakers_ids,
-            speciality_ids: Array.isArray(data.speciality_ids) ? data.speciality_ids.join(',') : data.speciality_ids,
+            date_time: formatDateTime(data.date_time),
         };
 
         if (isEditing) {
-            post(route('episodes.update', episode.id), {
-                ...formData,
-                forceFormData: true,
+            router.post(route('episodes.update', episode.id), {
                 _method: 'PUT',
+                ...submitData,
+            }, {
+                forceFormData: true,
             });
         } else {
-            post(route('episodes.store'), {
-                ...formData,
+            post(route('episodes.store'), submitData, {
                 forceFormData: true,
             });
         }
@@ -249,6 +285,7 @@ export default function Form({ episode, sponsorPages, specialities }) {
                                         <div>
                                             <InputLabel htmlFor="speciality_ids" value="Speciality" />
                                             <Select
+                                                key={`speciality-${episode?.id || 'new'}`}
                                                 mode="multiple"
                                                 id="speciality_ids"
                                                 className="mt-1 w-full"
@@ -262,6 +299,8 @@ export default function Form({ episode, sponsorPages, specialities }) {
                                                 filterOption={(input, option) =>
                                                     (option?.label ?? '').toLowerCase().includes(input.toLowerCase())
                                                 }
+                                                optionFilterProp="label"
+                                                labelInValue={false}
                                                 maxTagCount="responsive"
                                                 allowClear
                                             />
@@ -342,6 +381,7 @@ export default function Form({ episode, sponsorPages, specialities }) {
                                         <div>
                                             <InputLabel htmlFor="speakers_ids" value="Speakers" />
                                             <Select
+                                                key={`speakers-${episode?.id || 'new'}`}
                                                 mode="multiple"
                                                 id="speakers_ids"
                                                 className="mt-1 w-full text-sm"
@@ -361,16 +401,16 @@ export default function Form({ episode, sponsorPages, specialities }) {
                                                         specialty.toLowerCase().includes(searchText)
                                                     );
                                                 }}
-                                                options={speakers.map(speaker => ({
-                                                    value: speaker.value,
-                                                    label: speaker.label,
-                                                    specialty: speaker.specialty,
-                                                }))}
+                                                optionFilterProp="label"
+                                                labelInValue={false}
+                                                options={speakers}
                                                 optionRender={(option) => (
                                                     <div className="flex items-center justify-between">
                                                         <div>
-                                                            <div className="font-medium text-gray-900">{option.label}</div>
-                                                            
+                                                            <div className="font-medium text-gray-900">{option.data.label}</div>
+                                                            {option.data.specialty && (
+                                                                <div className="text-xs text-gray-500">{option.data.specialty}</div>
+                                                            )}
                                                         </div>
                                                     </div>
                                                 )}

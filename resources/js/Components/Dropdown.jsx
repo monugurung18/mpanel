@@ -150,13 +150,12 @@ export default function Dropdown({
 
                 {/* Clear Button */}
                 {clearable && hasValue && !disabled && (
-                    <button
-                        type="button"
+                    <span
                         onClick={handleClear}
-                        className="mr-2 text-gray-400 hover:text-red-500 transition-colors"
+                        className="mr-2 text-gray-400 hover:text-red-500 transition-colors cursor-pointer"
                     >
                         <i className="fa fa-times-circle"></i>
-                    </button>
+                    </span>
                 )}
 
                 {/* Arrow Icon */}

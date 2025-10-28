@@ -177,7 +177,7 @@ export default function Index({ seminars }) {
                                             <SortableHeader column="title">Title & Description</SortableHeader>
                                             <SortableHeader column="schedule_timestamp">Schedule</SortableHeader>
                                             <TableHead>Status</TableHead>
-                                            <TableHead>Type</TableHead>
+                                            <TableHead>Category</TableHead>
                                             <TableHead className="w-[100px] text-center">Actions</TableHead>
                                         </TableRow>
                                     </TableHeader>
@@ -240,7 +240,8 @@ export default function Index({ seminars }) {
                                                                 {seminar.title}
                                                             </div>
                                                             <div className="text-xs text-gray-500 line-clamp-2">
-                                                                {stripHtml(seminar.desc).substring(0, 80)}
+                                                                <div contentEditable='true' dangerouslySetInnerHTML={{ __html: stripHtml(seminar.desc).substring(0, 80) || '' }}></div>
+                                                               
                                                                 {stripHtml(seminar.desc).length > 80 ? '...' : ''}
                                                             </div>
                                                         </div>
@@ -264,7 +265,7 @@ export default function Index({ seminars }) {
                                                         <StatusBadge status={seminar.video_status} />
                                                     </TableCell>
                                                     <TableCell className="text-sm">
-                                                        {seminar.type_display || 'Non-Sponsored'}
+                                                        {seminar.speciality_name  || '-'}
                                                     </TableCell>
                                                     <TableCell>
                                                         <div className="flex items-center justify-center gap-2">

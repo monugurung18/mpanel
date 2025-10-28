@@ -18,7 +18,12 @@ class SeminarController extends Controller
     public function index()
     {
         $seminars = Seminar::active()
-            ->orderBy('schedule_timestamp', 'DESC')
+            ->leftJoin('user_specialty', function($join) {
+                $join->on('user_specialty.no', '=', 'seminar.seminar_speciality')
+                     ->where('user_specialty.status', '=', 'on');
+            })
+            ->select('seminar.*', 'user_specialty.title as speciality_name')
+            ->orderBy('seminar.schedule_timestamp', 'DESC')
             ->get()
             ->map(function ($seminar) {
                 return [
@@ -33,6 +38,7 @@ class SeminarController extends Controller
                     'video_image' => $seminar->video_image,
                     'speakerids' => $seminar->speakerids,
                     'seminar_speciality' => $seminar->seminar_speciality,
+                    'speciality_name' => $seminar->speciality_name ?? 'Not specified',
                     'isFeatured' => $seminar->isFeatured,
                     'type_display' => $seminar->type_display,
                 ];

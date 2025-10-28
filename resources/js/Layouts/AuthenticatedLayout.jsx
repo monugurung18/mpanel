@@ -26,7 +26,7 @@ export default function AuthenticatedLayout({ children }) {
             {/* Enhanced Navigation Bar with Glass Effect */}
             <nav className="border-b border-gray-200 bg-white/95 backdrop-blur-md shadow-sm sticky top-0 z-40">
                 <div className="mx-auto max-w-7xl">
-                    <div className="flex items-center justify-between px-6">
+                    <div className="py-2 flex items-center justify-between px-6">
                          {/* Enhanced Logo with Glow Effect */}
                         <div className="flex items-center">
                             <Link
@@ -37,7 +37,7 @@ export default function AuthenticatedLayout({ children }) {
                                     <img
                                         src="https://www.medtalks.in/uploads/img/logo.webp"
                                         alt="Medtalks India"
-                                        className="w-32  object-contain transition-all duration-300 group-hover:scale-105 relative z-10"
+                                        className="w-36  object-contain transition-all duration-300 group-hover:scale-105 relative z-10"
                                     />
                                     <div className="absolute inset-0 bg-[#00895f]/20 rounded-lg blur-lg opacity-0 group-hover:opacity-100 transition-opacity duration-300 -z-10"></div>
                                 </div>
@@ -52,7 +52,7 @@ export default function AuthenticatedLayout({ children }) {
                                 active={route().current('dashboard')}
                                 className="group relative flex items-center"
                             >
-                                <div className={`flex items-center space-x-2 px-4 py-4 text-sm transition-all duration-200 ${route().current('dashboard')
+                                <div className={`flex items-center space-x-2 px-4 py-4 text-base transition-all duration-200 ${route().current('dashboard')
                                         ? 'text-[#00895f] font-medium'
                                         : 'text-gray-700 hover:text-[#00895f] font-normal'
                                     }`}>
@@ -66,7 +66,7 @@ export default function AuthenticatedLayout({ children }) {
                                 onMouseEnter={() => setOpenDesktopDropdown('content')}
                                 onMouseLeave={() => setOpenDesktopDropdown(null)}
                             >
-                                <button className={`flex items-center space-x-2 px-4 py-4 text-sm transition-all duration-200 h-full ${route().current('episodes.*')
+                                <button className={`flex items-center space-x-2 px-4 py-4 text-base transition-all duration-200 h-full ${route().current('episodes.*')
                                         ? 'text-[#00895f] font-medium'
                                         : 'text-gray-700 hover:text-[#00895f] font-normal'
                                     }`}>
