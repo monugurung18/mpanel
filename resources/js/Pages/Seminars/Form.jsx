@@ -24,26 +24,6 @@ export default function Form({ seminar, sponsorPages, specialities, educationPar
     const [imageError, setImageError] = useState(null);
     const [appBannerError, setAppBannerError] = useState(null);
     const [appSquareError, setAppSquareError] = useState(null);
-    const [inviteBannerError, setInviteBannerError] = useState(null);
-    const [responsiveInviteBannerError, setResponsiveInviteBannerError] = useState(null);
-    const [videoBannerError, setVideoBannerError] = useState(null);
-    const [stripBannerError, setStripBannerError] = useState(null);
-    const [adsBannerError, setAdsBannerError] = useState(null);
-    const [timezoneBannerError, setTimezoneBannerError] = useState(null);
-    const [responsiveTimezoneBannerError, setResponsiveTimezoneBannerError] = useState(null);
-    const [certificateError, setCertificateError] = useState(null);
-
-    // Parse html_json for Step 3 registration configuration
-    const parseHtmlJson = (jsonString) => {
-        try {
-            return jsonString ? JSON.parse(jsonString) : {};
-        } catch (e) {
-            console.error('Error parsing html_json:', e);
-            return {};
-        }
-    };
-
-    const htmlJsonData = seminar?.html_json ? parseHtmlJson(seminar.html_json) : {};
 
     const { data, setData, post, put, errors, processing } = useForm({
         seminar_title: seminar?.seminar_title || '',
@@ -71,66 +51,37 @@ export default function Form({ seminar, sponsorPages, specialities, educationPar
         re_attempts: seminar?.re_attempts || 0,
         seminar_type: seminar?.seminar_type || '',
         poll_link: seminar?.poll_link || '',
-        // Registration form configuration from html_json
-        reg_title_enabled: htmlJsonData.reg_title_enabled ?? false,
-        reg_title_required: htmlJsonData.reg_title_required ?? false,
-        reg_title_options: htmlJsonData.reg_title_options || ['Dr.', 'Mr.', 'Miss.', 'Mrs.'],
-        reg_first_name_enabled: htmlJsonData.reg_first_name_enabled ?? false,
-        reg_first_name_required: htmlJsonData.reg_first_name_required ?? false,
-        reg_last_name_enabled: htmlJsonData.reg_last_name_enabled ?? false,
-        reg_last_name_required: htmlJsonData.reg_last_name_required ?? false,
-        reg_email_enabled: htmlJsonData.reg_email_enabled ?? false,
-        reg_email_required: htmlJsonData.reg_email_required ?? false,
-        reg_mobile_enabled: htmlJsonData.reg_mobile_enabled ?? false,
-        reg_mobile_required: htmlJsonData.reg_mobile_required ?? false,
-        reg_city_enabled: htmlJsonData.reg_city_enabled ?? false,
-        reg_city_required: htmlJsonData.reg_city_required ?? false,
-        reg_state_enabled: htmlJsonData.reg_state_enabled ?? false,
-        reg_state_required: htmlJsonData.reg_state_required ?? false,
-        reg_specialty_enabled: htmlJsonData.reg_specialty_enabled ?? false,
-        reg_specialty_required: htmlJsonData.reg_specialty_required ?? false,
-        reg_specialty_options: htmlJsonData.reg_specialty_options || [],
-        reg_medical_reg_enabled: htmlJsonData.reg_medical_reg_enabled ?? false,
-        reg_medical_reg_required: htmlJsonData.reg_medical_reg_required ?? false,
-        reg_medical_council_enabled: htmlJsonData.reg_medical_council_enabled ?? false,
-        reg_medical_council_required: htmlJsonData.reg_medical_council_required ?? false,
-        reg_profession_enabled: htmlJsonData.reg_profession_enabled ?? false,
-        reg_profession_required: htmlJsonData.reg_profession_required ?? false,
-        reg_drl_code_enabled: htmlJsonData.reg_drl_code_enabled ?? false,
-        reg_drl_code_required: htmlJsonData.reg_drl_code_required ?? false,
-        reg_country_enabled: htmlJsonData.reg_country_enabled ?? false,
-        reg_country_required: htmlJsonData.reg_country_required ?? false,
-        theme_color: htmlJsonData.theme_color || '#5d9cec',
-        allowed_by: htmlJsonData.allowed_by || 'email',
-        // Moderators, Panelists, Chief Guests, Speakers
-        moderators_enabled: htmlJsonData.moderators_enabled ?? false,
-        moderators_list: htmlJsonData.moderators_list || [],
-        panelists_enabled: htmlJsonData.panelists_enabled ?? false,
-        panelists_list: htmlJsonData.panelists_list || [],
-        chief_guests_enabled: htmlJsonData.chief_guests_enabled ?? false,
-        chief_guests_list: htmlJsonData.chief_guests_list || [],
-        speakers_enabled: htmlJsonData.speakers_enabled ?? false,
-        speakers_list: htmlJsonData.speakers_list || [],
-        // Text fields
-        note_text: htmlJsonData.note_text || '',
-        left_text: htmlJsonData.left_text || '',
-        // Banner images
-        invite_banner: null,
-        invite_banner_url: htmlJsonData.invite_banner_url || '',
-        responsive_invite_banner: null,
-        responsive_invite_banner_url: htmlJsonData.responsive_invite_banner_url || '',
-        video_banner: null,
-        video_banner_url: htmlJsonData.video_banner_url || '',
-        strip_banner: null,
-        strip_banner_url: htmlJsonData.strip_banner_url || '',
-        ads_banner: null,
-        ads_banner_url: htmlJsonData.ads_banner_url || '',
-        timezone_banner: null,
-        timezone_banner_url: htmlJsonData.timezone_banner_url || '',
-        responsive_timezone_banner: null,
-        responsive_timezone_banner_url: htmlJsonData.responsive_timezone_banner_url || '',
-        certificate: null,
-        certificate_url: htmlJsonData.certificate_url || '',
+        // Registration form configuration
+        reg_title_enabled: false,
+        reg_title_required: false,
+        reg_title_options: ['Dr.', 'Mr.', 'Miss.', 'Mrs.'],
+        reg_first_name_enabled: false,
+        reg_first_name_required: false,
+        reg_last_name_enabled: false,
+        reg_last_name_required: false,
+        reg_email_enabled: false,
+        reg_email_required: false,
+        reg_mobile_enabled: false,
+        reg_mobile_required: false,
+        reg_city_enabled: false,
+        reg_city_required: false,
+        reg_state_enabled: false,
+        reg_state_required: false,
+        reg_specialty_enabled: false,
+        reg_specialty_required: false,
+        reg_specialty_options: [],
+        reg_medical_reg_enabled: false,
+        reg_medical_reg_required: false,
+        reg_medical_council_enabled: false,
+        reg_medical_council_required: false,
+        reg_profession_enabled: false,
+        reg_profession_required: false,
+        reg_drl_code_enabled: false,
+        reg_drl_code_required: false,
+        reg_country_enabled: false,
+        reg_country_required: false,
+        theme_color: '#5d9cec',
+        allowed_by: 'email',
         image: null,
         s_image1: null,
         s_image2: null,
@@ -145,14 +96,6 @@ export default function Form({ seminar, sponsorPages, specialities, educationPar
     const [appSquarePreview, setAppSquarePreview] = useState(
         seminar?.s_image2 ? getSeminarImageUrl(seminar.s_image2, baseImagePath) : null
     );
-    const [inviteBannerPreview, setInviteBannerPreview] = useState(null);
-    const [responsiveInviteBannerPreview, setResponsiveInviteBannerPreview] = useState(null);
-    const [videoBannerPreview, setVideoBannerPreview] = useState(null);
-    const [stripBannerPreview, setStripBannerPreview] = useState(null);
-    const [adsBannerPreview, setAdsBannerPreview] = useState(null);
-    const [timezoneBannerPreview, setTimezoneBannerPreview] = useState(null);
-    const [responsiveTimezoneBannerPreview, setResponsiveTimezoneBannerPreview] = useState(null);
-    const [certificatePreview, setCertificatePreview] = useState(null);
 
     useEffect(() => {
         // Fetch speakers from API
@@ -192,58 +135,11 @@ export default function Form({ seminar, sponsorPages, specialities, educationPar
             featured: { width: 700, height: 393, label: 'Featured Image' },
             appBanner: { width: 640, height: 360, label: 'App Banner' },
             appSquare: { width: 400, height: 400, label: 'App Square' },
-            inviteBanner: { width: 497, height: 572, label: 'Webinar Invite Banner' },
-            responsiveInviteBanner: { width: 497, height: 572, label: 'Responsive Invite Banner' },
-            videoBanner: { width: 700, height: 393, label: 'Video Banner' },
-            stripBanner: { width: 1149, height: 70, label: 'Strip Banner' },
-            adsBanner: { width: 427, height: 572, label: 'Ads Banner' },
-            timezoneBanner: { width: 1149, height: 70, label: 'Timezone Desk Image' },
-            responsiveTimezoneBanner: { width: 770, height: 100, label: 'Timezone Responsive Image' },
-            certificate: { width: 1600, height: 1165, label: 'Certificate' },
         };
 
         const rules = validationRules[type];
-        const setError = {
-            featured: setImageError,
-            appBanner: setAppBannerError,
-            appSquare: setAppSquareError,
-            inviteBanner: setInviteBannerError,
-            responsiveInviteBanner: setResponsiveInviteBannerError,
-            videoBanner: setVideoBannerError,
-            stripBanner: setStripBannerError,
-            adsBanner: setAdsBannerError,
-            timezoneBanner: setTimezoneBannerError,
-            responsiveTimezoneBanner: setResponsiveTimezoneBannerError,
-            certificate: setCertificateError,
-        }[type];
-
-        const setPreview = {
-            featured: setImagePreview,
-            appBanner: setAppBannerPreview,
-            appSquare: setAppSquarePreview,
-            inviteBanner: setInviteBannerPreview,
-            responsiveInviteBanner: setResponsiveInviteBannerPreview,
-            videoBanner: setVideoBannerPreview,
-            stripBanner: setStripBannerPreview,
-            adsBanner: setAdsBannerPreview,
-            timezoneBanner: setTimezoneBannerPreview,
-            responsiveTimezoneBanner: setResponsiveTimezoneBannerPreview,
-            certificate: setCertificatePreview,
-        }[type];
-
-        const setDataField = {
-            featured: 'image',
-            appBanner: 's_image1',
-            appSquare: 's_image2',
-            inviteBanner: 'invite_banner',
-            responsiveInviteBanner: 'responsive_invite_banner',
-            videoBanner: 'video_banner',
-            stripBanner: 'strip_banner',
-            adsBanner: 'ads_banner',
-            timezoneBanner: 'timezone_banner',
-            responsiveTimezoneBanner: 'responsive_timezone_banner',
-            certificate: 'certificate',
-        }[type];
+        const setError = type === 'featured' ? setImageError :
+            type === 'appBanner' ? setAppBannerError : setAppSquareError;
 
         // Validate file size (max 1MB)
         const maxSize = 1 * 1024 * 1024;
@@ -277,8 +173,16 @@ export default function Form({ seminar, sponsorPages, specialities, educationPar
 
             // All validations passed
             setError(null);
-            setData(setDataField, file);
-            setPreview(URL.createObjectURL(file));
+            if (type === 'featured') {
+                setData('image', file);
+                setImagePreview(URL.createObjectURL(file));
+            } else if (type === 'appBanner') {
+                setData('s_image1', file);
+                setAppBannerPreview(URL.createObjectURL(file));
+            } else if (type === 'appSquare') {
+                setData('s_image2', file);
+                setAppSquarePreview(URL.createObjectURL(file));
+            }
         };
 
         img.onerror = function () {
@@ -340,64 +244,10 @@ export default function Form({ seminar, sponsorPages, specialities, educationPar
     const handleSubmit = (e) => {
         e.preventDefault();
 
-        // Build html_json from Step 3 registration configuration
-        const htmlJsonConfig = {
-            reg_title_enabled: data.reg_title_enabled,
-            reg_title_required: data.reg_title_required,
-            reg_title_options: data.reg_title_options,
-            reg_first_name_enabled: data.reg_first_name_enabled,
-            reg_first_name_required: data.reg_first_name_required,
-            reg_last_name_enabled: data.reg_last_name_enabled,
-            reg_last_name_required: data.reg_last_name_required,
-            reg_email_enabled: data.reg_email_enabled,
-            reg_email_required: data.reg_email_required,
-            reg_mobile_enabled: data.reg_mobile_enabled,
-            reg_mobile_required: data.reg_mobile_required,
-            reg_city_enabled: data.reg_city_enabled,
-            reg_city_required: data.reg_city_required,
-            reg_state_enabled: data.reg_state_enabled,
-            reg_state_required: data.reg_state_required,
-            reg_specialty_enabled: data.reg_specialty_enabled,
-            reg_specialty_required: data.reg_specialty_required,
-            reg_specialty_options: data.reg_specialty_options,
-            reg_medical_reg_enabled: data.reg_medical_reg_enabled,
-            reg_medical_reg_required: data.reg_medical_reg_required,
-            reg_medical_council_enabled: data.reg_medical_council_enabled,
-            reg_medical_council_required: data.reg_medical_council_required,
-            reg_profession_enabled: data.reg_profession_enabled,
-            reg_profession_required: data.reg_profession_required,
-            reg_drl_code_enabled: data.reg_drl_code_enabled,
-            reg_drl_code_required: data.reg_drl_code_required,
-            reg_country_enabled: data.reg_country_enabled,
-            reg_country_required: data.reg_country_required,
-            theme_color: data.theme_color,
-            allowed_by: data.allowed_by,
-            // Additional Step 3 data
-            moderators_enabled: data.moderators_enabled,
-            moderators_list: data.moderators_list,
-            panelists_enabled: data.panelists_enabled,
-            panelists_list: data.panelists_list,
-            chief_guests_enabled: data.chief_guests_enabled,
-            chief_guests_list: data.chief_guests_list,
-            speakers_enabled: data.speakers_enabled,
-            speakers_list: data.speakers_list,
-            note_text: data.note_text,
-            left_text: data.left_text,
-            invite_banner_url: data.invite_banner_url,
-            responsive_invite_banner_url: data.responsive_invite_banner_url,
-            video_banner_url: data.video_banner_url,
-            strip_banner_url: data.strip_banner_url,
-            ads_banner_url: data.ads_banner_url,
-            timezone_banner_url: data.timezone_banner_url,
-            responsive_timezone_banner_url: data.responsive_timezone_banner_url,
-            certificate_url: data.certificate_url,
-        };
-
         const formData = {
             ...data,
             speakerids: Array.isArray(data.speakerids) ? data.speakerids : [],
             education_partners: Array.isArray(data.education_partners) ? data.education_partners : [],
-            html_json: JSON.stringify(htmlJsonConfig),
         };
 
         if (isEditing) {
@@ -875,810 +725,100 @@ export default function Form({ seminar, sponsorPages, specialities, educationPar
 
                                 {/* Step 3: Registration Form Configuration */}
                                 {currentStep === 3 && (
-                                    <div className="space-y-8">
-                                        <div>
-                                            <h3 className="text-xl font-bold text-gray-800">Live Seminar Details Webcast</h3>
-                                            <p className="mt-1 text-sm text-gray-600">Configure registration fields and webcast details</p>
+                                    <div className="space-y-6">
+                                        <h3 className="text-lg font-semibold text-gray-800">Live Seminar Registration Form Builder</h3>
                                             <hr className="my-4" />
-                                        </div>
 
-                                        <div className="grid grid-cols-1 gap-8 lg:grid-cols-2">
-                                            {/* LEFT COLUMN - Registration Fields */}
-                                            <div className="space-y-6">
-                                                <div className="rounded-lg bg-gradient-to-r from-blue-50 to-indigo-50 p-4">
-                                                    <h4 className="text-md font-bold text-gray-800 flex items-center">
-                                                        <i className="fa fa-list-alt mr-2 text-blue-600"></i>
-                                                        Select Registration Fields
-                                                    </h4>
+                                        <div className="rounded-lg border border-blue-200 bg-blue-50 p-4">
+                                            <p className="text-sm text-blue-800">
+                                                <i className="fa fa-info-circle mr-2"></i>
+                                                Configure which fields appear in the registration form and whether they're required.
+                                            </p>
                                                 </div>
 
-                                                {/* Title Field */}
-                                                <div className="flex items-start justify-between rounded-lg border border-gray-200 bg-white p-4 shadow-sm hover:shadow-md transition-shadow">
-                                                    <div className="flex-1">
-                                                        <div className="flex items-center gap-3 mb-2">
-                                                            <Switch
-                                                                checked={data.reg_title_enabled}
-                                                                onChange={(checked) => setData('reg_title_enabled', checked)}
-                                                                style={{ backgroundColor: data.reg_title_enabled ? '#00895f' : undefined }}
-                                                            />
-                                                            <span className="text-sm font-semibold text-gray-700">Title</span>
+                                        {/* Registration Fields Configuration */}
+                                        <div className="space-y-3">
+                                            <div className="grid grid-cols-12 gap-4 border-b border-gray-300 pb-3">
+                                                <div className="col-span-8">
+                                                    <h5 className="font-semibold text-gray-700">Registration Fields</h5>
                                                         </div>
-                                                        {data.reg_title_enabled && (
-                                                            <div className="ml-12 flex gap-2">
-                                                                {['Dr.', 'Mr.', 'Miss.', 'Mrs.'].map(title => (
-                                                                    <span key={title} className="rounded-full bg-gray-100 px-3 py-1 text-xs font-medium text-gray-700">
-                                                                        {title}
-                                                                    </span>
-                                                                ))}
-                                                            </div>
-                                                        )}
-                                                    </div>
-                                                    <div className="text-center">
-                                                        <span className="mb-2 block text-xs font-semibold text-gray-600">Required?</span>
-                                                        <Switch
-                                                            checked={data.reg_title_required}
-                                                            onChange={(checked) => setData('reg_title_required', checked)}
-                                                            disabled={!data.reg_title_enabled}
-                                                            style={{ backgroundColor: data.reg_title_required ? '#00895f' : undefined }}
-                                                        />
+                                                <div className="col-span-4 text-center">
+                                                    <h5 className="font-semibold text-gray-700">Required</h5>
                                                     </div>
                                                 </div>
 
-                                                {/* First Name */}
-                                                <div className="flex items-center justify-between rounded-lg border border-gray-200 bg-white p-4 shadow-sm hover:shadow-md transition-shadow">
-                                                    <div className="flex items-center gap-3">
-                                                        <Switch
-                                                            checked={data.reg_first_name_enabled}
-                                                            onChange={(checked) => setData('reg_first_name_enabled', checked)}
-                                                            style={{ backgroundColor: data.reg_first_name_enabled ? '#00895f' : undefined }}
-                                                        />
-                                                        <span className="text-sm font-semibold text-gray-700">First Name</span>
+                                            {/* Registration fields - Title, First Name, Last Name, Email, Mobile, etc. */}
+                                            {/* Similar pattern for each field with enable/required toggles */}
+                                            
+                                            <div className="rounded-lg border border-yellow-200 bg-yellow-50 p-4 mt-4">
+                                                <p className="text-sm text-yellow-800">
+                                                    <i className="fa fa-wrench mr-2"></i>
+                                                    Registration form builder will be fully implemented with all fields from the PHP version.
+                                                </p>
                                                     </div>
-                                                    <Switch
-                                                        checked={data.reg_first_name_required}
-                                                        onChange={(checked) => setData('reg_first_name_required', checked)}
-                                                        disabled={!data.reg_first_name_enabled}
-                                                        style={{ backgroundColor: data.reg_first_name_required ? '#00895f' : undefined }}
-                                                    />
                                                 </div>
 
-                                                {/* Last Name */}
-                                                <div className="flex items-center justify-between rounded-lg border border-gray-200 bg-white p-4 shadow-sm hover:shadow-md transition-shadow">
-                                                    <div className="flex items-center gap-3">
-                                                        <Switch
-                                                            checked={data.reg_last_name_enabled}
-                                                            onChange={(checked) => setData('reg_last_name_enabled', checked)}
-                                                            style={{ backgroundColor: data.reg_last_name_enabled ? '#00895f' : undefined }}
-                                                        />
-                                                        <span className="text-sm font-semibold text-gray-700">Last Name</span>
-                                                    </div>
-                                                    <Switch
-                                                        checked={data.reg_last_name_required}
-                                                        onChange={(checked) => setData('reg_last_name_required', checked)}
-                                                        disabled={!data.reg_last_name_enabled}
-                                                        style={{ backgroundColor: data.reg_last_name_required ? '#00895f' : undefined }}
-                                                    />
-                                                </div>
-
-                                                {/* Email */}
-                                                <div className="flex items-center justify-between rounded-lg border border-gray-200 bg-white p-4 shadow-sm hover:shadow-md transition-shadow">
-                                                    <div className="flex items-center gap-3">
-                                                        <Switch
-                                                            checked={data.reg_email_enabled}
-                                                            onChange={(checked) => setData('reg_email_enabled', checked)}
-                                                            style={{ backgroundColor: data.reg_email_enabled ? '#00895f' : undefined }}
-                                                        />
-                                                        <span className="text-sm font-semibold text-gray-700">Email</span>
-                                                    </div>
-                                                    <Switch
-                                                        checked={data.reg_email_required}
-                                                        onChange={(checked) => setData('reg_email_required', checked)}
-                                                        disabled={!data.reg_email_enabled}
-                                                        style={{ backgroundColor: data.reg_email_required ? '#00895f' : undefined }}
-                                                    />
-                                                </div>
-
-                                                {/* Mobile */}
-                                                <div className="flex items-center justify-between rounded-lg border border-gray-200 bg-white p-4 shadow-sm hover:shadow-md transition-shadow">
-                                                    <div className="flex items-center gap-3">
-                                                        <Switch
-                                                            checked={data.reg_mobile_enabled}
-                                                            onChange={(checked) => setData('reg_mobile_enabled', checked)}
-                                                            style={{ backgroundColor: data.reg_mobile_enabled ? '#00895f' : undefined }}
-                                                        />
-                                                        <span className="text-sm font-semibold text-gray-700">Mobile</span>
-                                                    </div>
-                                                    <Switch
-                                                        checked={data.reg_mobile_required}
-                                                        onChange={(checked) => setData('reg_mobile_required', checked)}
-                                                        disabled={!data.reg_mobile_enabled}
-                                                        style={{ backgroundColor: data.reg_mobile_required ? '#00895f' : undefined }}
-                                                    />
-                                                </div>
-
-                                                {/* City */}
-                                                <div className="flex items-center justify-between rounded-lg border border-gray-200 bg-white p-4 shadow-sm hover:shadow-md transition-shadow">
-                                                    <div className="flex items-center gap-3">
-                                                        <Switch
-                                                            checked={data.reg_city_enabled}
-                                                            onChange={(checked) => setData('reg_city_enabled', checked)}
-                                                            style={{ backgroundColor: data.reg_city_enabled ? '#00895f' : undefined }}
-                                                        />
-                                                        <span className="text-sm font-semibold text-gray-700">City</span>
-                                                    </div>
-                                                    <Switch
-                                                        checked={data.reg_city_required}
-                                                        onChange={(checked) => setData('reg_city_required', checked)}
-                                                        disabled={!data.reg_city_enabled}
-                                                        style={{ backgroundColor: data.reg_city_required ? '#00895f' : undefined }}
-                                                    />
-                                                </div>
-
-                                                {/* State */}
-                                                <div className="flex items-center justify-between rounded-lg border border-gray-200 bg-white p-4 shadow-sm hover:shadow-md transition-shadow">
-                                                    <div className="flex items-center gap-3">
-                                                        <Switch
-                                                            checked={data.reg_state_enabled}
-                                                            onChange={(checked) => setData('reg_state_enabled', checked)}
-                                                            style={{ backgroundColor: data.reg_state_enabled ? '#00895f' : undefined }}
-                                                        />
-                                                        <span className="text-sm font-semibold text-gray-700">State</span>
-                                                    </div>
-                                                    <Switch
-                                                        checked={data.reg_state_required}
-                                                        onChange={(checked) => setData('reg_state_required', checked)}
-                                                        disabled={!data.reg_state_enabled}
-                                                        style={{ backgroundColor: data.reg_state_required ? '#00895f' : undefined }}
-                                                    />
-                                                </div>
-
-                                                {/* Specialty */}
-                                                <div className="rounded-lg border border-gray-200 bg-white p-4 shadow-sm hover:shadow-md transition-shadow">
-                                                    <div className="flex items-center justify-between mb-3">
-                                                        <div className="flex items-center gap-3">
-                                                            <Switch
-                                                                checked={data.reg_specialty_enabled}
-                                                                onChange={(checked) => setData('reg_specialty_enabled', checked)}
-                                                                style={{ backgroundColor: data.reg_specialty_enabled ? '#00895f' : undefined }}
-                                                            />
-                                                            <span className="text-sm font-semibold text-gray-700">Specialty</span>
-                                                        </div>
-                                                        <Switch
-                                                            checked={data.reg_specialty_required}
-                                                            onChange={(checked) => setData('reg_specialty_required', checked)}
-                                                            disabled={!data.reg_specialty_enabled}
-                                                            style={{ backgroundColor: data.reg_specialty_required ? '#00895f' : undefined }}
-                                                        />
-                                                    </div>
-                                                    {data.reg_specialty_enabled && (
-                                                        <div className="ml-12">
-                                                            <Select
-                                                                mode="multiple"
-                                                                placeholder="Select specialties"
-                                                                value={data.reg_specialty_options}
-                                                                onChange={(value) => setData('reg_specialty_options', value)}
-                                                                options={specialities}
-                                                                className="w-full"
-                                                                size="large"
-                                                            />
-                                                        </div>
-                                                    )}
-                                                </div>
-
-                                                {/* Medical Registration No */}
-                                                <div className="flex items-center justify-between rounded-lg border border-gray-200 bg-white p-4 shadow-sm hover:shadow-md transition-shadow">
-                                                    <div className="flex items-center gap-3">
-                                                        <Switch
-                                                            checked={data.reg_medical_reg_enabled}
-                                                            onChange={(checked) => setData('reg_medical_reg_enabled', checked)}
-                                                            style={{ backgroundColor: data.reg_medical_reg_enabled ? '#00895f' : undefined }}
-                                                        />
-                                                        <span className="text-sm font-semibold text-gray-700">Medical Registration No</span>
-                                                    </div>
-                                                    <Switch
-                                                        checked={data.reg_medical_reg_required}
-                                                        onChange={(checked) => setData('reg_medical_reg_required', checked)}
-                                                        disabled={!data.reg_medical_reg_enabled}
-                                                        style={{ backgroundColor: data.reg_medical_reg_required ? '#00895f' : undefined }}
-                                                    />
-                                                </div>
-
-                                                {/* Medical Council */}
-                                                <div className="flex items-center justify-between rounded-lg border border-gray-200 bg-white p-4 shadow-sm hover:shadow-md transition-shadow">
-                                                    <div className="flex items-center gap-3">
-                                                        <Switch
-                                                            checked={data.reg_medical_council_enabled}
-                                                            onChange={(checked) => setData('reg_medical_council_enabled', checked)}
-                                                            style={{ backgroundColor: data.reg_medical_council_enabled ? '#00895f' : undefined }}
-                                                        />
-                                                        <span className="text-sm font-semibold text-gray-700">Medical Council</span>
-                                                    </div>
-                                                    <Switch
-                                                        checked={data.reg_medical_council_required}
-                                                        onChange={(checked) => setData('reg_medical_council_required', checked)}
-                                                        disabled={!data.reg_medical_council_enabled}
-                                                        style={{ backgroundColor: data.reg_medical_council_required ? '#00895f' : undefined }}
-                                                    />
-                                                </div>
-
-                                                {/* Profession */}
-                                                <div className="flex items-center justify-between rounded-lg border border-gray-200 bg-white p-4 shadow-sm hover:shadow-md transition-shadow">
-                                                    <div className="flex items-center gap-3">
-                                                        <Switch
-                                                            checked={data.reg_profession_enabled}
-                                                            onChange={(checked) => setData('reg_profession_enabled', checked)}
-                                                            style={{ backgroundColor: data.reg_profession_enabled ? '#00895f' : undefined }}
-                                                        />
-                                                        <span className="text-sm font-semibold text-gray-700">Profession</span>
-                                                    </div>
-                                                    <Switch
-                                                        checked={data.reg_profession_required}
-                                                        onChange={(checked) => setData('reg_profession_required', checked)}
-                                                        disabled={!data.reg_profession_enabled}
-                                                        style={{ backgroundColor: data.reg_profession_required ? '#00895f' : undefined }}
-                                                    />
-                                                </div>
-
-                                                {/* DRL Code */}
-                                                <div className="flex items-center justify-between rounded-lg border border-gray-200 bg-white p-4 shadow-sm hover:shadow-md transition-shadow">
-                                                    <div className="flex items-center gap-3">
-                                                        <Switch
-                                                            checked={data.reg_drl_code_enabled}
-                                                            onChange={(checked) => setData('reg_drl_code_enabled', checked)}
-                                                            style={{ backgroundColor: data.reg_drl_code_enabled ? '#00895f' : undefined }}
-                                                        />
-                                                        <span className="text-sm font-semibold text-gray-700">DRL Code</span>
-                                                    </div>
-                                                    <Switch
-                                                        checked={data.reg_drl_code_required}
-                                                        onChange={(checked) => setData('reg_drl_code_required', checked)}
-                                                        disabled={!data.reg_drl_code_enabled}
-                                                        style={{ backgroundColor: data.reg_drl_code_required ? '#00895f' : undefined }}
-                                                    />
-                                                </div>
-
-                                                {/* Country */}
-                                                <div className="flex items-center justify-between rounded-lg border border-gray-200 bg-white p-4 shadow-sm hover:shadow-md transition-shadow">
-                                                    <div className="flex items-center gap-3">
-                                                        <Switch
-                                                            checked={data.reg_country_enabled}
-                                                            onChange={(checked) => setData('reg_country_enabled', checked)}
-                                                            style={{ backgroundColor: data.reg_country_enabled ? '#00895f' : undefined }}
-                                                        />
-                                                        <span className="text-sm font-semibold text-gray-700">Country</span>
-                                                    </div>
-                                                    <Switch
-                                                        checked={data.reg_country_required}
-                                                        onChange={(checked) => setData('reg_country_required', checked)}
-                                                        disabled={!data.reg_country_enabled}
-                                                        style={{ backgroundColor: data.reg_country_required ? '#00895f' : undefined }}
-                                                    />
-                                                </div>
-
+                                        {/* Additional Settings */}
+                                        <div className="mt-8 space-y-4">
+                                            <h4 className="text-md font-semibold text-gray-800">Additional Settings</h4>
+                                            
+                                            <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
                                                 {/* Theme Color */}
-                                                <div className="rounded-lg border border-gray-200 bg-white p-4 shadow-sm">
+                                                <div>
                                                     <InputLabel htmlFor="theme_color" value="Theme Color" />
-                                                    <div className="mt-2 flex items-center gap-3">
                                                         <input
                                                             type="color"
                                                             id="theme_color"
                                                             value={data.theme_color}
                                                             onChange={(e) => setData('theme_color', e.target.value)}
-                                                            className="h-12 w-20 cursor-pointer rounded border border-gray-300"
+                                                        className="h-10 w-full rounded-md border border-gray-300"
                                                         />
-                                                        <span className="text-sm text-gray-600">{data.theme_color}</span>
-                                                    </div>
+                                                    <p className="mt-1 text-xs text-gray-500">
+                                                        Choose the primary color for the registration form
+                                                    </p>
                                                 </div>
 
                                                 {/* Allow Registration With */}
-                                                <div className="rounded-lg border border-gray-200 bg-white p-4 shadow-sm">
+                                                <div>
                                                     <InputLabel value="Allow Registration With" />
-                                                    <div className="mt-3 space-y-3">
-                                                        <label className="flex items-center gap-3 cursor-pointer">
+                                                    <div className="mt-2 space-y-2">
+                                                        <label className="flex items-center gap-2">
                                                             <input
                                                                 type="radio"
                                                                 name="allowed_by"
                                                                 value="email"
                                                                 checked={data.allowed_by === 'email'}
                                                                 onChange={(e) => setData('allowed_by', e.target.value)}
-                                                                className="h-4 w-4 text-[#00895f] focus:ring-[#00895f]"
+                                                                className="text-[#00895f] focus:ring-[#00895f]"
                                                             />
                                                             <span className="text-sm text-gray-700">Email</span>
                                                         </label>
-                                                        <label className="flex items-center gap-3 cursor-pointer">
+                                                        <label className="flex items-center gap-2">
                                                             <input
                                                                 type="radio"
                                                                 name="allowed_by"
                                                                 value="mobile"
                                                                 checked={data.allowed_by === 'mobile'}
                                                                 onChange={(e) => setData('allowed_by', e.target.value)}
-                                                                className="h-4 w-4 text-[#00895f] focus:ring-[#00895f]"
+                                                                className="text-[#00895f] focus:ring-[#00895f]"
                                                             />
                                                             <span className="text-sm text-gray-700">Mobile</span>
                                                         </label>
-                                                        <label className="flex items-center gap-3 cursor-pointer">
+                                                        <label className="flex items-center gap-2">
                                                             <input
                                                                 type="radio"
                                                                 name="allowed_by"
                                                                 value="both"
                                                                 checked={data.allowed_by === 'both'}
                                                                 onChange={(e) => setData('allowed_by', e.target.value)}
-                                                                className="h-4 w-4 text-[#00895f] focus:ring-[#00895f]"
+                                                                className="text-[#00895f] focus:ring-[#00895f]"
                                                             />
                                                             <span className="text-sm text-gray-700">Both (Email and Mobile)</span>
                                                         </label>
                                                     </div>
                                                 </div>
                                             </div>
-
-                                            {/* RIGHT COLUMN - Webinar Banners & Participants */}
-                                            <div className="space-y-6">
-                                                <div className="rounded-lg bg-gradient-to-r from-purple-50 to-pink-50 p-4">
-                                                    <h4 className="text-md font-bold text-gray-800 flex items-center">
-                                                        <i className="fa fa-image mr-2 text-purple-600"></i>
-                                                        Webinar Banners
-                                                    </h4>
                                                 </div>
-
-                                                {/* Webinar Banners Info */}
-                                                <div className="rounded-lg border border-blue-200 bg-blue-50 p-4">
-                                                    <p className="text-sm text-blue-800">
-                                                        <i className="fa fa-info-circle mr-2"></i>
-                                                        Upload banners for invite, video, timezone displays and certificates.
-                                                    </p>
-                                                </div>
-
-                                                {/* Invite Banner (497x572) */}
-                                                <div className="rounded-lg border border-gray-200 bg-white p-4 shadow-sm">
-                                                    <InputLabel value="Webinar Banners Invite Image (497 x 572, Max 1MB)" />
-                                                    <div className="mt-2 rounded-md border-2 border-dashed border-gray-300 p-4">
-                                                        {!inviteBannerPreview ? (
-                                                            <div className="text-center">
-                                                                <i className="fa fa-cloud-upload text-4xl text-gray-400 mb-2"></i>
-                                                                <p className="mb-1 text-xs text-gray-500">497 x 572 pixels</p>
-                                                                <label className="cursor-pointer rounded-md bg-[#00895f] px-4 py-2 text-sm text-white hover:bg-emerald-700 inline-block">
-                                                                    <i className="fa fa-upload mr-2"></i>
-                                                                    Choose File
-                                                                    <input
-                                                                        type="file"
-                                                                        className="hidden"
-                                                                        accept="image/*"
-                                                                        onChange={(e) => handleImageChange(e, 'inviteBanner')}
-                                                                    />
-                                                                </label>
-                                                            </div>
-                                                        ) : (
-                                                            <div className="text-center">
-                                                                <img src={inviteBannerPreview} alt="Invite Banner" className="mx-auto max-h-48 rounded-md mb-2" />
-                                                                <button
-                                                                    type="button"
-                                                                    onClick={() => {
-                                                                        setData('invite_banner', null);
-                                                                        setInviteBannerPreview(null);
-                                                                    }}
-                                                                    className="text-xs text-red-600 hover:text-red-800"
-                                                                >
-                                                                    <i className="fa fa-trash mr-1"></i>Remove
-                                                                </button>
-                                                            </div>
-                                                        )}
-                                                    </div>
-                                                    {inviteBannerError && <div className="mt-1 text-xs text-red-600"><i className="fa fa-exclamation-circle mr-1"></i>{inviteBannerError}</div>}
-                                                </div>
-
-                                                {/* Responsive Invite Image (497x572) */}
-                                                <div className="rounded-lg border border-gray-200 bg-white p-4 shadow-sm">
-                                                    <InputLabel value="Responsive Invite Image (497 x 572, Max 1MB)" />
-                                                    <div className="mt-2 rounded-md border-2 border-dashed border-gray-300 p-4">
-                                                        {!responsiveInviteBannerPreview ? (
-                                                            <div className="text-center">
-                                                                <i className="fa fa-cloud-upload text-4xl text-gray-400 mb-2"></i>
-                                                                <p className="mb-1 text-xs text-gray-500">497 x 572 pixels</p>
-                                                                <label className="cursor-pointer rounded-md bg-[#00895f] px-4 py-2 text-sm text-white hover:bg-emerald-700 inline-block">
-                                                                    <i className="fa fa-upload mr-2"></i>
-                                                                    Choose File
-                                                                    <input
-                                                                        type="file"
-                                                                        className="hidden"
-                                                                        accept="image/*"
-                                                                        onChange={(e) => handleImageChange(e, 'responsiveInviteBanner')}
-                                                                    />
-                                                                </label>
-                                                            </div>
-                                                        ) : (
-                                                            <div className="text-center">
-                                                                <img src={responsiveInviteBannerPreview} alt="Responsive Invite" className="mx-auto max-h-48 rounded-md mb-2" />
-                                                                <button
-                                                                    type="button"
-                                                                    onClick={() => {
-                                                                        setData('responsive_invite_banner', null);
-                                                                        setResponsiveInviteBannerPreview(null);
-                                                                    }}
-                                                                    className="text-xs text-red-600 hover:text-red-800"
-                                                                >
-                                                                    <i className="fa fa-trash mr-1"></i>Remove
-                                                                </button>
-                                                            </div>
-                                                        )}
-                                                    </div>
-                                                    {responsiveInviteBannerError && <div className="mt-1 text-xs text-red-600"><i className="fa fa-exclamation-circle mr-1"></i>{responsiveInviteBannerError}</div>}
-                                                </div>
-
-                                                {/* Video Image (700x393) */}
-                                                <div className="rounded-lg border border-gray-200 bg-white p-4 shadow-sm">
-                                                    <InputLabel value="Video Image (700 x 393, Max 1MB)" />
-                                                    <div className="mt-2 rounded-md border-2 border-dashed border-gray-300 p-4">
-                                                        {!videoBannerPreview ? (
-                                                            <div className="text-center">
-                                                                <i className="fa fa-cloud-upload text-4xl text-gray-400 mb-2"></i>
-                                                                <p className="mb-1 text-xs text-gray-500">700 x 393 pixels</p>
-                                                                <label className="cursor-pointer rounded-md bg-[#00895f] px-4 py-2 text-sm text-white hover:bg-emerald-700 inline-block">
-                                                                    <i className="fa fa-upload mr-2"></i>
-                                                                    Choose File
-                                                                    <input
-                                                                        type="file"
-                                                                        className="hidden"
-                                                                        accept="image/*"
-                                                                        onChange={(e) => handleImageChange(e, 'videoBanner')}
-                                                                    />
-                                                                </label>
-                                                            </div>
-                                                        ) : (
-                                                            <div className="text-center">
-                                                                <img src={videoBannerPreview} alt="Video Banner" className="mx-auto max-h-48 rounded-md mb-2" />
-                                                                <button
-                                                                    type="button"
-                                                                    onClick={() => {
-                                                                        setData('video_banner', null);
-                                                                        setVideoBannerPreview(null);
-                                                                    }}
-                                                                    className="text-xs text-red-600 hover:text-red-800"
-                                                                >
-                                                                    <i className="fa fa-trash mr-1"></i>Remove
-                                                                </button>
-                                                            </div>
-                                                        )}
-                                                    </div>
-                                                    {videoBannerError && <div className="mt-1 text-xs text-red-600"><i className="fa fa-exclamation-circle mr-1"></i>{videoBannerError}</div>}
-                                                </div>
-
-                                                {/* Strip Image (1149x70) */}
-                                                <div className="rounded-lg border border-gray-200 bg-white p-4 shadow-sm">
-                                                    <InputLabel value="Strip Image (1149 x 70, Max 1MB)" />
-                                                    <div className="mt-2 rounded-md border-2 border-dashed border-gray-300 p-4">
-                                                        {!stripBannerPreview ? (
-                                                            <div className="text-center">
-                                                                <i className="fa fa-cloud-upload text-4xl text-gray-400 mb-2"></i>
-                                                                <p className="mb-1 text-xs text-gray-500">1149 x 70 pixels</p>
-                                                                <label className="cursor-pointer rounded-md bg-[#00895f] px-4 py-2 text-sm text-white hover:bg-emerald-700 inline-block">
-                                                                    <i className="fa fa-upload mr-2"></i>
-                                                                    Choose File
-                                                                    <input
-                                                                        type="file"
-                                                                        className="hidden"
-                                                                        accept="image/*"
-                                                                        onChange={(e) => handleImageChange(e, 'stripBanner')}
-                                                                    />
-                                                                </label>
-                                                            </div>
-                                                        ) : (
-                                                            <div className="text-center">
-                                                                <img src={stripBannerPreview} alt="Strip Banner" className="mx-auto max-h-48 rounded-md mb-2" />
-                                                                <button
-                                                                    type="button"
-                                                                    onClick={() => {
-                                                                        setData('strip_banner', null);
-                                                                        setStripBannerPreview(null);
-                                                                    }}
-                                                                    className="text-xs text-red-600 hover:text-red-800"
-                                                                >
-                                                                    <i className="fa fa-trash mr-1"></i>Remove
-                                                                </button>
-                                                            </div>
-                                                        )}
-                                                    </div>
-                                                    {stripBannerError && <div className="mt-1 text-xs text-red-600"><i className="fa fa-exclamation-circle mr-1"></i>{stripBannerError}</div>}
-                                                </div>
-
-                                                {/* Ads Image (427x572) */}
-                                                <div className="rounded-lg border border-gray-200 bg-white p-4 shadow-sm">
-                                                    <InputLabel value="Ads Image (427 x 572, Max 1MB)" />
-                                                    <div className="mt-2 rounded-md border-2 border-dashed border-gray-300 p-4">
-                                                        {!adsBannerPreview ? (
-                                                            <div className="text-center">
-                                                                <i className="fa fa-cloud-upload text-4xl text-gray-400 mb-2"></i>
-                                                                <p className="mb-1 text-xs text-gray-500">427 x 572 pixels</p>
-                                                                <label className="cursor-pointer rounded-md bg-[#00895f] px-4 py-2 text-sm text-white hover:bg-emerald-700 inline-block">
-                                                                    <i className="fa fa-upload mr-2"></i>
-                                                                    Choose File
-                                                                    <input
-                                                                        type="file"
-                                                                        className="hidden"
-                                                                        accept="image/*"
-                                                                        onChange={(e) => handleImageChange(e, 'adsBanner')}
-                                                                    />
-                                                                </label>
-                                                            </div>
-                                                        ) : (
-                                                            <div className="text-center">
-                                                                <img src={adsBannerPreview} alt="Ads Banner" className="mx-auto max-h-48 rounded-md mb-2" />
-                                                                <button
-                                                                    type="button"
-                                                                    onClick={() => {
-                                                                        setData('ads_banner', null);
-                                                                        setAdsBannerPreview(null);
-                                                                    }}
-                                                                    className="text-xs text-red-600 hover:text-red-800"
-                                                                >
-                                                                    <i className="fa fa-trash mr-1"></i>Remove
-                                                                </button>
-                                                            </div>
-                                                        )}
-                                                    </div>
-                                                    {adsBannerError && <div className="mt-1 text-xs text-red-600"><i className="fa fa-exclamation-circle mr-1"></i>{adsBannerError}</div>}
-                                                </div>
-
-                                                {/* Timezone Desk Image (1149x70) */}
-                                                <div className="rounded-lg border border-gray-200 bg-white p-4 shadow-sm">
-                                                    <InputLabel value="Timezone Desk Image (1149 x 70, Max 1MB)" />
-                                                    <div className="mt-2 rounded-md border-2 border-dashed border-gray-300 p-4">
-                                                        {!timezoneBannerPreview ? (
-                                                            <div className="text-center">
-                                                                <i className="fa fa-cloud-upload text-4xl text-gray-400 mb-2"></i>
-                                                                <p className="mb-1 text-xs text-gray-500">1149 x 70 pixels</p>
-                                                                <label className="cursor-pointer rounded-md bg-[#00895f] px-4 py-2 text-sm text-white hover:bg-emerald-700 inline-block">
-                                                                    <i className="fa fa-upload mr-2"></i>
-                                                                    Choose File
-                                                                    <input
-                                                                        type="file"
-                                                                        className="hidden"
-                                                                        accept="image/*"
-                                                                        onChange={(e) => handleImageChange(e, 'timezoneBanner')}
-                                                                    />
-                                                                </label>
-                                                            </div>
-                                                        ) : (
-                                                            <div className="text-center">
-                                                                <img src={timezoneBannerPreview} alt="Timezone Banner" className="mx-auto max-h-48 rounded-md mb-2" />
-                                                                <button
-                                                                    type="button"
-                                                                    onClick={() => {
-                                                                        setData('timezone_banner', null);
-                                                                        setTimezoneBannerPreview(null);
-                                                                    }}
-                                                                    className="text-xs text-red-600 hover:text-red-800"
-                                                                >
-                                                                    <i className="fa fa-trash mr-1"></i>Remove
-                                                                </button>
-                                                            </div>
-                                                        )}
-                                                    </div>
-                                                    {timezoneBannerError && <div className="mt-1 text-xs text-red-600"><i className="fa fa-exclamation-circle mr-1"></i>{timezoneBannerError}</div>}
-                                                </div>
-
-                                                {/* Timezone Responsive Image (770x100) */}
-                                                <div className="rounded-lg border border-gray-200 bg-white p-4 shadow-sm">
-                                                    <InputLabel value="Timezone Responsive Image (770 x 100, Max 1MB)" />
-                                                    <div className="mt-2 rounded-md border-2 border-dashed border-gray-300 p-4">
-                                                        {!responsiveTimezoneBannerPreview ? (
-                                                            <div className="text-center">
-                                                                <i className="fa fa-cloud-upload text-4xl text-gray-400 mb-2"></i>
-                                                                <p className="mb-1 text-xs text-gray-500">770 x 100 pixels</p>
-                                                                <label className="cursor-pointer rounded-md bg-[#00895f] px-4 py-2 text-sm text-white hover:bg-emerald-700 inline-block">
-                                                                    <i className="fa fa-upload mr-2"></i>
-                                                                    Choose File
-                                                                    <input
-                                                                        type="file"
-                                                                        className="hidden"
-                                                                        accept="image/*"
-                                                                        onChange={(e) => handleImageChange(e, 'responsiveTimezoneBanner')}
-                                                                    />
-                                                                </label>
-                                                            </div>
-                                                        ) : (
-                                                            <div className="text-center">
-                                                                <img src={responsiveTimezoneBannerPreview} alt="Responsive Timezone" className="mx-auto max-h-48 rounded-md mb-2" />
-                                                                <button
-                                                                    type="button"
-                                                                    onClick={() => {
-                                                                        setData('responsive_timezone_banner', null);
-                                                                        setResponsiveTimezoneBannerPreview(null);
-                                                                    }}
-                                                                    className="text-xs text-red-600 hover:text-red-800"
-                                                                >
-                                                                    <i className="fa fa-trash mr-1"></i>Remove
-                                                                </button>
-                                                            </div>
-                                                        )}
-                                                    </div>
-                                                    {responsiveTimezoneBannerError && <div className="mt-1 text-xs text-red-600"><i className="fa fa-exclamation-circle mr-1"></i>{responsiveTimezoneBannerError}</div>}
-                                                </div>
-
-                                                {/* Certificate (1600x1165) */}
-                                                <div className="rounded-lg border border-gray-200 bg-white p-4 shadow-sm">
-                                                    <InputLabel value="Seminar Certificate (1600 x 1165, Max 1MB)" />
-                                                    <div className="mt-2 rounded-md border-2 border-dashed border-gray-300 p-4">
-                                                        {!certificatePreview ? (
-                                                            <div className="text-center">
-                                                                <i className="fa fa-certificate text-4xl text-gray-400 mb-2"></i>
-                                                                <p className="mb-1 text-xs text-gray-500">1600 x 1165 pixels</p>
-                                                                <label className="cursor-pointer rounded-md bg-[#00895f] px-4 py-2 text-sm text-white hover:bg-emerald-700 inline-block">
-                                                                    <i className="fa fa-upload mr-2"></i>
-                                                                    Choose File
-                                                                    <input
-                                                                        type="file"
-                                                                        className="hidden"
-                                                                        accept="image/*"
-                                                                        onChange={(e) => handleImageChange(e, 'certificate')}
-                                                                    />
-                                                                </label>
-                                                            </div>
-                                                        ) : (
-                                                            <div className="text-center">
-                                                                <img src={certificatePreview} alt="Certificate" className="mx-auto max-h-48 rounded-md mb-2" />
-                                                                <button
-                                                                    type="button"
-                                                                    onClick={() => {
-                                                                        setData('certificate', null);
-                                                                        setCertificatePreview(null);
-                                                                    }}
-                                                                    className="text-xs text-red-600 hover:text-red-800"
-                                                                >
-                                                                    <i className="fa fa-trash mr-1"></i>Remove
-                                                                </button>
-                                                            </div>
-                                                        )}
-                                                    </div>
-                                                    {certificateError && <div className="mt-1 text-xs text-red-600"><i className="fa fa-exclamation-circle mr-1"></i>{certificateError}</div>}
-                                                </div>
-
-                                                {/* Moderators */}
-                                                <div className="rounded-lg border border-gray-200 bg-white p-4 shadow-sm">
-                                                    <div className="flex items-center gap-3 mb-3">
-                                                        <Switch
-                                                            checked={data.moderators_enabled}
-                                                            onChange={(checked) => setData('moderators_enabled', checked)}
-                                                            style={{ backgroundColor: data.moderators_enabled ? '#00895f' : undefined }}
-                                                        />
-                                                        <span className="text-sm font-semibold text-gray-700">Moderators</span>
-                                                    </div>
-                                                    {data.moderators_enabled && (
-                                                        <div className="ml-12">
-                                                            <Select
-                                                                mode="multiple"
-                                                                placeholder="Choose moderators"
-                                                                value={data.moderators_list}
-                                                                onChange={(value) => setData('moderators_list', value)}
-                                                                loading={loadingSpeakers}
-                                                                options={speakers}
-                                                                className="w-full"
-                                                                size="large"
-                                                                showSearch
-                                                                filterOption={(input, option) =>
-                                                                    option.label.toLowerCase().includes(input.toLowerCase())
-                                                                }
-                                                            />
-                                                        </div>
-                                                    )}
-                                                </div>
-
-                                                {/* Panelists */}
-                                                <div className="rounded-lg border border-gray-200 bg-white p-4 shadow-sm">
-                                                    <div className="flex items-center gap-3 mb-3">
-                                                        <Switch
-                                                            checked={data.panelists_enabled}
-                                                            onChange={(checked) => setData('panelists_enabled', checked)}
-                                                            style={{ backgroundColor: data.panelists_enabled ? '#00895f' : undefined }}
-                                                        />
-                                                        <span className="text-sm font-semibold text-gray-700">Panelists</span>
-                                                    </div>
-                                                    {data.panelists_enabled && (
-                                                        <div className="ml-12">
-                                                            <Select
-                                                                mode="multiple"
-                                                                placeholder="Choose panelists"
-                                                                value={data.panelists_list}
-                                                                onChange={(value) => setData('panelists_list', value)}
-                                                                loading={loadingSpeakers}
-                                                                options={speakers}
-                                                                className="w-full"
-                                                                size="large"
-                                                                showSearch
-                                                                filterOption={(input, option) =>
-                                                                    option.label.toLowerCase().includes(input.toLowerCase())
-                                                                }
-                                                            />
-                                                        </div>
-                                                    )}
-                                                </div>
-
-                                                {/* Chief Guests */}
-                                                <div className="rounded-lg border border-gray-200 bg-white p-4 shadow-sm">
-                                                    <div className="flex items-center gap-3 mb-3">
-                                                        <Switch
-                                                            checked={data.chief_guests_enabled}
-                                                            onChange={(checked) => setData('chief_guests_enabled', checked)}
-                                                            style={{ backgroundColor: data.chief_guests_enabled ? '#00895f' : undefined }}
-                                                        />
-                                                        <span className="text-sm font-semibold text-gray-700">Chief Guests</span>
-                                                    </div>
-                                                    {data.chief_guests_enabled && (
-                                                        <div className="ml-12">
-                                                            <Select
-                                                                mode="multiple"
-                                                                placeholder="Choose chief guests"
-                                                                value={data.chief_guests_list}
-                                                                onChange={(value) => setData('chief_guests_list', value)}
-                                                                loading={loadingSpeakers}
-                                                                options={speakers}
-                                                                className="w-full"
-                                                                size="large"
-                                                                showSearch
-                                                                filterOption={(input, option) =>
-                                                                    option.label.toLowerCase().includes(input.toLowerCase())
-                                                                }
-                                                            />
-                                                        </div>
-                                                    )}
-                                                </div>
-
-                                                {/* Speakers */}
-                                                <div className="rounded-lg border border-gray-200 bg-white p-4 shadow-sm">
-                                                    <div className="flex items-center gap-3 mb-3">
-                                                        <Switch
-                                                            checked={data.speakers_enabled}
-                                                            onChange={(checked) => setData('speakers_enabled', checked)}
-                                                            style={{ backgroundColor: data.speakers_enabled ? '#00895f' : undefined }}
-                                                        />
-                                                        <span className="text-sm font-semibold text-gray-700">Speakers</span>
-                                                    </div>
-                                                    {data.speakers_enabled && (
-                                                        <div className="ml-12">
-                                                            <Select
-                                                                mode="multiple"
-                                                                placeholder="Choose speakers"
-                                                                value={data.speakers_list}
-                                                                onChange={(value) => setData('speakers_list', value)}
-                                                                loading={loadingSpeakers}
-                                                                options={speakers}
-                                                                className="w-full"
-                                                                size="large"
-                                                                showSearch
-                                                                filterOption={(input, option) =>
-                                                                    option.label.toLowerCase().includes(input.toLowerCase())
-                                                                }
-                                                            />
-                                                        </div>
-                                                    )}
-                                                </div>
-
-                                                {/* Note Text */}
-                                                <div className="rounded-lg border border-gray-200 bg-white p-4 shadow-sm">
-                                                    <InputLabel htmlFor="note_text" value="Note Text" />
-                                                    <textarea
-                                                        id="note_text"
-                                                        value={data.note_text}
-                                                        onChange={(e) => setData('note_text', e.target.value)}
-                                                        rows="3"
-                                                        className="mt-2 w-full rounded-md border-gray-300 shadow-sm focus:border-[#00895f] focus:ring-[#00895f]"
-                                                        placeholder="Enter note text for registration page"
-                                                    />
-                                                </div>
-
-                                                {/* Left Text */}
-                                                <div className="rounded-lg border border-gray-200 bg-white p-4 shadow-sm">
-                                                    <InputLabel htmlFor="left_text" value="Left Text" />
-                                                    <textarea
-                                                        id="left_text"
-                                                        value={data.left_text}
-                                                        onChange={(e) => setData('left_text', e.target.value)}
-                                                        rows="3"
-                                                        className="mt-2 w-full rounded-md border-gray-300 shadow-sm focus:border-[#00895f] focus:ring-[#00895f]"
-                                                        placeholder="Enter left sidebar text"
-                                                    />
-                                                </div>
-                                            </div>
-                                        </div>
                                     </div>
                                 )}
 
@@ -1709,8 +849,9 @@ export default function Form({ seminar, sponsorPages, specialities, educationPar
                                             </>
                                         ) : (
                                             <>
-                                                <i className="fa fa-save mr-2"></i>
+                                                
                                                 {isEditing ? 'Update Seminar' : 'Create Seminar'}
+                                                <i className="fa fa-arrow-right ml-2"></i>
                                             </>
                                         )}
                                     </PrimaryButton>

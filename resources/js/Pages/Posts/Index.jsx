@@ -2,7 +2,7 @@ import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { Head, Link, router, usePage } from '@inertiajs/react';
 import { useState, useMemo } from 'react';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/Components/ui/table';
-import { Search, ChevronUp, ChevronDown, Calendar, FileText, Eye } from 'lucide-react';
+import { Search, ChevronUp, ChevronDown, Calendar, FileText, Eye,Trash2, Pencil } from 'lucide-react';
 import { getPostImageUrl } from '@/Utils/imageHelper';
 
 export default function Index({ posts }) {
@@ -90,6 +90,8 @@ export default function Index({ posts }) {
             year: 'numeric',
             month: 'short',
             day: 'numeric',
+            hour: '2-digit',
+            minute: '2-digit',
         });
     };
 
@@ -236,11 +238,11 @@ export default function Index({ posts }) {
                                             <TableHead className="w-24">Image</TableHead>
                                             <SortableHeader column="title">Title</SortableHeader>
                                             <SortableHeader column="catagory1">Category</SortableHeader>
-                                            <SortableHeader column="author1">Author</SortableHeader>
+                                           
                                             <SortableHeader column="status">Status</SortableHeader>
                                             <SortableHeader column="postType">Type</SortableHeader>
-                                            <SortableHeader column="post_like">Likes</SortableHeader>
-                                            <SortableHeader column="created_on">Created</SortableHeader>
+                                          
+                                            <SortableHeader column="publish_date">Published</SortableHeader>
                                             <TableHead className="w-32 text-center">Actions</TableHead>
                                         </TableRow>
                                     </TableHeader>
@@ -311,9 +313,7 @@ export default function Index({ posts }) {
                                                             <span className="text-gray-400">-</span>
                                                         )}
                                                     </TableCell>
-                                                    <TableCell className="text-sm text-gray-600">
-                                                        {post.author1 || '-'}
-                                                    </TableCell>
+                                                  
                                                     <TableCell>
                                                         <span className={getStatusBadgeClass(post.status)}>
                                                             {post.status}
@@ -331,16 +331,11 @@ export default function Index({ posts }) {
                                                             <span className="text-gray-400">-</span>
                                                         )}
                                                     </TableCell>
-                                                    <TableCell className="text-center">
-                                                        <div className="flex items-center justify-center gap-1 text-sm text-gray-600">
-                                                            <i className="fa fa-heart text-red-400"></i>
-                                                            {post.post_like || 0}
-                                                        </div>
-                                                    </TableCell>
+                                                    
                                                     <TableCell className="text-sm text-gray-600">
                                                         <div className="flex items-center gap-1">
                                                             <Calendar className="h-4 w-4 text-gray-400" />
-                                                            {formatDate(post.created_on)}
+                                                            {formatDate(post.post_date)}
                                                         </div>
                                                     </TableCell>
                                                     <TableCell>
@@ -350,14 +345,14 @@ export default function Index({ posts }) {
                                                                 className="text-blue-600 hover:text-blue-800"
                                                                 title="Edit"
                                                             >
-                                                                <i className="fa fa-edit text-lg"></i>
+                                                               <Pencil className="h-4 w-4" />
                                                             </Link>
                                                             <button
                                                                 onClick={() => handleDelete(post.articleID)}
                                                                 className="text-red-600 hover:text-red-800"
                                                                 title="Delete"
                                                             >
-                                                                <i className="fa fa-trash text-lg"></i>
+                                                                <Trash2 className="h-4 w-4 text-destructive" />
                                                             </button>
                                                         </div>
                                                     </TableCell>
