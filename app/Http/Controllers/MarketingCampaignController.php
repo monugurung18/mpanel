@@ -15,7 +15,7 @@ class MarketingCampaignController extends Controller
      */
     public function index()
     {
-        $campaigns = MarketingCampaign::with('business')
+         $campaigns = MarketingCampaign::with('business')
             ->orderBy('created_on', 'desc')
             ->get();
 

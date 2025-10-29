@@ -20,8 +20,7 @@ export default function AuthenticatedLayout({ children }) {
     };
 
     return (
-        <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-emerald-50/30">
-           
+        <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-emerald-50/30">           
 
             {/* Enhanced Navigation Bar with Glass Effect */}
             <nav className="border-b border-gray-200 bg-white/95 backdrop-blur-md shadow-sm sticky top-0 z-40">
@@ -37,7 +36,7 @@ export default function AuthenticatedLayout({ children }) {
                                     <img
                                         src="https://www.medtalks.in/uploads/img/logo.webp"
                                         alt="Medtalks India"
-                                        className="w-36  object-contain transition-all duration-300 group-hover:scale-105 relative z-10"
+                                        className="w-28  object-contain transition-all duration-300 group-hover:scale-105 relative z-10"
                                     />
                                     <div className="absolute inset-0 bg-[#00895f]/20 rounded-lg blur-lg opacity-0 group-hover:opacity-100 transition-opacity duration-300 -z-10"></div>
                                 </div>
@@ -52,7 +51,7 @@ export default function AuthenticatedLayout({ children }) {
                                 active={route().current('dashboard')}
                                 className="group relative flex items-center"
                             >
-                                <div className={`flex items-center space-x-2 px-4 py-4 text-base transition-all duration-200 ${route().current('dashboard')
+                                <div className={`flex items-center space-x-2 px-4 py-4 text-base transition-all duration-200 text-sm ${route().current('dashboard')
                                         ? 'text-[#00895f] font-medium'
                                         : 'text-gray-700 hover:text-[#00895f] font-normal'
                                     }`}>
@@ -66,7 +65,7 @@ export default function AuthenticatedLayout({ children }) {
                                 onMouseEnter={() => setOpenDesktopDropdown('content')}
                                 onMouseLeave={() => setOpenDesktopDropdown(null)}
                             >
-                                <button className={`flex items-center space-x-2 px-4 py-4 text-base transition-all duration-200 h-full ${route().current('episodes.*')
+                                <button className={`flex items-center space-x-2 px-4 py-4 text-base transition-all duration-200 h-full text-sm ${route().current('episodes.*')
                                         ? 'text-[#00895f] font-medium'
                                         : 'text-gray-700 hover:text-[#00895f] font-normal'
                                     }`}>
@@ -113,21 +112,62 @@ export default function AuthenticatedLayout({ children }) {
 
                                                 <div className="flex-1">
                                                     <div className="font-semibold text-gray-900 group-hover:text-[#00895f] transition-colors duration-200">Posts</div>
-                                                    <div className="text-xs text-gray-500 group-hover:text-gray-600">Manage articles and blog posts</div>
+                                                    <div className="text-xs text-gray-500 group-hover:text-gray-600">Manage articles, FAQs and blog posts</div>
+                                                </div>
+                                                <i className="fa fa-arrow-right text-gray-400 group-hover:text-[#00895f] group-hover:translate-x-1 transition-all duration-200"></i>
+                                            </Link>
+                                            
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            {/* Business Menu - Dropdown with Business, Business, Business */}
+                            <div
+                                className="group relative"
+                                onMouseEnter={() => setOpenDesktopDropdown('business')}
+                                onMouseLeave={() => setOpenDesktopDropdown(null)}
+                            >
+                                <button className={`flex items-center space-x-2 px-4 py-4 text-base transition-all duration-200 h-full text-sm ${route().current('episodes.*')
+                                        ? 'text-[#00895f] font-medium'
+                                        : 'text-gray-700 hover:text-[#00895f] font-normal'
+                                    }`}>
+                                  
+                                    <span>Business</span>
+                                    <i className={`fa fa-angle-down text-xs transition-transform duration-200 ${openDesktopDropdown === 'business' ? 'rotate-180' : ''
+                                        }`}></i>
+                                </button>
+
+                                {/* Enhanced Content Dropdown Menu */}
+                                <div className={`absolute left-0 z-50 mt-2 w-72 origin-top-left transition-all duration-300 ${openDesktopDropdown === 'business'
+                                        ? 'opacity-100 translate-y-0 visible scale-100'
+                                        : 'opacity-0 -translate-y-4 invisible scale-95'
+                                    }`}>
+                                    <div className="overflow-hidden rounded-xl bg-white/95 backdrop-blur-md shadow-2xl ring-1 ring-gray-200 border border-gray-100">
+                                      
+                                        <div className="py-1">
+                                            <Link
+                                                href={route('episodes.index')}
+                                                className="group flex items-center px-5 py-4 text-sm transition-all duration-200 hover:bg-gradient-to-r hover:from-emerald-50 hover:to-teal-50 border-b border-gray-100 relative overflow-hidden"
+                                            >
+                                                
+                                                <div className="flex-1">
+                                                    <div className="font-semibold text-gray-900 group-hover:text-[#00895f] transition-colors duration-200">Business Pages</div>
+                                                    <div className="text-xs text-gray-500 group-hover:text-gray-600">Manage business pages</div>
                                                 </div>
                                                 <i className="fa fa-arrow-right text-gray-400 group-hover:text-[#00895f] group-hover:translate-x-1 transition-all duration-200"></i>
                                             </Link>
                                             <Link
-                                                href="#"
-                                                className="group flex items-center px-5 py-4 text-sm transition-all duration-200 hover:bg-gradient-to-r hover:from-blue-50 hover:to-cyan-50 relative overflow-hidden"
+                                                href={route('marketing-campaign.index')}
+                                                className="group flex items-center px-5 py-4 text-sm transition-all duration-200 hover:bg-gradient-to-r hover:from-purple-50 hover:to-indigo-50 border-b border-gray-100 relative overflow-hidden"
                                             >
-                                                
+
                                                 <div className="flex-1">
-                                                    <div className="font-semibold text-gray-900 group-hover:text-[#00895f] transition-colors duration-200">FAQ</div>
-                                                    <div className="text-xs text-gray-500 group-hover:text-gray-600">Frequently asked questions</div>
+                                                    <div className="font-semibold text-gray-900 group-hover:text-[#00895f] transition-colors duration-200">Marketing Campaigns</div>
+                                                    <div className="text-xs text-gray-500 group-hover:text-gray-600">Manage marketing campaigns</div>
                                                 </div>
                                                 <i className="fa fa-arrow-right text-gray-400 group-hover:text-[#00895f] group-hover:translate-x-1 transition-all duration-200"></i>
                                             </Link>
+                                            
                                         </div>
                                     </div>
                                 </div>

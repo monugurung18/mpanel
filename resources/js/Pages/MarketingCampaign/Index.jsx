@@ -1,7 +1,10 @@
 import React from 'react';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { Head, Link, usePage } from '@inertiajs/react';
-import { Table } from '@/Components/ui/table';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/Components/ui/table';
+import {  message, Popconfirm } from 'antd';
+import { Plus, Film, Pencil, Trash2, Search, ChevronUp, ChevronDown } from 'lucide-react';
+import { Button } from '@/Components/ui/button';
 
 export default function MarketingCampaignsIndex({ campaigns }) {
     const { auth } = usePage().props;
@@ -52,7 +55,6 @@ export default function MarketingCampaignsIndex({ campaigns }) {
     return (
         <AuthenticatedLayout>
             <Head title="Marketing Campaigns" />
-
             <div className="py-6">
                 <div className="mx-auto max-w-7xl sm:px-6 lg:px-8">
                     <div className="overflow-hidden bg-white shadow-sm sm:rounded-lg">
@@ -61,9 +63,13 @@ export default function MarketingCampaignsIndex({ campaigns }) {
                                 <h2 className="text-xl font-bold">Marketing Campaigns</h2>
                                 <Link
                                     href={route('marketing-campaign.create')}
-                                    className="rounded-md bg-[#00895f] px-4 py-2 text-sm text-white hover:bg-emerald-700"
+                                    
                                 >
-                                    Create Campaign
+                                     <Button size="sm">
+                                        <Plus className="mr-2 h-4 w-4" />
+                                        Create Campaign
+                                    </Button>
+                                    
                                 </Link>
                             </div>
 

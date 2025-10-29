@@ -5,7 +5,7 @@ import PrimaryButton from '@/Components/PrimaryButton';
 import TextInput from '@/Components/TextInput';
 import GuestLayout from '@/Layouts/GuestLayout';
 import { Head, Link, useForm } from '@inertiajs/react';
-
+import { Input } from 'antd';
 export default function Login({ status, canResetPassword }) {
     const { data, setData, post, processing, errors, reset } = useForm({
         email: '',
@@ -28,10 +28,10 @@ export default function Login({ status, canResetPassword }) {
             <div className="space-y-6">
                 {/* Header Section */}
                 <div className="text-center">
-                    <h2 className="text-3xl font-bold tracking-tight text-gray-900">
+                    <h2 className="text-lg font-bold tracking-tight text-gray-900">
                         Welcome back
                     </h2>
-                    <p className="mt-2 text-sm text-gray-600">
+                    <p className="mt-2 text-xs text-gray-600">
                         Sign in to your account to continue
                     </p>
                 </div>
@@ -62,20 +62,19 @@ export default function Login({ status, canResetPassword }) {
                             <InputLabel 
                                 htmlFor="email" 
                                 value="Email address" 
-                                className="block text-sm font-medium text-gray-700"
+                                className="block text-xs font-medium text-gray-700"
                             />
                             <div className="mt-2">
-                                <TextInput
-                                    id="email"
-                                    type="email"
-                                    name="email"
-                                    value={data.email}
-                                    className="block w-full rounded-lg border-gray-300 px-3 py-3 text-gray-900 placeholder-gray-500 focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm transition-colors duration-200"
-                                    placeholder="Enter your email"
-                                    autoComplete="username"
-                                    isFocused={true}
-                                    onChange={(e) => setData('email', e.target.value)}
-                                />
+                                <Input 
+                                    type="email" 
+                                    name="email" 
+                                    value={data.email} 
+                                    className="block w-full rounded-lg border-gray-300 px-3 py-1.5 text-gray-900 placeholder-gray-500 focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm transition-colors duration-200 text-xs" 
+                                    placeholder="Enter your email" 
+                                    autoComplete="username" 
+                                    autoFocus 
+                                    onChange={(e) => setData('email', e.target.value)} 
+                                 />
                                 <InputError message={errors.email} className="mt-2" />
                             </div>
                         </div>
@@ -85,15 +84,14 @@ export default function Login({ status, canResetPassword }) {
                             <InputLabel 
                                 htmlFor="password" 
                                 value="Password" 
-                                className="block text-sm font-medium text-gray-700"
+                                className="block text-xs font-medium text-gray-700"
                             />
                             <div className="mt-2">
-                                <TextInput
+                                <Input.Password
                                     id="password"
-                                    type="password"
                                     name="password"
                                     value={data.password}
-                                    className="block w-full rounded-lg border-gray-300 px-3 py-3 text-gray-900 placeholder-gray-500 focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm transition-colors duration-200"
+                                    className="block w-full rounded-lg border-gray-300 px-3 py-1.5 text-gray-900 placeholder-gray-500 focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm transition-colors duration-200 text-xs flex items-center"
                                     placeholder="Enter your password"
                                     autoComplete="current-password"
                                     onChange={(e) => setData('password', e.target.value)}
@@ -131,7 +129,7 @@ export default function Login({ status, canResetPassword }) {
                     {/* Submit Button */}
                     <div>
                         <PrimaryButton 
-                            className="w-full justify-center py-3 px-4 text-sm font-semibold rounded-lg bg-[#00895f] hover:bg-[#00895f] focus:bg-[#00895f] focus:ring-[#00895f]transition-all duration-200 transform hover:scale-[1.02] active:scale-[0.98]" 
+                            className="w-full justify-center py-1.5 px-4 text-sm font-semibold rounded-lg bg-[#00895f] hover:bg-[#00895f] focus:bg-[#00895f] focus:ring-[#00895f]transition-all duration-200 transform hover:scale-[1.02] active:scale-[0.98]" 
                             disabled={processing}
                         >
                             {processing ? (
