@@ -61,8 +61,8 @@ class EpisodeController extends Controller
         $validated = $request->validate([
             'title' => 'required|string|max:255',
             'custom_url' => 'required|string|unique:medtalks_tv,custom_url',
-            'desc' => 'nullable|string',
-            'video_url' => 'nullable|string',
+            'desc' => 'required|string',
+            'video_url' => 'required|string',
             'video_status' => 'required|in:live,schedule,archive,new',
             'videoSource' => 'required|in:youTube,faceBook,mp4,other',
             'date_time' => 'required|date',
@@ -72,9 +72,9 @@ class EpisodeController extends Controller
             'speciality_ids' => 'nullable|array',
             'question_required' => 'boolean',
             'login_required' => 'boolean',
-            'image' => 'nullable|image|mimes:jpeg,jpg,png,gif,webp|max:1024|dimensions:width=700,height=393',
+            'image' => 'nullable|image|mimes:jpeg,jpg,png,gif,webp|max:1024|dimensions:width=733,height=370',
         ], [
-            'image.dimensions' => 'Image dimensions must be exactly 700 x 393 pixels.',
+            'image.dimensions' => 'Image dimensions must be exactly 733 x 370 pixels.',
             'image.max' => 'Image size must be less than 1MB.',
         ]);
 
@@ -143,11 +143,11 @@ class EpisodeController extends Controller
     /**
      * Update the specified episode in storage.
      */
-    public function update(Request $request, Episode $episode)
+    public function updateEpisode(Request $request, Episode $episode)
     {
         $validated = $request->validate([
             'title' => 'required|string|max:255',
-            'custom_url' => 'required|string|unique:medtalks_tv,custom_url,' . $episode->id,
+            'custom_url' => 'required|string',
             'desc' => 'nullable|string',
             'video_url' => 'nullable|string',
             'video_status' => 'required|in:live,schedule,archive,new',

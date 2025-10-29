@@ -26,6 +26,7 @@ export default function Form({ seminar, sponsorPages, specialities, educationPar
     const [appSquareError, setAppSquareError] = useState(null);
 
     const { data, setData, post, put, errors, processing } = useForm({
+        seminar_id: seminar?.seminar_no || '',
         seminar_title: seminar?.seminar_title || '',
         custom_url: seminar?.custom_url || '',
         seminar_desc: seminar?.seminar_desc || '',
@@ -216,7 +217,7 @@ export default function Form({ seminar, sponsorPages, specialities, educationPar
         };
 
         if (isEditing) {
-            post(route('seminars.update', seminar.id), {
+            post(route('seminars.updates', seminar.id), {
                 ...formData,
                 forceFormData: true,
                 _method: 'PUT',

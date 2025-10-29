@@ -4,6 +4,8 @@ import { useState, useMemo } from 'react';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/Components/ui/table';
 import { Search, ChevronUp, ChevronDown, Calendar, FileText, Eye,Trash2, Pencil } from 'lucide-react';
 import { getPostImageUrl } from '@/Utils/imageHelper';
+import { Button, message, Popconfirm } from 'antd';
+
 
 export default function Index({ posts }) {
     const { props } = usePage();
@@ -76,9 +78,9 @@ export default function Index({ posts }) {
     };
 
     const handleDelete = (id) => {
-        if (confirm('Are you sure you want to delete this post?')) {
+      
             router.delete(route('posts.destroy', id));
-        }
+        
     };
 
     const formatDate = (dateString) => {
@@ -347,13 +349,18 @@ export default function Index({ posts }) {
                                                             >
                                                                <Pencil className="h-4 w-4" />
                                                             </Link>
-                                                            <button
-                                                                onClick={() => handleDelete(post.articleID)}
+                                                            <Popconfirm
+                                                                title="Delete the task"
+                                                                description="Are you sure to delete this post?"
+                                                                onConfirm={() => handleDelete(post.articleID)}
+                                                                onCancel={()=>{}}
+                                                                okText="Yes"
+                                                                cancelText="No"
                                                                 className="text-red-600 hover:text-red-800"
-                                                                title="Delete"
                                                             >
                                                                 <Trash2 className="h-4 w-4 text-destructive" />
-                                                            </button>
+                                                            </Popconfirm>
+                                                           
                                                         </div>
                                                     </TableCell>
                                                 </TableRow>

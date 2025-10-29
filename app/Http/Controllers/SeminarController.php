@@ -197,7 +197,7 @@ class SeminarController extends Controller
     /**
      * Update the specified seminar in storage.
      */
-    public function update(Request $request, Seminar $seminar)
+    public function updateSeminar(Request $request, Seminar $seminar)
     {
         $validated = $request->validate([
             'seminar_title' => 'required|string|max:250',

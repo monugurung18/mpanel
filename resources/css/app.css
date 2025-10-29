@@ -127,3 +127,7 @@
 ::-webkit-scrollbar-thumb:hover {
     background: #006d4a;
 }
+.ant-upload, .ant-upload-select{
+    width: 100% !important;
+    height: 200px !important;
+}

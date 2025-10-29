@@ -7,6 +7,7 @@ import { Button } from '@/Components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/Components/ui/card';
 import Input from '@/Components/Input';
 import { Plus, Film, Pencil, Trash2, Search, ChevronUp, ChevronDown } from 'lucide-react';
+import {  message, Popconfirm } from 'antd';
 
 export default function Index({ episodes }) {
     const [loading, setLoading] = useState(false);
@@ -19,7 +20,7 @@ export default function Index({ episodes }) {
     const pageSize = 25;
 
     const handleDelete = (id) => {
-        if (confirm('Are you sure to delete this episode?')) {
+       
             setLoading(true);
             router.delete(route('episodes.destroy', id), {
                 preserveScroll: true,
@@ -28,7 +29,7 @@ export default function Index({ episodes }) {
                 },
                 onFinish: () => setLoading(false),
             });
-        }
+        
     };
 
     // Handle sorting
@@ -260,13 +261,18 @@ export default function Index({ episodes }) {
                                                                     <Pencil className="h-4 w-4" />
                                                                 </Button>
                                                             </Link>
-                                                            <Button
-                                                                variant="ghost"
-                                                                size="sm"
-                                                                onClick={() => handleDelete(episode.id)}
+                                                            <Popconfirm
+                                                                title="Delete the task"
+                                                                description="Are you sure to delete this episode?"
+                                                                onConfirm={() => handleDelete(episode.id)}
+                                                                onCancel={() => {}}
+                                                                okText="Yes"
+                                                                cancelText="No"
                                                             >
-                                                                <Trash2 className="h-4 w-4 text-destructive" />
-                                                            </Button>
+                                                               
+                                                                    <Trash2 className="h-4 w-4 text-destructive" />
+                                                              
+                                                            </Popconfirm>
                                                         </div>
                                                     </TableCell>
                                                 </TableRow>

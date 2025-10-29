@@ -11,14 +11,17 @@ import { getEpisodeImageUrl } from '@/Utils/imageHelper';
 import { Select } from 'antd';
 import 'antd/dist/reset.css';
 import '../../../css/antd-custom.css';
+import { Upload, message } from 'antd';
+import { PlusOutlined } from '@ant-design/icons';
 
-export default function Form({ episode, sponsorPages, specialities }) {
+export default function Form({ episode, sponsorPages }) {
     const isEditing = !!episode;
     const { baseImagePath } = usePage().props;
 
     const [speakers, setSpeakers] = useState([]);
     const [loadingSpeakers, setLoadingSpeakers] = useState(false);
     const [imageError, setImageError] = useState(null);
+    const [specialities, setSpecialities] = useState([]);   
 
     const { data, setData, post, put, errors, processing } = useForm({
         title: episode?.title || '',
@@ -62,6 +65,19 @@ export default function Form({ episode, sponsorPages, specialities }) {
     }, []);
 
     useEffect(() => {
+        getSpecialities();
+        function getSpecialities() {
+            fetch('/api/specialities', { method: 'GET', headers: { 'Content-Type': 'application/json' } })
+                .then((response) => response.json())
+                .then((data) => {
+                    setSpecialities(data);
+                })
+                .catch((error) => {
+                    console.error('Error fetching specialities:', error);
+                });
+        }
+    }, []);
+    useEffect(() => {
         // Auto-generate custom URL from title
         if (data.title && !isEditing) {
             const slug = data.title
@@ -91,7 +107,7 @@ export default function Form({ episode, sponsorPages, specialities }) {
                 return;
             }
 
-            // Validate image dimensions (exactly 700 x 393)
+            // Validate image dimensions (exactly 733 x 370)
             const img = new Image();
             const objectUrl = URL.createObjectURL(file);
             img.src = objectUrl;
@@ -100,8 +116,8 @@ export default function Form({ episode, sponsorPages, specialities }) {
                 // Clean up the object URL
                 URL.revokeObjectURL(objectUrl);
                 
-                if (this.width !== 700 || this.height !== 393) {
-                    setImageError(`Image dimensions must be exactly 700 x 393 pixels. Current: ${this.width} x ${this.height}`);
+                if (this.width !== 733 || this.height !== 370) {
+                    setImageError(`Image dimensions must be exactly 733 x 370 pixels. Current: ${this.width} x ${this.height}`);
                     e.target.value = '';
                     return;
                 }
@@ -136,7 +152,7 @@ export default function Form({ episode, sponsorPages, specialities }) {
         };
 
         if (isEditing) {
-            post(route('episodes.update', episode.id), {
+            post(route('episodes.updates', episode.id), {
                 ...formData,
                 forceFormData: true,
                 _method: 'PUT',
@@ -183,15 +199,16 @@ export default function Form({ episode, sponsorPages, specialities }) {
                                         {/* Episode Type */}
                                         <div>
                                             <InputLabel htmlFor="episode_type" value="Type *" />
-                                            <Dropdown
-                                                options={sponsorPages}
+                                            <Select
+                                                id="episode_type"
+                                                placeholder="Select episode type"
                                                 value={data.episode_type}
                                                 onChange={(value) => setData('episode_type', value)}
-                                                placeholder="Select episode type"
+                                                options={sponsorPages}
                                                 icon="fa-th-large"
                                                 searchable
                                                 error={errors.episode_type}
-                                                size="lg"
+                                                className="w-full mt-1 rounded-sm text-sm"
                                             />
                                         </div>
 
@@ -206,7 +223,8 @@ export default function Form({ episode, sponsorPages, specialities }) {
                                                 placeholder="Eg. Episode 999"
                                                 icon="fa-hashtag"
                                                 error={errors.episode_no}
-                                                size="lg"
+                                                className="w-full py-1.5 mt-1 text-sm"
+                                                
                                             />
                                         </div>
 
@@ -221,8 +239,8 @@ export default function Form({ episode, sponsorPages, specialities }) {
                                                 required
                                                 icon="fa-file-text"
                                                 error={errors.title}
-                                                size="lg"
                                                 placeholder="Enter episode title"
+                                                className="w-full py-1.5 mt-1 text-sm"
                                             />
                                         </div>
 
@@ -239,9 +257,8 @@ export default function Form({ episode, sponsorPages, specialities }) {
                                                 required
                                                 icon="fa-link"
                                                 error={errors.custom_url}
-                                                size="lg"
                                                 placeholder="episode-custom-url"
-                                                
+                                                className="w-full py-1.5 mt-1 text-sm"
                                             />
                                         </div>
 
@@ -251,11 +268,21 @@ export default function Form({ episode, sponsorPages, specialities }) {
                                             <Select
                                                 mode="multiple"
                                                 id="speciality_ids"
-                                                className="mt-1 w-full"
+                                                className="mt-1 w-full text-sm rounded-sm"
                                                 style={{ width: '100%' }}
                                                 placeholder="Select specialities"
                                                 value={data.speciality_ids}
                                                 onChange={(value) => setData('speciality_ids', value)}
+                                                size="large"
+                                                showSearch
+                                                filterOption={(input, option) => {
+                                                    const label = option?.label ?? '';
+                                                    const searchText = input.toLowerCase();
+                                                    return label.toLowerCase().includes(searchText);
+                                                }}
+                                                optionFilterProp="label"
+                                                labelInValue={false}
+                                                options={specialities}
                                             />
                                            
                                             <InputError message={errors.speciality_ids} className="mt-2" />
@@ -266,6 +293,8 @@ export default function Form({ episode, sponsorPages, specialities }) {
                                                 htmlFor="question_required"
                                                 value="Question Required"
                                             />
+                                            
+                                            
                                             <Dropdown
                                                 options={[
                                                     { value: false, label: 'No' },
@@ -281,7 +310,8 @@ export default function Form({ episode, sponsorPages, specialities }) {
                                         {/* Video Status */}
                                         <div>
                                             <InputLabel htmlFor="video_status" value="Video Status *" />
-                                            <Dropdown
+                                            <Select
+                                                id="video_status"
                                                 options={[
                                                     { value: 'live', label: 'Live' },
                                                     { value: 'schedule', label: 'Scheduled' },
@@ -290,30 +320,30 @@ export default function Form({ episode, sponsorPages, specialities }) {
                                                 ]}
                                                 value={data.video_status}
                                                 onChange={(value) => setData('video_status', value)}
-                                                placeholder="Select video status"
-                                                icon="fa-video-camera"
+                                                className="w-full mt-1 rounded-sm text-sm"
                                                 error={errors.video_status}
-                                                size="lg"
                                             />
+
+                                           
                                         </div>
 
                                         {/* Video Source */}
                                         <div>
                                             <InputLabel htmlFor="videoSource" value="Video Source *" />
-                                            <Dropdown
+                                            <Select
+                                                id="videoSource"
                                                 options={[
                                                     { value: 'youTube', label: 'YouTube' },
                                                     { value: 'faceBook', label: 'Facebook' },
                                                     { value: 'mp4', label: 'MP4' },
-                                                    { value: 'other', label: 'Other' },
+                                                    { value: 'other', label: 'Other' }
                                                 ]}
                                                 value={data.videoSource}
                                                 onChange={(value) => setData('videoSource', value)}
-                                                placeholder="Select video source"
-                                                icon="fa-play-circle"
+                                                className="w-full mt-1 rounded-sm text-sm"
                                                 error={errors.videoSource}
-                                                size="lg"
-                                            />
+                                            />  
+                                           
                                         </div>
 
                                         {/* Episode Date */}
@@ -379,17 +409,19 @@ export default function Form({ episode, sponsorPages, specialities }) {
                                         {/* Login Required */}
                                         <div>
                                             <InputLabel htmlFor="login_required" value="Login Required" />
-                                            <Dropdown
+                                            <Select
+                                                id="login_required"
                                                 options={[
                                                     { value: false, label: 'No' },
                                                     { value: true, label: 'Yes' },
                                                 ]}
                                                 value={data.login_required}
                                                 onChange={(value) => setData('login_required', value)}
-                                                icon="fa-lock"
+                                                className="w-full mt-1 rounded-sm text-sm"
                                                 error={errors.login_required}
-                                                size="lg"
+                                                placeholder="Select login required"
                                             />
+                                           
                                         </div>
                                          {/* Video URL */}
                                         <div>
@@ -403,6 +435,7 @@ export default function Form({ episode, sponsorPages, specialities }) {
                                                 error={errors.video_url}
                                                 size="lg"
                                                 placeholder="https://youtube.com/watch?v=..."
+                                                className="w-full py-1.5 mt-1 text-sm"
                                             />
                                         </div>
 
@@ -415,43 +448,62 @@ export default function Form({ episode, sponsorPages, specialities }) {
                                                 placeholder="Enter episode description with rich formatting..."
                                                 error={errors.desc}
                                                 height={300}
+                                                className='mt-1'
                                             />
                                         </div>
 
                                         {/* Featured Image */}
-                                        <div>
-                                            <InputLabel value="Featured Image (700 x 393, Max 1MB)" />
-                                            <div className="mt-2 rounded-md border-2 border-dashed border-gray-300 p-4">
-                                                {!imagePreview ? (
-                                                    <div className="text-center">
-                                                        <div className="mb-4">
-                                                            <i className="fa fa-cloud-upload text-4xl text-gray-400"></i>
-                                                        </div>
-                                                        <p className="mb-2 text-sm font-medium text-gray-700">
-                                                            Episode Featured Image
-                                                        </p>
-                                                        <p className="mb-1 text-xs text-gray-500">
-                                                            Dimensions: <span className="font-semibold">700 x 393 pixels</span>
-                                                        </p>
-                                                        <p className="mb-4 text-xs text-gray-500">
-                                                            Max Size: <span className="font-semibold">1MB</span>
-                                                        </p>
-                                                        <label
-                                                            htmlFor="image"
+                                        <div className='mt-8'>
+                                            <InputLabel value="Featured Image (733 x 370, Max 1MB)" />
+                                            <div className="mt-2">
+                                                <Upload
+                                                    accept=".png,.jpg,.jpeg,.gif,.webp"
+                                                    showUploadList={false}
+                                                    maxCount={1}
+                                                    beforeUpload={file => {
+                                                        const maxSize = 1 * 1024 * 1024; // 1MB
+                                                        const validTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp'];
+                                                        if (!validTypes.includes(file.type)) {
+                                                            message.error('Only image files (JPG, JPEG, PNG, GIF, WEBP) are allowed.');
+                                                            return Upload.LIST_IGNORE;
+                                                        }
+                                                        if (file.size > maxSize) {
+                                                            message.error('Image size must be less than 1MB.');
+                                                            return Upload.LIST_IGNORE;
+                                                        }
+                                                        // Validate dimensions async
+                                                        return new Promise(resolve => {
+                                                            const img = new window.Image();
+                                                            img.src = window.URL.createObjectURL(file);
+                                                            img.onload = function() {
+                                                                window.URL.revokeObjectURL(img.src);
+                                                                if (img.width !== 733 || img.height !== 370) {
+                                                                    message.error(`Image dimensions must be 733 x 370 pixels. Current: ${img.width} x ${img.height}`);
+                                                                    resolve(Upload.LIST_IGNORE);
+                                                                } else {
+                                                                    setImageError(null);
+                                                                    setData('image', file);
+                                                                    setImagePreview(window.URL.createObjectURL(file));
+                                                                    resolve(false); // Prevent auto-upload
+                                                                }
+                                                            };
+                                                            img.onerror = function() {
+                                                                message.error('Failed to load image. Please try another file.');
+                                                                resolve(Upload.LIST_IGNORE);
+                                                            };
+                                                        });
+                                                    }}
+                                                >
+                                                    {!imagePreview ? (
+                                                        <button
+                                                            type="button"
                                                             className="cursor-pointer rounded-md bg-[#00895f] px-4 py-2 text-sm text-white hover:bg-emerald-700 transition-colors inline-block"
                                                         >
-                                                            <i className="fa fa-upload mr-2"></i>
-                                                            Upload Featured Image
-                                                        </label>
-                                                        <input
-                                                            id="image"
-                                                            type="file"
-                                                            className="hidden"
-                                                            accept=".png,.jpg,.jpeg,.gif,.webp"
-                                                            onChange={handleImageChange}
-                                                        />
-                                                    </div>
-                                                ) : (
+                                                            <i className="fa fa-upload mr-2"></i> Upload Featured Image
+                                                        </button>
+                                                    ) : null}
+                                                </Upload>
+                                                {imagePreview && (
                                                     <div>
                                                         <img
                                                             src={imagePreview}
@@ -468,15 +520,15 @@ export default function Form({ episode, sponsorPages, specialities }) {
                                                         </button>
                                                     </div>
                                                 )}
+                                                {imageError && (
+                                                    <div className="mt-2 flex items-center space-x-1 text-sm text-red-600">
+                                                        <i className="fa fa-exclamation-circle"></i>
+                                                        <span>{imageError}</span>
+                                                    </div>
+                                                )}
                                             </div>
-                                            {imageError && (
-                                                <div className="mt-2 flex items-center space-x-1 text-sm text-red-600">
-                                                    <i className="fa fa-exclamation-circle"></i>
-                                                    <span>{imageError}</span>
-                                                </div>
-                                            )}
                                             <InputError message={errors.image} className="mt-2" />
-                                        </div>
+                                    </div>
                                    
                                        
 
@@ -485,7 +537,7 @@ export default function Form({ episode, sponsorPages, specialities }) {
                                 </div>
 
                                 {/* Submit Button */}
-                                <div className="flex items-center justify-center gap-4">
+                                <div className="flex items-center justify-between gap-4">
                                     <Link
                                         href={route('episodes.index')}
                                         className="rounded-md bg-gray-300 px-4 py-2 text-gray-700 hover:bg-gray-400"

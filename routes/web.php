@@ -5,6 +5,7 @@ use App\Http\Controllers\SeminarController;
 use App\Http\Controllers\PostController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\MarketingCampaignController;
+use App\Http\Controllers\CommonController;
 use Illuminate\Foundation\Application;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
@@ -29,14 +30,21 @@ Route::middleware('auth')->group(function () {
     
     // Episode Management Routes
     Route::resource('episodes', EpisodeController::class);
-    Route::get('/api/speakers', [EpisodeController::class, 'getSpeakers'])->name('api.speakers');
+    Route::post('/update-episode/{id}', [EpisodeController::class, 'updateEpisode'])->name('episodes.updates');
+    //
+    Route::get('/api/speakers', [CommonController::class, 'GetSpeaker'])->name('api.speakers');
+    
+    Route::get('/api/tags', [PostController::class, 'getTags'])->name('api.tags');
+    Route::get('/api/specialities', [CommonController::class, 'getSpecialities'])->name('api.specialities');
     
     // Seminar Management Routes
     Route::resource('seminars', SeminarController::class);
+    Route::post('/update-seminar/{id}', [SeminarController::class, 'updateSeminar'])->name('seminars.updates');
     Route::get('/api/seminar-speakers', [SeminarController::class, 'getSpeakers'])->name('api.seminar-speakers');
     
     // Post Management Routes
     Route::resource('posts', PostController::class);
+    Route::post('/update-post/{id}', [PostController::class, 'updatePost'])->name('posts.updates');
     
     // Marketing Campaign Routes
     Route::resource('marketing-campaign', MarketingCampaignController::class);

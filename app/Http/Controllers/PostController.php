@@ -254,17 +254,152 @@ class PostController extends Controller
     /**
      * Update the specified post in storage.
      */
-    public function update(Request $request, Post $post)
+    // public function update(Request $request, Post $post)
+    // {
+    //     // Log the incoming request data for debugging
+    //     \Log::info('Post update request data:', $request->all());
+        
+    //     $validated = $request->validate([
+    //         'title' => 'required|string|max:200',
+    //         'custom_url' => 'required|string|max:255|unique:post,custom_url,' . $post->articleID . ',articleID',
+    //         'postType' => 'nullable|string|max:255',
+    //         'theContent' => 'required|string',
+    //         'transcript' => 'nullable|string',
+    //         'videoLink' => 'nullable|string|max:256',
+    //         'linkType' => 'nullable|string|max:255',
+    //         'catagory1' => 'nullable|string|max:100',
+    //         'diseaseRelations' => 'nullable|string|max:50',
+    //         'author1' => 'nullable|string|max:300',
+    //         'status' => 'required|in:draft,published,deleted',
+    //         'isFeatured' => 'boolean',
+    //         'post_date' => 'required|date',
+    //         'featuredThumbnail' => 'nullable|image|mimes:jpeg,jpg,png,gif,webp|max:1024|dimensions:width=360,height=260',
+    //         'SquareThumbnail' => 'nullable|image|mimes:jpeg,jpg,png,gif,webp|max:1024|dimensions:width=600,height=600',
+    //         'bannerImage' => 'nullable|image|mimes:jpeg,jpg,png,gif,webp|max:1024|dimensions:width=1200,height=400',
+    //         's_image1' => 'nullable|image|mimes:jpeg,jpg,png,gif,webp|max:1024|dimensions:width=770,height=550',
+    //         'alt_image' => 'nullable|string|max:200',
+    //         'seo_pageTitle' => 'nullable|string|max:256',
+    //         'seo_metaDesctiption' => 'nullable|string',
+    //         'seo_metaKeywords' => 'nullable|string',
+    //         'seo_canonical' => 'nullable|string|max:255',
+    //         'tags' => 'nullable|array',
+    //         'article_language' => 'nullable|string|max:50',
+    //         'related_post_id' => 'nullable|array',
+    //     ]);
+
+    //     // Handle image upload - only update if file is uploaded
+    //     if ($request->hasFile('featuredThumbnail')) {
+    //         // Delete old image
+    //         if ($post->featuredThumbnail) {
+    //             $oldImagePath = public_path('uploads/post/orginal/' . $post->featuredThumbnail);
+    //             if (file_exists($oldImagePath)) {
+    //                 unlink($oldImagePath);
+    //             }
+    //         }
+
+    //         $image = $request->file('featuredThumbnail');
+    //         $filename = time() . '-' . Str::slug($request->title) . '.' . $image->getClientOriginalExtension();
+            
+    //         $destinationPath = public_path('uploads/post/orginal');
+    //         if (!file_exists($destinationPath)) {
+    //             mkdir($destinationPath, 0755, true);
+    //         }
+    //         $image->move($destinationPath, $filename);
+    //         $validated['featuredThumbnail'] = $filename;
+    //     } else {
+    //         // Keep existing image if not uploading new one
+    //         unset($validated['featuredThumbnail']);
+    //     }
+    //     if ($request->hasFile('SquareThumbnail')) {
+    //         if ($post->SquareThumbnail) {
+    //             $old = public_path('uploads/post/orginal/' . $post->SquareThumbnail);
+    //             if (file_exists($old)) unlink($old);
+    //         }
+    //         $image = $request->file('SquareThumbnail');
+    //         $filename = time() . '-square-' . Str::slug($request->title) . '.' . $image->getClientOriginalExtension();
+    //         $destinationPath = public_path('uploads/post/orginal');
+    //         if (!file_exists($destinationPath)) mkdir($destinationPath, 0755, true);
+    //         $image->move($destinationPath, $filename);
+    //         $validated['SquareThumbnail'] = $filename;
+    //     } else {
+    //         // Keep existing image if not uploading new one
+    //         unset($validated['SquareThumbnail']);
+    //     }
+    //     if ($request->hasFile('bannerImage')) {
+    //         if ($post->bannerImage) {
+    //             $old = public_path('uploads/post/orginal/' . $post->bannerImage);
+    //             if (file_exists($old)) unlink($old);
+    //         }
+    //         $image = $request->file('bannerImage');
+    //         $filename = time() . '-banner-' . Str::slug($request->title) . '.' . $image->getClientOriginalExtension();
+    //         $destinationPath = public_path('uploads/post/orginal');
+    //         if (!file_exists($destinationPath)) mkdir($destinationPath, 0755, true);
+    //         $image->move($destinationPath, $filename);
+    //         $validated['bannerImage'] = $filename;
+    //     } else {
+    //         // Keep existing image if not uploading new one
+    //         unset($validated['bannerImage']);
+    //     }
+    //     if ($request->hasFile('s_image1')) {
+    //         if ($post->s_image1) {
+    //             $old = public_path('uploads/post/orginal/' . $post->s_image1);
+    //             if (file_exists($old)) unlink($old);
+    //         }
+    //         $image = $request->file('s_image1');
+    //         $filename = time() . '-app-' . Str::slug($request->title) . '.' . $image->getClientOriginalExtension();
+    //         $destinationPath = public_path('uploads/post/orginal');
+    //         if (!file_exists($destinationPath)) mkdir($destinationPath, 0755, true);
+    //         $image->move($destinationPath, $filename);
+    //         $validated['s_image1'] = $filename;
+    //     } else {
+    //         // Keep existing image if not uploading new one
+    //         unset($validated['s_image1']);
+    //     }
+
+    //     // Convert tags array to comma-separated string
+    //     if (isset($validated['tags']) && is_array($validated['tags'])) {
+    //         $validated['tags'] = implode(',', $validated['tags']);
+    //     }
+
+    //     // Normalize related posts array (model cast will JSON encode)
+    //     if (isset($validated['related_post_id']) && is_array($validated['related_post_id'])) {
+    //         $validated['related_post_id'] = array_map(fn($v) => (string) $v, $validated['related_post_id']);
+    //     }
+
+    //     // Format post_date as string (Y-m-d H:i:s)
+    //     if (isset($validated['post_date'])) {
+    //         $validated['post_date'] = date('Y-m-d H:i:s', strtotime($validated['post_date']));
+    //     }
+
+    //     // Set audit fields
+    //     $validated['modified_by'] = auth()->user()->username ?? auth()->user()->display_name;
+    //     $validated['modified_ip'] = $request->ip();
+    //     $validated['modified_on'] = now()->format('Y-m-d H:i:s');
+
+    //     // Auto-set post_date if status changed to published
+    //     if ($validated['status'] === 'published' && !$post->post_date) {
+    //         $validated['post_date'] = now()->format('Y-m-d H:i:s');
+    //     }
+
+    //     $post->update($validated);
+
+    //     return redirect()->route('posts.index')->with('success', 'Post updated successfully!');
+    // }
+    public function updatePost(Request $request, Post $post)
     {
+        
+      
         $validated = $request->validate([
             'title' => 'required|string|max:200',
-            'custom_url' => 'required|string|max:255|unique:post,custom_url,' . $post->articleID . ',articleID',
+            'custom_url' => 'required|string|max:255|unique:post,custom_url,' . $request->articleID . ',articleID',
             'postType' => 'nullable|string|max:255',
             'theContent' => 'required|string',
             'transcript' => 'nullable|string',
             'videoLink' => 'nullable|string|max:256',
             'linkType' => 'nullable|string|max:255',
             'catagory1' => 'nullable|string|max:100',
+            'catagory2' => 'nullable|string|max:100',
+            'catagory3' => 'nullable|string|max:100',
             'diseaseRelations' => 'nullable|string|max:50',
             'author1' => 'nullable|string|max:300',
             'status' => 'required|in:draft,published,deleted',
@@ -284,6 +419,9 @@ class PostController extends Controller
             'related_post_id' => 'nullable|array',
         ]);
 
+        if(Post::where('custom_url', $request->custom_url)->where('articleID', '!=', $request->articleID)->exists()){
+            return back()->withErrors(['custom_url' => 'The custom URL has already been taken.'])->withInput();
+        }
         // Handle image upload - only update if file is uploaded
         if ($request->hasFile('featuredThumbnail')) {
             // Delete old image
@@ -378,6 +516,9 @@ class PostController extends Controller
             $validated['post_date'] = now()->format('Y-m-d H:i:s');
         }
 
+        $post = Post::find($request->articleID);
+
+
         $post->update($validated);
 
         return redirect()->route('posts.index')->with('success', 'Post updated successfully!');
@@ -388,7 +529,7 @@ class PostController extends Controller
      */
     public function destroy(Post $post)
     {
-        // Soft delete by setting status to 'deleted'
+       
         $post->update([
             'status' => 'deleted',
             'deactivated_by' => auth()->user()->username ?? auth()->user()->display_name,
@@ -397,6 +538,20 @@ class PostController extends Controller
         ]);
 
         return redirect()->route('posts.index')->with('success', 'Post deleted successfully!');
+    }
+    
+    /**
+     * Fetch all tags for the tags dropdown
+     */
+    public function getTags()
+    {
+        $tags = \App\Models\Tag::select('tagId as value', 'tagString as label')
+            ->where('status', '!=', 'deleted')
+            ->orderBy('tagString')
+            ->get()
+            ->toArray();
+            
+        return response()->json($tags);
     }
    
 }
