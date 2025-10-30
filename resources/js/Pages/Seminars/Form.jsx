@@ -8,10 +8,29 @@ import Dropdown from '@/Components/Dropdown';
 import RichTextEditor from '@/Components/RichTextEditor';
 import { Head, Link, useForm, usePage } from '@inertiajs/react';
 import { useState, useEffect } from 'react';
-import { Select, Switch } from 'antd';
+import { Select, Switch, Upload, message } from 'antd';
 import { getSeminarImageUrl } from '@/Utils/imageHelper';
 import 'antd/dist/reset.css';
 import '../../../css/antd-custom.css';
+
+// Helper function to format datetime for datetime-local input
+const formatDateTimeForInput = (dateTimeString) => {
+    if (!dateTimeString) return '';
+    
+    // Parse the datetime string (assuming format: 'YYYY-MM-DD HH:MM:SS')
+    const date = new Date(dateTimeString.replace(' ', 'T'));
+    
+    if (isNaN(date.getTime())) return '';
+    
+    // Format as 'YYYY-MM-DDTHH:MM' for datetime-local input
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    const hours = String(date.getHours()).padStart(2, '0');
+    const minutes = String(date.getMinutes()).padStart(2, '0');
+    
+    return `${year}-${month}-${day}T${hours}:${minutes}`;
+};
 
 export default function Form({ seminar, sponsorPages, specialities, educationPartners }) {
     const { props } = usePage();
@@ -25,9 +44,9 @@ export default function Form({ seminar, sponsorPages, specialities, educationPar
     const [appBannerError, setAppBannerError] = useState(null);
     const [appSquareError, setAppSquareError] = useState(null);
 
-   
+
     const { data, setData, post, put, errors, processing } = useForm({
-        seminar_id: seminar?.seminar_no || '',
+        seminar_id: seminar?.id || '',
         seminar_title: seminar?.seminar_title || '',
         custom_url: seminar?.custom_url || '',
         seminar_desc: seminar?.seminar_desc || '',
@@ -35,7 +54,7 @@ export default function Form({ seminar, sponsorPages, specialities, educationPar
         offline_url: seminar?.offline_url || '',
         video_status: seminar?.video_status || 'schedule',
         videoSource: seminar?.videoSource || 'youTube',
-        schedule_timestamp: seminar?.schedule_timestamp || '',
+        schedule_timestamp: seminar?.schedule_timestamp ? formatDateTimeForInput(seminar.schedule_timestamp) : '',
         seminar_speciality: seminar?.seminar_speciality || '',
         speakerids: seminar?.speakerids ? (Array.isArray(seminar.speakerids) ? seminar.speakerids.map(id => String(id).trim()) : []) : [],
         sponsor_ids: seminar?.sponsor_ids || '',
@@ -49,7 +68,7 @@ export default function Form({ seminar, sponsorPages, specialities, educationPar
         questionBox: seminar?.questionBox ?? '0',
         is_registered: seminar?.is_registered ?? false,
         education_partners: seminar?.education_partners ? (Array.isArray(seminar.education_partners) ? seminar.education_partners.map(id => String(id).trim()) : []) : [],
-        hasMCQ: seminar?.hasMCQ || '',
+        hasMCQ: seminar?.hasMCQ || 0,
         re_attempts: seminar?.re_attempts || 0,
         seminar_type: seminar?.seminar_type || '',
         poll_link: seminar?.poll_link || '',
@@ -87,6 +106,7 @@ export default function Form({ seminar, sponsorPages, specialities, educationPar
         image: null,
         s_image1: null,
         s_image2: null,
+        currentStep:currentStep
     });
 
     const [imagePreview, setImagePreview] = useState(
@@ -100,7 +120,7 @@ export default function Form({ seminar, sponsorPages, specialities, educationPar
     );
 
     useEffect(() => {
-         console.log(seminar);
+        console.log(seminar);
         // Fetch speakers from API
         const fetchSpeakers = async () => {
             setLoadingSpeakers(true);
@@ -219,6 +239,7 @@ export default function Form({ seminar, sponsorPages, specialities, educationPar
         };
 
         if (isEditing) {
+            setData('currentStep',currentStep);
             post(route('seminars.updates', seminar.id), {
                 ...formData,
                 forceFormData: true,
@@ -254,7 +275,9 @@ export default function Form({ seminar, sponsorPages, specialities, educationPar
         };
 
         if (isEditing) {
-            post(route('seminars.update', seminar.id), {
+            setData('currentStep',currentStep);
+           
+            post(route('seminars.updates', seminar.id), {
                 ...formData,
                 forceFormData: true,
                 _method: 'PUT',
@@ -361,39 +384,6 @@ export default function Form({ seminar, sponsorPages, specialities, educationPar
                                             />
                                         </div>
 
-                                        {/* Shorten URL */}
-                                        <div>
-                                            <InputLabel htmlFor="shorten_url" value="Shorten URL" />
-                                            <Input
-                                                id="shorten_url"
-                                                type="text"
-                                                value={data.shorten_url}
-                                                onChange={(e) => setData('shorten_url', e.target.value)}
-                                                error={errors.shorten_url}
-                                                icon="fa-external-link"
-                                                placeholder="https://short.url/abc"
-                                                size="lg"
-                                            />
-                                        </div>
-
-                                        {/* Video Status */}
-                                        <div>
-                                            <InputLabel htmlFor="video_status" value="Video Status *" />
-                                            <Dropdown
-                                                options={[
-                                                    { value: 'live', label: 'Live' },
-                                                    { value: 'schedule', label: 'Scheduled' },
-                                                    { value: 'archive', label: 'Archive' },
-                                                    { value: 'new', label: 'New' },
-                                                ]}
-                                                value={data.video_status}
-                                                onChange={(value) => setData('video_status', value)}
-                                                placeholder="Select status"
-                                                icon="fa-circle"
-                                                error={errors.video_status}
-                                                size="lg"
-                                            />
-                                        </div>
                                         {/* Description */}
                                         <div className="col-span-2">
                                             <InputLabel value="Description *" />
@@ -406,119 +396,158 @@ export default function Form({ seminar, sponsorPages, specialities, educationPar
                                             />
                                         </div>
                                         <div className="col-span-2 mt-8">
-                                            <div className="grid grid-cols-2 gap-6">
-
+                                            <div className="grid grid-cols-3 gap-6">
+                                                {/* Shorten URL */}
                                                 <div>
-                                                    <InputLabel value="Featured Image (700 x 393, Max 1MB)" />
-                                                    <div className="mt-2 rounded-md border-2 border-dashed border-gray-300 p-4">
-                                                        {!imagePreview ? (
-                                                            <div className="text-center">
-                                                                <div className="mb-4">
-                                                                    <i className="fa fa-cloud-upload text-4xl text-gray-400"></i>
-                                                                </div>
-                                                                <p className="mb-2 text-sm font-medium text-gray-700">
-                                                                    Seminar Featured Image
-                                                                </p>
-                                                                <p className="mb-1 text-xs text-gray-500">
-                                                                    Dimensions: <span className="font-semibold">700 x 393 pixels</span>
-                                                                </p>
-                                                                <p className="mb-4 text-xs text-gray-500">
-                                                                    Max Size: <span className="font-semibold">1MB</span>
-                                                                </p>
-                                                                <label className="cursor-pointer rounded-md bg-[#00895f] px-4 py-2 text-sm text-white hover:bg-emerald-700">
-                                                                    <i className="fa fa-upload mr-2"></i>
-                                                                    Upload Featured Image
-                                                                    <input
-                                                                        type="file"
-                                                                        className="hidden"
-                                                                        accept="image/*"
-                                                                        onChange={(e) => handleImageChange(e, 'featured')}
-                                                                    />
-                                                                </label>
-                                                            </div>
-                                                        ) : (
-                                                            <div className="relative">
-                                                                <img
-                                                                    src={imagePreview}
-                                                                    alt="Preview"
-                                                                    className="mx-auto max-h-64 rounded-md"
-                                                                />
-                                                                <button
-                                                                    type="button"
-                                                                    onClick={() => {
-                                                                        setData('image', null);
-                                                                        setImagePreview(null);
-                                                                    }}
-                                                                    className="mt-4 w-full rounded-md bg-red-600 px-4 py-2 text-white hover:bg-red-700"
-                                                                >
-                                                                    <i className="fa fa-trash mr-2"></i>
-                                                                    Remove Image
-                                                                </button>
-                                                            </div>
-                                                        )}
-                                                    </div>
-                                                    {imageError && (
-                                                        <div className="mt-2 flex items-center space-x-1 text-sm text-red-600">
-                                                            <i className="fa fa-exclamation-circle"></i>
-                                                            <span>{imageError}</span>
-                                                        </div>
-                                                    )}
-                                                    <InputError message={errors.image} className="mt-2" />
+                                                    <InputLabel htmlFor="shorten_url" value="Shorten URL" />
+                                                    <Input
+                                                        id="shorten_url"
+                                                        type="text"
+                                                        value={data.shorten_url}
+                                                        onChange={(e) => setData('shorten_url', e.target.value)}
+                                                        error={errors.shorten_url}
+                                                        icon="fa-external-link"
+                                                        placeholder="https://short.url/abc"
+                                                        size="lg"
+                                                    />
                                                 </div>
 
+                                                {/* Video Status */}
                                                 <div>
-                                                    {/* Live Stream URL */}
-                                                    <div className=''>
-                                                        <InputLabel htmlFor="stream_url" value="Live Stream URL" />
-                                                        <Input
-                                                            id="stream_url"
-                                                            type="text"
-                                                            value={data.stream_url}
-                                                            onChange={(e) => setData('stream_url', e.target.value)}
-                                                            error={errors.stream_url}
-                                                            icon="fa-video-camera"
-                                                            placeholder="https://youtube.com/live/..."
-                                                            size="lg"
-                                                        />
-                                                    </div>
-
-                                                    {/* Archive Video URL */}
-                                                    <div className='mt-4'>
-                                                        <InputLabel htmlFor="offline_url" value="Archive Video URL" />
-                                                        <Input
-                                                            id="offline_url"
-                                                            type="text"
-                                                            value={data.offline_url}
-                                                            onChange={(e) => setData('offline_url', e.target.value)}
-                                                            error={errors.offline_url}
-                                                            icon="fa-archive"
-                                                            placeholder="https://youtube.com/watch/..."
-                                                            size="lg"
-                                                        />
-                                                    </div>
-
-
-
-                                                    {/* Video Source */}
-                                                    <div className='mt-4'>
-                                                        <InputLabel htmlFor="videoSource" value="Video Source *" />
-                                                        <Dropdown
-                                                            options={[
-                                                                { value: 'youTube', label: 'YouTube' },
-                                                                { value: 'faceBook', label: 'Facebook' },
-                                                                { value: 'mp4', label: 'MP4' },
-                                                                { value: 'other', label: 'Other' },
-                                                            ]}
-                                                            value={data.videoSource}
-                                                            onChange={(value) => setData('videoSource', value)}
-                                                            placeholder="Select source"
-                                                            icon="fa-play-circle"
-                                                            error={errors.videoSource}
-                                                            size="lg"
-                                                        />
-                                                    </div>
+                                                    <InputLabel htmlFor="video_status" value="Video Status *" />
+                                                    <Dropdown
+                                                        options={[
+                                                            { value: 'live', label: 'Live' },
+                                                            { value: 'schedule', label: 'Scheduled' },
+                                                            { value: 'archive', label: 'Archive' },
+                                                            { value: 'new', label: 'New' },
+                                                        ]}
+                                                        value={data.video_status}
+                                                        onChange={(value) => setData('video_status', value)}
+                                                        placeholder="Select status"
+                                                        icon="fa-circle"
+                                                        error={errors.video_status}
+                                                        size="lg"
+                                                    />
+                                                </div>
+                                                {/* Live Stream URL */}
+                                                <div className=''>
+                                                    <InputLabel htmlFor="stream_url" value="Live Stream URL" />
+                                                    <Input
+                                                        id="stream_url"
+                                                        type="text"
+                                                        value={data.stream_url}
+                                                        onChange={(e) => setData('stream_url', e.target.value)}
+                                                        error={errors.stream_url}
+                                                        icon="fa-video-camera"
+                                                        placeholder="https://youtube.com/live/..."
+                                                        size="lg"
+                                                    />
                                                 </div>
 
+                                                {/* Archive Video URL */}
+                                                <div >
+                                                    <InputLabel htmlFor="offline_url" value="Archive Video URL" />
+                                                    <Input
+                                                        id="offline_url"
+                                                        type="text"
+                                                        value={data.offline_url}
+                                                        onChange={(e) => setData('offline_url', e.target.value)}
+                                                        error={errors.offline_url}
+                                                        icon="fa-archive"
+                                                        placeholder="https://youtube.com/watch/..."
+                                                        size="lg"
+                                                    />
+                                                </div>
+
+                                                {/* Video Source */}
+                                                <div >
+                                                    <InputLabel htmlFor="videoSource" value="Video Source *" />
+                                                    <Dropdown
+                                                        options={[
+                                                            { value: 'youTube', label: 'YouTube' },
+                                                            { value: 'faceBook', label: 'Facebook' },
+                                                            { value: 'mp4', label: 'MP4' },
+                                                            { value: 'other', label: 'Other' },
+                                                        ]}
+                                                        value={data.videoSource}
+                                                        onChange={(value) => setData('videoSource', value)}
+                                                        placeholder="Select source"
+                                                        icon="fa-play-circle"
+                                                        error={errors.videoSource}
+                                                        size="lg"
+                                                    />
+                                                </div>
+                                                {/* Schedule DateTime */}
+                                                <div>
+                                                    <InputLabel htmlFor="schedule_timestamp" value="Schedule Date & Time *" />
+                                                    <Input
+                                                        id="schedule_timestamp"
+                                                        type="datetime-local"
+                                                        value={data.schedule_timestamp}
+                                                        onChange={(e) => setData('schedule_timestamp', e.target.value)}
+                                                        error={errors.schedule_timestamp}
+                                                        icon="fa-calendar"
+                                                        size="lg"
+                                                    />
+                                                </div>
+
+                                                {/* Speakers */}
+                                                <div>
+                                                    <InputLabel value="Speakers" />
+                                                    <Select
+                                                        mode="multiple"
+                                                        size="large"
+                                                        placeholder="Select speakers"
+                                                        value={data.speakerids}
+                                                        onChange={(value) => setData('speakerids', value)}
+                                                        loading={loadingSpeakers}
+                                                        options={speakers}
+                                                        className="w-full"
+                                                        style={{ width: '100%' }}
+                                                        filterOption={(input, option) =>
+                                                            option.label.toLowerCase().includes(input.toLowerCase())
+                                                        }
+                                                        optionFilterProp="label"
+                                                        showSearch
+                                                    />
+                                                    <InputError message={errors.speakerids} />
+                                                </div>
+                                                {/* Speciality */}
+                                                <div>
+                                                    <InputLabel htmlFor="seminar_speciality" value="Speciality" />
+                                                    <Dropdown
+                                                        options={specialities}
+                                                        value={data.seminar_speciality}
+                                                        onChange={(value) => setData('seminar_speciality', value)}
+                                                        placeholder="Select speciality"
+                                                        icon="fa-stethoscope"
+                                                        searchable
+                                                        error={errors.seminar_speciality}
+                                                        size="lg"
+                                                    />
+                                                </div>
+
+                                                {/* Education Partners */}
+                                                <div>
+                                                    <InputLabel value="Education Partners" />
+                                                    <Select
+                                                        mode="multiple"
+                                                        size="large"
+                                                        placeholder="Select education partners"
+                                                        value={data.education_partners}
+                                                        onChange={(value) => setData('education_partners', value)}
+                                                        options={educationPartners}
+                                                        className="w-full"
+                                                        style={{ width: '100%' }}
+                                                        filterOption={(input, option) =>
+                                                            option.label.toLowerCase().includes(input.toLowerCase())
+                                                        }
+                                                        optionFilterProp="label"
+                                                        showSearch
+                                                    />
+                                                    <InputError message={errors.education_partners} />
+                                                </div>
                                             </div>
                                         </div>
 
@@ -526,80 +555,105 @@ export default function Form({ seminar, sponsorPages, specialities, educationPar
 
 
 
-                                        {/* Schedule DateTime */}
+
+
+
+
+
                                         <div>
-                                            <InputLabel htmlFor="schedule_timestamp" value="Schedule Date & Time *" />
-                                            <Input
-                                                id="schedule_timestamp"
-                                                type="datetime-local"
-                                                value={data.schedule_timestamp}
-                                                onChange={(e) => setData('schedule_timestamp', e.target.value)}
-                                                error={errors.schedule_timestamp}
-                                                icon="fa-calendar"
-                                                size="lg"
-                                            />
+                                            <InputLabel value="Featured Image (700 x 393, Max 1MB)" />
+                                            <div className="mt-2 rounded-md border-2 border-dashed border-gray-300">
+                                                <Upload
+                                                    name="image"
+                                                    listType="picture-card"
+                                                    className="avatar-uploader"
+                                                    showUploadList={false}
+                                                    beforeUpload={(file) => {
+                                                        // Validation for file type
+                                                        const isValidType = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp'].includes(file.type);
+                                                        if (!isValidType) {
+                                                            message.error('Only image files (JPG, JPEG, PNG, GIF, WEBP) are allowed.');
+                                                            return false;
+                                                        }
+
+                                                        // Validation for file size (max 1MB)
+                                                        const isLt1M = file.size / 1024 / 1024 < 1;
+                                                        if (!isLt1M) {
+                                                            message.error('Image size must be less than 1MB.');
+                                                            return false;
+                                                        }
+
+                                                        // Create preview
+                                                        const reader = new FileReader();
+                                                        reader.onload = (e) => {
+                                                            // Validate dimensions
+                                                            const img = new Image();
+                                                            img.src = e.target.result;
+                                                            img.onload = () => {
+                                                                if (img.width !== 700 || img.height !== 393) {
+                                                                    message.error(`Featured Image dimensions must be exactly 700 x 393 pixels. Current: ${img.width} x ${img.height}`);
+                                                                    return false;
+                                                                }
+                                                                setImagePreview(e.target.result);
+                                                                setData('image', file);
+                                                                setImageError(null);
+                                                            };
+                                                        };
+                                                        reader.readAsDataURL(file);
+
+                                                        return false; // Prevent automatic upload
+                                                    }}
+                                                    onRemove={() => {
+                                                        setData('image', null);
+                                                        setImagePreview(null);
+                                                    }}
+                                                >
+                                                    {imagePreview ? (
+                                                        <div className="relative w-full">
+                                                            <img src={imagePreview} alt="Preview" className="mx-auto w-full h-[200px] rounded-md" />
+                                                            <button
+                                                                type="button"
+                                                                onClick={(e) => {
+                                                                    e.stopPropagation();
+                                                                    setData('image', null);
+                                                                    setImagePreview(null);
+                                                                }}
+                                                                className="rounded-md bg-red-600 px-2 py-1 text-white hover:bg-red-700 absolute right-1 top-1"
+                                                            >
+                                                                <i className="fa fa-trash h-3 w-3"></i>
+
+                                                            </button>
+                                                        </div>
+                                                    ) : (
+                                                        <div className="text-center">
+                                                            <div className="mb-4">
+                                                                <i className="fa fa-cloud-upload text-4xl text-gray-400"></i>
+                                                            </div>
+                                                            <p className="mb-2 text-sm font-medium text-gray-700">
+                                                                Seminar Featured Image
+                                                            </p>
+                                                            <p className="mb-1 text-xs text-gray-500">
+                                                                Dimensions: <span className="font-semibold">700 x 393 pixels</span>
+                                                            </p>
+                                                            <p className="mb-4 text-xs text-gray-500">
+                                                                Max Size: <span className="font-semibold">1MB</span>
+                                                            </p>
+                                                            <div className="cursor-pointer rounded-md bg-[#00895f] px-4 py-2 text-sm text-white hover:bg-emerald-700">
+                                                                <i className="fa fa-upload mr-2"></i>
+                                                                Upload Featured Image
+                                                            </div>
+                                                        </div>
+                                                    )}
+                                                </Upload>
+                                            </div>
+                                            {imageError && (
+                                                <div className="mt-2 flex items-center space-x-1 text-sm text-red-600">
+                                                    <i className="fa fa-exclamation-circle"></i>
+                                                    <span>{imageError}</span>
+                                                </div>
+                                            )}
+                                            <InputError message={errors.image} className="mt-2" />
                                         </div>
-
-                                        {/* Speakers */}
-                                        <div>
-                                            <InputLabel value="Speakers" />
-                                            <Select
-                                                mode="multiple"
-                                                size="large"
-                                                placeholder="Select speakers"
-                                                value={data.speakerids}
-                                                onChange={(value) => setData('speakerids', value)}
-                                                loading={loadingSpeakers}
-                                                options={speakers}
-                                                className="w-full"
-                                                style={{ width: '100%' }}
-                                                filterOption={(input, option) =>
-                                                    option.label.toLowerCase().includes(input.toLowerCase())
-                                                }
-                                                optionFilterProp="label"
-                                                showSearch
-                                            />
-                                            <InputError message={errors.speakerids} />
-                                        </div>
-
-                                        {/* Speciality */}
-                                        <div>
-                                            <InputLabel htmlFor="seminar_speciality" value="Speciality" />
-                                            <Dropdown
-                                                options={specialities}
-                                                value={data.seminar_speciality}
-                                                onChange={(value) => setData('seminar_speciality', value)}
-                                                placeholder="Select speciality"
-                                                icon="fa-stethoscope"
-                                                searchable
-                                                error={errors.seminar_speciality}
-                                                size="lg"
-                                            />
-                                        </div>
-
-                                        {/* Education Partners */}
-                                        <div>
-                                            <InputLabel value="Education Partners" />
-                                            <Select
-                                                mode="multiple"
-                                                size="large"
-                                                placeholder="Select education partners"
-                                                value={data.education_partners}
-                                                onChange={(value) => setData('education_partners', value)}
-                                                options={educationPartners}
-                                                className="w-full"
-                                                style={{ width: '100%' }}
-                                                filterOption={(input, option) =>
-                                                    option.label.toLowerCase().includes(input.toLowerCase())
-                                                }
-                                                optionFilterProp="label"
-                                                showSearch
-                                            />
-                                            <InputError message={errors.education_partners} />
-                                        </div>
-
-
-
 
 
 
@@ -607,34 +661,75 @@ export default function Form({ seminar, sponsorPages, specialities, educationPar
                                         <div>
                                             <InputLabel value="App Banner (640 x 360, Max 1MB)" />
                                             <div className="mt-2 rounded-md border-2 border-dashed border-gray-300 p-4">
-                                                {!appBannerPreview ? (
-                                                    <div className="text-center">
-                                                        <p className="mb-2 text-xs text-gray-500">640 x 360 pixels</p>
-                                                        <label className="cursor-pointer rounded-md bg-gray-600 px-3 py-1 text-sm text-white hover:bg-gray-700">
-                                                            Upload
-                                                            <input
-                                                                type="file"
-                                                                className="hidden"
-                                                                accept="image/*"
-                                                                onChange={(e) => handleImageChange(e, 'appBanner')}
-                                                            />
-                                                        </label>
-                                                    </div>
-                                                ) : (
-                                                    <div className="relative">
-                                                        <img src={appBannerPreview} alt="App Banner" className="mx-auto max-h-32 rounded-md" />
-                                                        <button
-                                                            type="button"
-                                                            onClick={() => {
-                                                                setData('s_image1', null);
-                                                                setAppBannerPreview(null);
-                                                            }}
-                                                            className="mt-2 text-xs text-red-600 hover:text-red-800"
-                                                        >
-                                                            Remove
-                                                        </button>
-                                                    </div>
-                                                )}
+                                                <Upload
+                                                    name="s_image1"
+                                                    listType="picture-card"
+                                                    className="avatar-uploader"
+                                                    showUploadList={false}
+                                                    beforeUpload={(file) => {
+                                                        // Validation for file type
+                                                        const isValidType = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp'].includes(file.type);
+                                                        if (!isValidType) {
+                                                            message.error('Only image files (JPG, JPEG, PNG, GIF, WEBP) are allowed.');
+                                                            return false;
+                                                        }
+                                                        
+                                                        // Validation for file size (max 1MB)
+                                                        const isLt1M = file.size / 1024 / 1024 < 1;
+                                                        if (!isLt1M) {
+                                                            message.error('Image size must be less than 1MB.');
+                                                            return false;
+                                                        }
+                                                        
+                                                        // Create preview
+                                                        const reader = new FileReader();
+                                                        reader.onload = (e) => {
+                                                            // Validate dimensions
+                                                            const img = new Image();
+                                                            img.src = e.target.result;
+                                                            img.onload = () => {
+                                                                if (img.width !== 640 || img.height !== 360) {
+                                                                    message.error(`App Banner dimensions must be exactly 640 x 360 pixels. Current: ${img.width} x ${img.height}`);
+                                                                    return false;
+                                                                }
+                                                                setAppBannerPreview(e.target.result);
+                                                                setData('s_image1', file);
+                                                                setAppBannerError(null);
+                                                            };
+                                                        };
+                                                        reader.readAsDataURL(file);
+                                                        
+                                                        return false; // Prevent automatic upload
+                                                    }}
+                                                    onRemove={() => {
+                                                        setData('s_image1', null);
+                                                        setAppBannerPreview(null);
+                                                    }}
+                                                >
+                                                    {appBannerPreview ? (
+                                                        <div className="relative">
+                                                            <img src={appBannerPreview} alt="App Banner" className="mx-auto max-h-32 rounded-md" />
+                                                            <button
+                                                                type="button"
+                                                                onClick={(e) => {
+                                                                    e.stopPropagation();
+                                                                    setData('s_image1', null);
+                                                                    setAppBannerPreview(null);
+                                                                }}
+                                                                className="mt-2 text-xs text-red-600 hover:text-red-800"
+                                                            >
+                                                                Remove
+                                                            </button>
+                                                        </div>
+                                                    ) : (
+                                                        <div className="text-center">
+                                                            <p className="mb-2 text-xs text-gray-500">640 x 360 pixels</p>
+                                                            <div className="cursor-pointer rounded-md bg-gray-600 px-3 py-1 text-sm text-white hover:bg-gray-700">
+                                                                Upload
+                                                            </div>
+                                                        </div>
+                                                    )}
+                                                </Upload>
                                             </div>
                                             {appBannerError && <div className="mt-1 text-xs text-red-600">{appBannerError}</div>}
                                         </div>
@@ -730,52 +825,52 @@ export default function Form({ seminar, sponsorPages, specialities, educationPar
                                 {currentStep === 3 && (
                                     <div className="space-y-6">
                                         <h3 className="text-lg font-semibold text-gray-800">Live Seminar Registration Form Builder</h3>
-                                            <hr className="my-4" />
+                                        <hr className="my-4" />
 
                                         <div className="rounded-lg border border-blue-200 bg-blue-50 p-4">
                                             <p className="text-sm text-blue-800">
                                                 <i className="fa fa-info-circle mr-2"></i>
                                                 Configure which fields appear in the registration form and whether they're required.
                                             </p>
-                                                </div>
+                                        </div>
 
                                         {/* Registration Fields Configuration */}
                                         <div className="space-y-3">
                                             <div className="grid grid-cols-12 gap-4 border-b border-gray-300 pb-3">
                                                 <div className="col-span-8">
                                                     <h5 className="font-semibold text-gray-700">Registration Fields</h5>
-                                                        </div>
+                                                </div>
                                                 <div className="col-span-4 text-center">
                                                     <h5 className="font-semibold text-gray-700">Required</h5>
-                                                    </div>
                                                 </div>
+                                            </div>
 
                                             {/* Registration fields - Title, First Name, Last Name, Email, Mobile, etc. */}
                                             {/* Similar pattern for each field with enable/required toggles */}
-                                            
+
                                             <div className="rounded-lg border border-yellow-200 bg-yellow-50 p-4 mt-4">
                                                 <p className="text-sm text-yellow-800">
                                                     <i className="fa fa-wrench mr-2"></i>
                                                     Registration form builder will be fully implemented with all fields from the PHP version.
                                                 </p>
-                                                    </div>
-                                                </div>
+                                            </div>
+                                        </div>
 
                                         {/* Additional Settings */}
                                         <div className="mt-8 space-y-4">
                                             <h4 className="text-md font-semibold text-gray-800">Additional Settings</h4>
-                                            
+
                                             <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
                                                 {/* Theme Color */}
                                                 <div>
                                                     <InputLabel htmlFor="theme_color" value="Theme Color" />
-                                                        <input
-                                                            type="color"
-                                                            id="theme_color"
-                                                            value={data.theme_color}
-                                                            onChange={(e) => setData('theme_color', e.target.value)}
+                                                    <input
+                                                        type="color"
+                                                        id="theme_color"
+                                                        value={data.theme_color}
+                                                        onChange={(e) => setData('theme_color', e.target.value)}
                                                         className="h-10 w-full rounded-md border border-gray-300"
-                                                        />
+                                                    />
                                                     <p className="mt-1 text-xs text-gray-500">
                                                         Choose the primary color for the registration form
                                                     </p>
@@ -821,7 +916,7 @@ export default function Form({ seminar, sponsorPages, specialities, educationPar
                                                     </div>
                                                 </div>
                                             </div>
-                                                </div>
+                                        </div>
                                     </div>
                                 )}
 
@@ -852,7 +947,7 @@ export default function Form({ seminar, sponsorPages, specialities, educationPar
                                             </>
                                         ) : (
                                             <>
-                                                
+
                                                 {isEditing ? 'Update Seminar' : 'Create Seminar'}
                                                 <i className="fa fa-arrow-right ml-2"></i>
                                             </>

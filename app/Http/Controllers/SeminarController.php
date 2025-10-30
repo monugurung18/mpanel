@@ -199,7 +199,7 @@ class SeminarController extends Controller
      */
     public function updateSeminar(Request $request)
     {
-        \Log::info("Updating seminar with ID: " . $request->seminar_id);
+        \Log::info("Updating seminar with ID: " . $request->currentStep);
         $validated = $request->validate([
             'seminar_title' => 'required|string|max:250',
             'custom_url' => 'required|string|max:256|unique:seminar,custom_url,' . $request->seminar_id . ',seminar_no',
@@ -295,9 +295,18 @@ class SeminarController extends Controller
         
         // Use the seminar instance from route model binding directly
         $seminar->update($validated);
+        \Log::info('jsdkfa');
+        if($request->currentStep<3)
+        {
+            return back()->with('success', 'Seminar updated successfully.');
+        }
+        else{
+            return redirect()->route('seminars.index')
+            ->with('success', 'Seminar created successfully.');
+        }
+        
 
-        return redirect()->route('seminars.index')
-            ->with('success', 'Seminar updated successfully.');
+       
     }
 
     /**
