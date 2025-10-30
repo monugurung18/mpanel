@@ -32,7 +32,7 @@ const formatDateTimeForInput = (dateTimeString) => {
     return `${year}-${month}-${day}T${hours}:${minutes}`;
 };
 
-export default function Form({ seminar, sponsorPages, specialities, educationPartners }) {
+export default function Form({ seminar, sponsorPages, specialities }) {
     const { props } = usePage();
     const { baseImagePath } = props;
     const isEditing = !!seminar;
@@ -43,7 +43,7 @@ export default function Form({ seminar, sponsorPages, specialities, educationPar
     const [imageError, setImageError] = useState(null);
     const [appBannerError, setAppBannerError] = useState(null);
     const [appSquareError, setAppSquareError] = useState(null);
-
+    const [educationPartners, setEducationalPartners]= useState([]);
 
     const { data, setData, post, put, errors, processing } = useForm({
         seminar_id: seminar?.id || '',
@@ -120,7 +120,6 @@ export default function Form({ seminar, sponsorPages, specialities, educationPar
     );
 
     useEffect(() => {
-        console.log(seminar);
         // Fetch speakers from API
         const fetchSpeakers = async () => {
             setLoadingSpeakers(true);
@@ -137,6 +136,24 @@ export default function Form({ seminar, sponsorPages, specialities, educationPar
 
         fetchSpeakers();
     }, []);
+
+    useEffect(()=>{
+        fetchEducationalPartners();
+
+    },[]);
+
+    const fetchEducationalPartners=async()=>{
+        setLoadingSpeakers(true);
+        try {
+            const response = await fetch('/api/education-partners');
+            const data = await response.json();
+            setEducationalPartners(data);
+        } catch (error) {
+            console.error('Error fetching speakers:', error);
+        } finally {
+            setLoadingSpeakers(false);
+        }
+    }
 
     useEffect(() => {
         // Auto-generate custom URL from title

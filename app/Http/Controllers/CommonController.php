@@ -6,6 +6,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Response;
 use App\Models\FrontendUser;
 use Illuminate\Support\Facades\DB;
+use App\Models\EducationPartner;
 
 class CommonController extends Controller
 {
@@ -48,5 +49,26 @@ class CommonController extends Controller
             })
             ->toArray();
         return response()->json($specialities);
+    }
+
+    /**
+     * Return a list of education partners for dropdowns, etc.
+     */
+    public function apiEducationPartners()
+    {
+        $partners = EducationPartner::query()
+            ->orderBy('name')
+            ->get(['id', 'name', 'square_image', 'rectangle_image', 'is_active'])
+            ->map(function ($row) {
+                return [
+                    'value' => $row->id,
+                    'label' => $row->name,
+                    'square_image' => $row->square_image,
+                    'rectangle_image' => $row->rectangle_image,
+                    'is_active' => $row->is_active,
+                ];
+            })->values();
+
+        return response()->json($partners);
     }
 }

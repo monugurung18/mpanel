@@ -6,6 +6,7 @@ use App\Http\Controllers\PostController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\MarketingCampaignController;
 use App\Http\Controllers\CommonController;
+use App\Http\Controllers\TagController; // Added TagController
 use Illuminate\Foundation\Application;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
@@ -36,6 +37,7 @@ Route::middleware('auth')->group(function () {
     
     Route::get('/api/tags', [PostController::class, 'getTags'])->name('api.tags');
     Route::get('/api/specialities', [CommonController::class, 'getSpecialities'])->name('api.specialities');
+    Route::get('/api/education-partners', [CommonController::class, 'apiEducationPartners']);
     
     // Seminar Management Routes
     Route::resource('seminars', SeminarController::class);
@@ -48,6 +50,10 @@ Route::middleware('auth')->group(function () {
     
     // Marketing Campaign Routes
     Route::resource('marketing-campaign', MarketingCampaignController::class);
+    
+    // Tag Management Routes
+    Route::resource('tags', TagController::class);
+    Route::post('/check-tag', [TagController::class, 'checkTag'])->name('tags.check');
 });
 
 require __DIR__.'/auth.php';
