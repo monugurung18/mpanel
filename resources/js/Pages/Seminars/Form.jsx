@@ -25,6 +25,7 @@ export default function Form({ seminar, sponsorPages, specialities, educationPar
     const [appBannerError, setAppBannerError] = useState(null);
     const [appSquareError, setAppSquareError] = useState(null);
 
+   
     const { data, setData, post, put, errors, processing } = useForm({
         seminar_id: seminar?.seminar_no || '',
         seminar_title: seminar?.seminar_title || '',
@@ -99,6 +100,7 @@ export default function Form({ seminar, sponsorPages, specialities, educationPar
     );
 
     useEffect(() => {
+         console.log(seminar);
         // Fetch speakers from API
         const fetchSpeakers = async () => {
             setLoadingSpeakers(true);

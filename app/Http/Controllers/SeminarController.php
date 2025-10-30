@@ -197,11 +197,12 @@ class SeminarController extends Controller
     /**
      * Update the specified seminar in storage.
      */
-    public function updateSeminar(Request $request, Seminar $seminar)
+    public function updateSeminar(Request $request)
     {
+        \Log::info("Updating seminar with ID: " . $request->seminar_id);
         $validated = $request->validate([
             'seminar_title' => 'required|string|max:250',
-            'custom_url' => 'required|string|max:256|unique:seminar,custom_url,' . $seminar->seminar_no . ',seminar_no',
+            'custom_url' => 'required|string|max:256|unique:seminar,custom_url,' . $request->seminar_id . ',seminar_no',
             'seminar_desc' => 'nullable|string',
             'seminar_auth' => 'nullable|string|max:245',
             'video_url' => 'nullable|string|max:250',
@@ -290,7 +291,9 @@ class SeminarController extends Controller
             }
             $validated['s_image2'] = $this->handleImageUpload($request->file('s_image2'), 'app_square');
         }
-
+        $seminar = Seminar::find($request->seminar_id);
+        
+        // Use the seminar instance from route model binding directly
         $seminar->update($validated);
 
         return redirect()->route('seminars.index')
