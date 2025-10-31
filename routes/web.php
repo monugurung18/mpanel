@@ -6,7 +6,8 @@ use App\Http\Controllers\PostController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\MarketingCampaignController;
 use App\Http\Controllers\CommonController;
-use App\Http\Controllers\TagController; // Added TagController
+use App\Http\Controllers\TagController;
+use App\Http\Controllers\SpecialtyController; // Added SpecialtyController
 use Illuminate\Foundation\Application;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
@@ -54,6 +55,9 @@ Route::middleware('auth')->group(function () {
     // Tag Management Routes
     Route::resource('tags', TagController::class);
     Route::post('/check-tag', [TagController::class, 'checkTag'])->name('tags.check');
+    
+    // Specialty Management Routes
+    Route::resource('specialties', SpecialtyController::class);
 });
 
 require __DIR__.'/auth.php';

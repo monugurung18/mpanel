@@ -24,9 +24,10 @@ export default function TagsIndex({ tags }) {
                                 </div>
                                 <Link href={route('tags.create')}>
                                     <Button  
-                                        icon={<PlusOutlined />}
+                                        
                                         className="flex items-center"
                                     >
+                                        <PlusOutlined className="mr-2 h-4 w-4" />
                                         Add New Tag
                                     </Button>
                                 </Link>
