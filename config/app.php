@@ -134,5 +134,6 @@ return [
     */
 
     'base_image_path' => env('BASE_IMAGE_PATH', 'https://www.medtalks.in/uploads'),
+    'base_file_path' => env('BASE_FILE_PATH', '/var/www/html/uploads/'),   
 
 ];

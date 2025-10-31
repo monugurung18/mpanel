@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use App\Models\BusinessPage;
 
 class MarketingCampaign extends Model
 {
@@ -52,4 +53,9 @@ class MarketingCampaign extends Model
         'modified_on' => 'datetime',
         'deactivated_on' => 'datetime',
     ];
+    
+    public function business()
+    {
+        return $this->belongsTo(BusinessPage::class, 'businessID', 'businessID');
+    }
 }

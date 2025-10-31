@@ -1,637 +1,591 @@
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
-import { Head, Link } from '@inertiajs/react';
-import { Button, Input, Select, Form, Row, Col, message, Switch, Upload } from 'antd';
+import { Head, Link, useForm } from '@inertiajs/react';
+import { Button } from '@/Components/ui/button';
+import Input from '@/Components/Input';
+import Dropdown from '@/Components/Dropdown';
 import { useState, useEffect } from 'react';
-import { LeftOutlined, UploadOutlined } from '@ant-design/icons';
-import axios from 'axios';
+import { LeftOutlined } from '@ant-design/icons';
+import PrimaryButton from '@/Components/PrimaryButton';
+import InputError from '@/Components/InputError';
+import InputLabel from '@/Components/InputLabel';
+import { Select } from 'antd';
 
 export default function SpecialtyForm({ specialty, parentSpecialties }) {
-    const [form] = Form.useForm();
+
     const [processing, setProcessing] = useState(false);
     const [errors, setErrors] = useState({});
+    const [imagePreviews, setImagePreviews] = useState({
+        web_banner: null,
+        app_banner: null,
+        icon_banner: null,
+        banner_img: null
+    });
+    // Add image validation errors state
+    const [imageValidationErrors, setImageValidationErrors] = useState({
+        web_banner: '',
+        app_banner: '',
+        icon_banner: '',
+        banner_img: ''
+    });
 
     const isEditing = !!specialty;
 
+    const { data, setData, post, put, reset } = useForm({
+        title: specialty?.title || '',
+        spec_desc: specialty?.spec_desc || '',
+        meta_title: specialty?.meta_title || '',
+        meta_desc: specialty?.meta_desc || '',
+        meta_key: specialty?.meta_key || '',
+        custom_url: specialty?.custom_url || '',
+        cmeDescription: specialty?.cmeDescription || '',
+        speciality_type: specialty?.speciality_type || 'speciality',
+        parentID: specialty?.parentID || 0,
+        parentID2: specialty?.parentID2 || 0,
+        parentID3: specialty?.parentID3 || 0,
+        parentID4: specialty?.parentID4 || 0,
+        parentID5: specialty?.parentID5 || 0,
+        status: specialty?.status || 'on',
+        web_banner: null,
+        app_banner: null,
+        icon_banner: null,
+        banner_img: null,
+        web_banner_old: specialty?.thumbnail_img || '',
+        app_banner_old: specialty?.mobileThumb || '',
+        icon_banner_old: specialty?.featured_img || '',
+        banner_img_old: specialty?.banner_img || '',
+    });
+
     useEffect(() => {
         if (specialty) {
-            const initialValues = {
-                title: specialty.title || '',
-                spec_desc: specialty.spec_desc || '',
-                meta_title: specialty.meta_title || '',
-                meta_desc: specialty.meta_desc || '',
-                meta_key: specialty.meta_key || '',
-                custom_url: specialty.custom_url || '',
-                cmeDescription: specialty.cmeDescription || '',
-                speciality_type: specialty.speciality_type || 'speciality',
-                parentID: specialty.parentID || undefined,
-                parentID2: specialty.parentID2 || undefined,
-                parentID3: specialty.parentID3 || undefined,
-                parentID4: specialty.parentID4 || undefined,
-                parentID5: specialty.parentID5 || undefined,
-                status: specialty.status === 'on', // Initialize as boolean
-                web_banner_old: specialty.thumbnail_img || '',
-                app_banner_old: specialty.mobileThumb || '',
-                icon_banner_old: specialty.featured_img || '',
-                banner_img_old: specialty.banner_img || '',
-            };
-            form.setFieldsValue(initialValues);
-        } else {
-            // For new specialties, set default values
-            const initialValues = {
-                title: '',
-                spec_desc: '',
-                meta_title: '',
-                meta_desc: '',
-                meta_key: '',
-                custom_url: '',
-                cmeDescription: '',
-                speciality_type: 'speciality',
-                parentID: undefined,
-                parentID2: undefined,
-                parentID3: undefined,
-                parentID4: undefined,
-                parentID5: undefined,
-                status: true, // Default to active
-                web_banner_old: '',
-                app_banner_old: '',
-                icon_banner_old: '',
-                banner_img_old: '',
-            };
-            form.setFieldsValue(initialValues);
+            // Set up image previews for existing images
+            const previews = {};
+            if (specialty.thumbnail_img) previews.web_banner = `/storage/${specialty.thumbnail_img}`;
+            if (specialty.mobileThumb) previews.app_banner = `/storage/${specialty.mobileThumb}`;
+            if (specialty.featured_img) previews.icon_banner = `/storage/${specialty.featured_img}`;
+            if (specialty.banner_img) previews.banner_img = `/storage/${specialty.banner_img}`;
+            setImagePreviews(previews);
         }
-    }, [specialty, form]);
+    }, [specialty]);
 
-    const handleSubmit = (values) => {
+    // Function to validate image dimensions and size
+    const validateImage = (file, type) => {
+        return new Promise((resolve, reject) => {
+            // Check file size (max 1MB)
+            if (file.size > 1024 * 1024) {
+                reject(`File size must be less than 1MB. Current size: ${(file.size / 1024 / 1024).toFixed(2)}MB`);
+                return;
+            }
+
+            // Check file type
+            const validTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp'];
+            if (!validTypes.includes(file.type)) {
+                reject('Only JPG, JPEG, PNG, GIF, and WEBP files are allowed');
+                return;
+            }
+
+            // Create image to check dimensions
+            const img = new Image();
+            img.onload = () => {
+                const { width, height } = img;
+                let expectedWidth, expectedHeight;
+
+                // Define expected dimensions based on image type
+                switch (type) {
+                    case 'web_banner':
+                        expectedWidth = 360;
+                        expectedHeight = 260;
+                        break;
+                    case 'app_banner':
+                        expectedWidth = 451;
+                        expectedHeight = 260;
+                        break;
+                    case 'icon_banner':
+                        expectedWidth = 350;
+                        expectedHeight = 490;
+                        break;
+                    case 'banner_img':
+                        expectedWidth = 451;
+                        expectedHeight = 260;
+                        break;
+                    default:
+                        resolve(); // No validation for unknown types
+                        return;
+                }
+
+                if (width !== expectedWidth || height !== expectedHeight) {
+                    reject(`Image dimensions must be exactly ${expectedWidth}x${expectedHeight}px. Current dimensions: ${width}x${height}px`);
+                } else {
+                    resolve();
+                }
+            };
+
+            img.onerror = () => {
+                reject('Invalid image file');
+            };
+
+            img.src = URL.createObjectURL(file);
+        });
+    };
+
+    const handleSubmit = (e) => {
+        e.preventDefault();
+
         // Validate title is not empty or only whitespace
-        if (!values.title || values.title.trim() === '') {
-            message.error('Specialty name is required and cannot be empty.');
+        if (!data.title || data.title.trim() === '') {
+            setErrors({ title: 'Specialty name is required and cannot be empty.' });
             return;
         }
-        
-        // Set processing state
+
+        // Check for image validation errors
+        const hasImageErrors = Object.values(imageValidationErrors).some(error => error !== '');
+        if (hasImageErrors) {
+            setErrors({ ...errors, image: 'Please fix image validation errors before submitting' });
+            return;
+        }
+
         setProcessing(true);
         setErrors({});
-        
+
         // Prepare the data for submission
         const submitData = new FormData();
-        
+
         // Add all form values
-        Object.keys(values).forEach(key => {
+        Object.keys(data).forEach(key => {
             // Special handling for status field
             if (key === 'status') {
-                submitData.append(key, values[key] ? 'on' : 'off');
-            } 
+                submitData.append(key, data[key] ? 'on' : 'off');
+            }
             // Special handling for title field
             else if (key === 'title') {
-                submitData.append(key, values[key].trim());
+                submitData.append(key, data[key].trim());
             }
             // Skip file fields as they're handled separately
             else if (!['web_banner', 'app_banner', 'icon_banner', 'banner_img'].includes(key)) {
-                submitData.append(key, values[key] !== undefined && values[key] !== null ? values[key] : '');
+                submitData.append(key, data[key] !== undefined && data[key] !== null ? data[key] : '');
             }
         });
-        
-        // Add file uploads if present and are actual File objects
-        if (values.web_banner instanceof File) submitData.append('web_banner', values.web_banner);
-        if (values.app_banner instanceof File) submitData.append('app_banner', values.app_banner);
-        if (values.icon_banner instanceof File) submitData.append('icon_banner', values.icon_banner);
-        if (values.banner_img instanceof File) submitData.append('banner_img', values.banner_img);
-        
+
+        // Add file uploads if present
+        if (data.web_banner) submitData.append('web_banner', data.web_banner);
+        if (data.app_banner) submitData.append('app_banner', data.app_banner);
+        if (data.icon_banner) submitData.append('icon_banner', data.icon_banner);
+        if (data.banner_img) submitData.append('banner_img', data.banner_img);
+
         // Add old image values for reference
-        submitData.append('web_banner_old', values.web_banner_old || '');
-        submitData.append('app_banner_old', values.app_banner_old || '');
-        submitData.append('icon_banner_old', values.icon_banner_old || '');
-        submitData.append('banner_img_old', values.banner_img_old || '');
+        submitData.append('web_banner_old', data.web_banner_old || '');
+        submitData.append('app_banner_old', data.app_banner_old || '');
+        submitData.append('icon_banner_old', data.icon_banner_old || '');
+        submitData.append('banner_img_old', data.banner_img_old || '');
 
-        // Debug log
-        console.log('Form values received:', values);
-        console.log('Prepared submission data:', Array.from(submitData.entries()));
-        
-        // Check specifically for title in prepared data
-        const titleEntry = Array.from(submitData.entries()).find(entry => entry[0] === 'title');
-        if (titleEntry) {
-            console.log('Title in prepared submission data:', titleEntry[1]);
-        } else {
-            console.log('ERROR: Title not found in prepared submission data!');
-        }
-
-        // Submit the form data
-        const url = isEditing 
-            ? route('specialties.update', specialty.no) 
+        const url = isEditing
+            ? route('specialties.update', specialty.no)
             : route('specialties.store');
-            
-        const method = isEditing ? 'post' : 'post'; // Both use POST, Laravel handles PUT via _method
-        
-        // Add _method for PUT requests
+
         if (isEditing) {
             submitData.append('_method', 'PUT');
-        }
-
-        axios({
-            method: method,
-            url: url,
-            data: submitData,
-            headers: {
-                'Content-Type': 'multipart/form-data',
-                'X-Requested-With': 'XMLHttpRequest',
-                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content')
-            },
-        })
-        .then(response => {
-            setProcessing(false);
-            message.success(isEditing ? 'Specialty updated successfully!' : 'Specialty created successfully!');
-            if (!isEditing) {
-                form.resetFields();
-            }
-            // Redirect to index page
-            window.location.href = route('specialties.index');
-        })
-        .catch(error => {
-            setProcessing(false);
-            if (error.response && error.response.data && error.response.data.errors) {
-                setErrors(error.response.data.errors);
-                message.error(isEditing ? 'Failed to update specialty.' : 'Failed to create specialty.');
-            } else {
-                console.error(isEditing ? 'Update error:' : 'Create error:', error);
-                message.error('An unexpected error occurred.');
-            }
-        });
-    };
-
-    // Handle image preview and validation
-    const handleImageChange = (info, fieldName) => {
-        if (info.file.status === 'done') {
-            form.setFieldsValue({ [fieldName]: info.file.originFileObj });
-        } else if (info.file.status === 'error') {
-            message.error(`${info.file.name} file upload failed.`);
+            put(url, submitData, {
+                onSuccess: () => {
+                    setProcessing(false);
+                    // Redirect to index page
+                    window.location.href = route('specialties.index');
+                },
+                onError: (errors) => {
+                    setProcessing(false);
+                    setErrors(errors);
+                }
+            });
+        } else {
+            post(url, submitData, {
+                onSuccess: () => {
+                    setProcessing(false);
+                    reset();
+                    // Reset image previews
+                    setImagePreviews({
+                        web_banner: null,
+                        app_banner: null,
+                        icon_banner: null,
+                        banner_img: null
+                    });
+                    // Reset image validation errors
+                    setImageValidationErrors({
+                        web_banner: '',
+                        app_banner: '',
+                        icon_banner: '',
+                        banner_img: ''
+                    });
+                },
+                onError: (errors) => {
+                    setProcessing(false);
+                    setErrors(errors);
+                }
+            });
         }
     };
 
-    // Custom request for image upload to bypass default behavior
-    const customRequest = ({ file, onSuccess, onError }) => {
-        setTimeout(() => {
-            onSuccess("ok");
-        }, 0);
+    const handleImageChange = (e, fieldName) => {
+        const file = e.target.files[0];
+        if (file) {
+            // Validate image before setting it
+            validateImage(file, fieldName)
+                .then(() => {
+                    // Clear any previous validation error for this field
+                    setImageValidationErrors(prev => ({
+                        ...prev,
+                        [fieldName]: ''
+                    }));
+
+                    setData(fieldName, file);
+
+                    // Create preview
+                    const reader = new FileReader();
+                    reader.onload = (e) => {
+                        setImagePreviews(prev => ({
+                            ...prev,
+                            [fieldName]: e.target.result
+                        }));
+                    };
+                    reader.readAsDataURL(file);
+                })
+                .catch(error => {
+                    // Set validation error
+                    setImageValidationErrors(prev => ({
+                        ...prev,
+                        [fieldName]: error
+                    }));
+
+                    // Clear the file input
+                    e.target.value = '';
+                });
+        }
     };
 
     // Generate custom URL from title
     const generateCustomUrl = (title) => {
         if (title && title.trim() !== '') {
             const customUrl = title.toLowerCase().replace(/ /g, '-').replace(/[^\w-]+/g, '');
-            form.setFieldsValue({ custom_url: customUrl });
+            setData('custom_url', customUrl);
         }
     };
 
+    // Format parent specialties for dropdown
+    const formatParentSpecialties = () => {
+        return parentSpecialties.map(spec => ({
+            value: spec.value,
+            label: spec.label
+        }));
+    };
+
+
+
     return (
         <AuthenticatedLayout>
-            <Head title={isEditing ? "Edit Specialty" : "Create Specialty"} />
+            <Head title={isEditing ? "Edit Speciality" : "Create Speciality"} />
 
             <div className="py-6">
                 <div className="mx-auto max-w-7xl sm:px-6 lg:px-8">
                     <div className="bg-white shadow-sm sm:rounded-lg">
                         <div className="px-6 py-6">
-                            <div className="mb-6">
-                                <Link 
-                                    href={route('specialties.index')} 
-                                    className="inline-flex items-center text-sm font-medium text-gray-600 hover:text-gray-900"
+                            <div className="mb-6 flex justify-between items-center">
+
+                                <h2 className="mt-2 text-2xl font-bold text-gray-900 uppercase">
+                                    {isEditing ? "Edit Specialty" : "Create New Specialty"}
+                                </h2>
+                                <Link
+                                    href={route('specialties.index')}
+                                    className="inline-flex items-center text-sm font-medium text-gray-600 hover:text-gray-900 "
                                 >
                                     <LeftOutlined className="mr-1" />
                                     Back to Specialties
                                 </Link>
-                                <h2 className="mt-2 text-2xl font-bold text-gray-900">
-                                    {isEditing ? "Edit Specialty" : "Create New Specialty"}
-                                </h2>
-                                <p className="mt-1 text-sm text-gray-500">
-                                    {isEditing 
-                                        ? "Update the details for this specialty below." 
-                                        : "Fill in the details to create a new specialty."}
-                                </p>
+
                             </div>
 
                             <div className="rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
-                                <Form
-                                    form={form}
-                                    layout="vertical"
-                                    onFinish={handleSubmit}
-                                    requiredMark={false}
-                                >
-                                    {/* Basic Information */}
-                                    <div className="mb-8">
-                                        <h3 className="text-lg font-medium text-gray-900 mb-4">Basic Information</h3>
-                                        <Row gutter={24}>
-                                            <Col xs={24} md={12}>
-                                                <Form.Item
-                                                    label={
-                                                        <span className="text-sm font-medium text-gray-700">
-                                                            Specialty Name
-                                                        </span>
-                                                    }
-                                                    name="title"
-                                                    rules={[
-                                                        { 
-                                                            required: true, 
-                                                            message: 'Please input the specialty name!',
-                                                            validator: (_, value) => {
-                                                                if (!value || value.trim() === '') {
-                                                                    return Promise.reject('Please input the specialty name!');
-                                                                }
-                                                                return Promise.resolve();
-                                                            }
-                                                        }
-                                                    ]}
-                                                >
-                                                    <Input
-                                                        placeholder="Enter specialty name"
-                                                        className="rounded-md"
-                                                        size="large"
-                                                        onChange={(e) => generateCustomUrl(e.target.value)}
-                                                    />
-                                                </Form.Item>
-                                            </Col>
-                                            
-                                            <Col xs={24} md={12}>
-                                                <Form.Item
-                                                    label={
-                                                        <span className="text-sm font-medium text-gray-700">
-                                                            Specialty Type
-                                                        </span>
-                                                    }
-                                                    name="speciality_type"
-                                                >
-                                                    <Select
-                                                        placeholder="Select specialty type"
-                                                        options={[
-                                                            { value: 'speciality', label: 'Speciality' },
-                                                            { value: 'preference', label: 'Preference' },
-                                                            { value: 'follow', label: 'Follow' },
-                                                            { value: 'sponsored', label: 'Sponsored' },
-                                                        ]}
-                                                        className="rounded-md"
-                                                        size="large"
-                                                    />
-                                                </Form.Item>
-                                            </Col>
-                                        </Row>
-                                        
-                                        <Form.Item
-                                            label={
-                                                <span className="text-sm font-medium text-gray-700">
-                                                    Specialty Description
-                                                </span>
-                                            }
-                                            name="spec_desc"
-                                        >
-                                            <Input.TextArea
-                                                placeholder="Enter specialty description"
-                                                rows={4}
-                                                className="rounded-md"
-                                            />
-                                        </Form.Item>
-                                    </div>
-                                    
-                                    {/* Parent Specialties */}
-                                    <div className="mb-8">
-                                        <h3 className="text-lg font-medium text-gray-900 mb-4">Parent Specialties</h3>
-                                        <Row gutter={24}>
-                                            <Col xs={24} md={12}>
-                                                <Form.Item
-                                                    label={
-                                                        <span className="text-sm font-medium text-gray-700">
-                                                            Parent 1
-                                                        </span>
-                                                    }
-                                                    name="parentID"
-                                                >
-                                                    <Select
-                                                        showSearch
-                                                        placeholder="Select parent specialty"
-                                                        optionFilterProp="children"
-                                                        options={parentSpecialties[0]}
-                                                        className="rounded-md"
-                                                        size="large"
-                                                        allowClear
-                                                    />
-                                                </Form.Item>
-                                            </Col>
-                                            
-                                            <Col xs={24} md={12}>
-                                                <Form.Item
-                                                    label={
-                                                        <span className="text-sm font-medium text-gray-700">
-                                                            Parent 2
-                                                        </span>
-                                                    }
-                                                    name="parentID2"
-                                                >
-                                                    <Select
-                                                        showSearch
-                                                        placeholder="Select parent specialty"
-                                                        optionFilterProp="children"
-                                                        options={parentSpecialties[1]}
-                                                        className="rounded-md"
-                                                        size="large"
-                                                        allowClear
-                                                    />
-                                                </Form.Item>
-                                            </Col>
-                                        </Row>
-                                        
-                                        <Row gutter={24}>
-                                            <Col xs={24} md={12}>
-                                                <Form.Item
-                                                    label={
-                                                        <span className="text-sm font-medium text-gray-700">
-                                                            Parent 3
-                                                        </span>
-                                                    }
-                                                    name="parentID3"
-                                                >
-                                                    <Select
-                                                        showSearch
-                                                        placeholder="Select parent specialty"
-                                                        optionFilterProp="children"
-                                                        options={parentSpecialties[2]}
-                                                        className="rounded-md"
-                                                        size="large"
-                                                        allowClear
-                                                    />
-                                                </Form.Item>
-                                            </Col>
-                                            
-                                            <Col xs={24} md={12}>
-                                                <Form.Item
-                                                    label={
-                                                        <span className="text-sm font-medium text-gray-700">
-                                                            Parent 4
-                                                        </span>
-                                                    }
-                                                    name="parentID4"
-                                                >
-                                                    <Select
-                                                        showSearch
-                                                        placeholder="Select parent specialty"
-                                                        optionFilterProp="children"
-                                                        options={parentSpecialties[3]}
-                                                        className="rounded-md"
-                                                        size="large"
-                                                        allowClear
-                                                    />
-                                                </Form.Item>
-                                            </Col>
-                                        </Row>
-                                        
-                                        <Row gutter={24}>
-                                            <Col xs={24} md={12}>
-                                                <Form.Item
-                                                    label={
-                                                        <span className="text-sm font-medium text-gray-700">
-                                                            Parent 5
-                                                        </span>
-                                                    }
-                                                    name="parentID5"
-                                                >
-                                                    <Select
-                                                        showSearch
-                                                        placeholder="Select parent specialty"
-                                                        optionFilterProp="children"
-                                                        options={parentSpecialties[4]}
-                                                        className="rounded-md"
-                                                        size="large"
-                                                        allowClear
-                                                    />
-                                                </Form.Item>
-                                            </Col>
-                                        </Row>
-                                    </div>
-                                    
-                                    {/* URLs and Meta Information */}
-                                    <div className="mb-8">
-                                        <h3 className="text-lg font-medium text-gray-900 mb-4">URLs and Meta Information</h3>
-                                        <Form.Item
-                                            label={
-                                                <span className="text-sm font-medium text-gray-700">
-                                                    Custom URL
-                                                </span>
-                                            }
-                                            name="custom_url"
-                                        >
+                                <form onSubmit={handleSubmit} className="space-y-6">
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                        <div>
+                                            <InputLabel for="title" value="Specialty Name" className="text-sm font-medium text-gray-700" />
                                             <Input
+                                                id="title"
+                                                type="text"
+                                                placeholder="Enter specialty name"
+                                                value={data.title}
+                                                onChange={(e) => {
+                                                    setData('title', e.target.value);
+                                                    // Auto-generate custom URL when title changes (only for new specialties)
+                                                    if (!isEditing) {
+                                                        generateCustomUrl(e.target.value);
+                                                    }
+                                                }}
+                                                className="w-full py-1.5 mt-1 text-sm"
+                                                required
+                                            />
+                                            {errors.title && <InputError message={errors.title} className="mt-2" />}
+                                        </div>
+
+                                        <div>
+                                            <InputLabel for="custom_url" value="Custom URL" className="text-sm font-medium text-gray-700" />
+                                            <Input
+                                                id="custom_url"
+                                                type="text"
                                                 placeholder="Enter custom URL"
-                                                className="rounded-md"
-                                                size="large"
+                                                value={data.custom_url}
+                                                onChange={(e) => setData('custom_url', e.target.value)}
+                                                className="w-full py-1.5 mt-1 text-sm"
                                             />
-                                        </Form.Item>
-                                        
-                                        <Row gutter={24}>
-                                            <Col xs={24} md={12}>
-                                                <Form.Item
-                                                    label={
-                                                        <span className="text-sm font-medium text-gray-700">
-                                                            Meta Title
-                                                        </span>
-                                                    }
-                                                    name="meta_title"
-                                                >
-                                                    <Input
-                                                        placeholder="Enter meta title"
-                                                        className="rounded-md"
-                                                        size="large"
+                                        </div>
+                                    </div>
+
+                                    <div>
+                                        <InputLabel for="spec_desc" value="Description" className="text-sm font-medium text-gray-700" />
+                                        <textarea
+                                            id="spec_desc"
+                                            placeholder="Enter description"
+                                            value={data.spec_desc}
+                                            onChange={(e) => setData('spec_desc', e.target.value)}
+                                            className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-[#00895f] focus:ring-[#00895f] sm:text-sm"
+                                            rows="4"
+                                        />
+                                    </div>
+
+                                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                                        <div>
+                                            <InputLabel for="speciality_type" value="Specialty Type" className="text-sm font-medium text-gray-700" />
+
+                                            <Select
+                                                options={[
+                                                    { value: 'speciality', label: 'Speciality' },
+                                                    { value: 'preference', label: 'Preference' },
+                                                    { value: 'sponsored', label: 'Sponsored' }, { value: 'follow', label: 'Follow' }
+                                                ]}
+
+                                                value={data.speciality_type}
+                                                onChange={(value) => setData('speciality_type', value)}
+                                                placeholder="Select specialty type"
+                                                searchable
+                                                clearable
+                                                className="mt-1 w-full h-[36px]"
+                                            />
+
+                                        </div>
+                                        <div>
+                                            <InputLabel for="parentID" value="Parent Specialty 1" className="text-sm font-medium text-gray-700" />
+                                            <Select
+                                                options={parentSpecialties}
+                                                value={data.parentID}
+                                                onChange={(value) => setData('parentID', value)}
+                                                placeholder="Select parent specialty"
+                                                searchable
+                                                clearable
+                                                className="mt-1 w-full h-[36px]"
+
+                                            />
+                                        </div>
+
+                                        <div>
+                                            <InputLabel for="parentID2" value="Parent Specialty 2" className="text-sm font-medium text-gray-700" />
+                                            <Select
+                                                options={formatParentSpecialties()}
+                                                value={data.parentID2}
+                                                onChange={(value) => setData('parentID2', value)}
+                                                placeholder="Select parent specialty"
+                                                searchable
+                                                clearable
+                                                className="mt-1 w-full h-[36px]"
+                                            />
+                                        </div>
+
+                                        <div>
+                                            <InputLabel for="parentID3" value="Parent Specialty 3" className="text-sm font-medium text-gray-700" />
+                                            <Select
+                                                options={formatParentSpecialties()}
+                                                value={data.parentID3}
+                                                onChange={(value) => setData('parentID3', value)}
+                                                placeholder="Select parent specialty"
+                                                searchable
+                                                clearable
+                                                className="mt-1 w-full h-[36px]"
+                                            />
+                                        </div>
+
+                                        <div>
+                                            <InputLabel for="parentID4" value="Parent Specialty 4" className="text-sm font-medium text-gray-700" />
+                                            <Select
+                                                options={parentSpecialties}
+                                                value={data.parentID4}
+                                                onChange={(value) => setData('parentID4', value)}
+                                                placeholder="Select parent specialty"
+                                                searchable
+                                                clearable
+                                                className="mt-1 w-full h-[36px]"
+                                            />
+                                        </div>
+
+                                        <div>
+                                            <InputLabel for="parentID5" value="Parent Specialty 5" className="text-sm font-medium text-gray-700" />
+                                            <Select
+                                                options={formatParentSpecialties()}
+                                                value={data.parentID5}
+                                                onChange={(value) => setData('parentID5', value)}
+                                                placeholder="Select parent specialty"
+                                                searchable
+                                                clearable
+                                                className="mt-1 w-full h-[36px]"
+                                            />
+                                        </div>
+
+
+
+                                    </div>
+
+
+
+                                    {/* Image Upload Sections */}
+                                    <div className="border-t border-gray-200 pt-6">
+                                        <h3 className="text-lg font-medium text-gray-900">Images</h3>
+                                        <p className="mt-1 text-sm text-gray-500">
+                                            Upload images for this specialty (optional)
+                                        </p>
+                                    </div>
+
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                        <div>
+                                            <InputLabel for="web_banner" value="Web Banner (360x260px)" className="text-sm font-medium text-gray-700" />
+                                            {imagePreviews.web_banner && (
+                                                <div className="mt-2 mb-2">
+                                                    <img
+                                                        src={imagePreviews.web_banner}
+                                                        alt="Web Banner Preview"
+                                                        className="h-32 w-full object-cover rounded-md"
                                                     />
-                                                </Form.Item>
-                                            </Col>
-                                            
-                                            <Col xs={24} md={12}>
-                                                <Form.Item
-                                                    label={
-                                                        <span className="text-sm font-medium text-gray-700">
-                                                            Meta Keywords
-                                                        </span>
-                                                    }
-                                                    name="meta_key"
-                                                >
-                                                    <Input
-                                                        placeholder="Enter meta keywords"
-                                                        className="rounded-md"
-                                                        size="large"
+                                                </div>
+                                            )}
+                                            <input
+                                                id="web_banner"
+                                                type="file"
+                                                accept="image/*"
+                                                onChange={(e) => handleImageChange(e, 'web_banner')}
+                                                className="mt-1 block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-[#00895f] file:text-white hover:file:bg-[#007a52]"
+                                            />
+                                            {imageValidationErrors.web_banner && <InputError message={imageValidationErrors.web_banner} className="mt-2" />}
+                                        </div>
+
+                                        <div>
+                                            <InputLabel for="app_banner" value="App Banner (451x260px)" className="text-sm font-medium text-gray-700" />
+                                            {imagePreviews.app_banner && (
+                                                <div className="mt-2 mb-2">
+                                                    <img
+                                                        src={imagePreviews.app_banner}
+                                                        alt="App Banner Preview"
+                                                        className="h-32 w-full object-cover rounded-md"
                                                     />
-                                                </Form.Item>
-                                            </Col>
-                                        </Row>
-                                        
-                                        <Form.Item
-                                            label={
-                                                <span className="text-sm font-medium text-gray-700">
-                                                    Meta Description
-                                                </span>
-                                            }
-                                            name="meta_desc"
-                                        >
-                                            <Input.TextArea
+                                                </div>
+                                            )}
+                                            <input
+                                                id="app_banner"
+                                                type="file"
+                                                accept="image/*"
+                                                onChange={(e) => handleImageChange(e, 'app_banner')}
+                                                className="mt-1 block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-[#00895f] file:text-white hover:file:bg-[#007a52]"
+                                            />
+                                            {imageValidationErrors.app_banner && <InputError message={imageValidationErrors.app_banner} className="mt-2" />}
+                                        </div>
+                                    </div>
+
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                        <div>
+                                            <InputLabel for="icon_banner" value="Icon Banner (350x490px)" className="text-sm font-medium text-gray-700" />
+                                            {imagePreviews.icon_banner && (
+                                                <div className="mt-2 mb-2">
+                                                    <img
+                                                        src={imagePreviews.icon_banner}
+                                                        alt="Icon Banner Preview"
+                                                        className="h-32 w-full object-cover rounded-md"
+                                                    />
+                                                </div>
+                                            )}
+                                            <input
+                                                id="icon_banner"
+                                                type="file"
+                                                accept="image/*"
+                                                onChange={(e) => handleImageChange(e, 'icon_banner')}
+                                                className="mt-1 block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-[#00895f] file:text-white hover:file:bg-[#007a52]"
+                                            />
+                                            {imageValidationErrors.icon_banner && <InputError message={imageValidationErrors.icon_banner} className="mt-2" />}
+                                        </div>
+
+                                        <div>
+                                            <InputLabel for="banner_img" value="App Banner Image (451x260px)" className="text-sm font-medium text-gray-700" />
+                                            {imagePreviews.banner_img && (
+                                                <div className="mt-2 mb-2">
+                                                    <img
+                                                        src={imagePreviews.banner_img}
+                                                        alt="Banner Image Preview"
+                                                        className="h-32 w-full object-cover rounded-md"
+                                                    />
+                                                </div>
+                                            )}
+                                            <input
+                                                id="banner_img"
+                                                type="file"
+                                                accept="image/*"
+                                                onChange={(e) => handleImageChange(e, 'banner_img')}
+                                                className="mt-1 block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-[#00895f] file:text-white hover:file:bg-[#007a52]"
+                                            />
+                                            {imageValidationErrors.banner_img && <InputError message={imageValidationErrors.banner_img} className="mt-2" />}
+                                        </div>
+                                    </div>
+
+                                    {/* SEO Section */}
+                                    <div className="border-t border-gray-200 pt-6">
+                                        <h3 className="text-lg font-medium text-gray-900">SEO Information</h3>
+                                        <p className="mt-1 text-sm text-gray-500">
+                                            Optimize this specialty for search engines
+                                        </p>
+                                    </div>
+
+                                    <div className="space-y-6">
+                                        <div>
+                                            <InputLabel for="meta_title" value="Meta Title" className="text-sm font-medium text-gray-700" />
+                                            <Input
+                                                id="meta_title"
+                                                type="text"
+                                                placeholder="Enter meta title"
+                                                value={data.meta_title}
+                                                onChange={(e) => setData('meta_title', e.target.value)}
+                                                className="w-full py-1.5 mt-1 text-sm"
+                                            />
+                                        </div>
+
+                                        <div>
+                                            <InputLabel for="meta_desc" value="Meta Description" className="text-sm font-medium text-gray-700" />
+                                            <textarea
+                                                id="meta_desc"
                                                 placeholder="Enter meta description"
-                                                rows={3}
-                                                className="rounded-md"
+                                                value={data.meta_desc}
+                                                onChange={(e) => setData('meta_desc', e.target.value)}
+                                                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-[#00895f] focus:ring-[#00895f] sm:text-sm"
+                                                rows="3"
                                             />
-                                        </Form.Item>
-                                    </div>
-                                    
-                                    {/* CME Description */}
-                                    <div className="mb-8">
-                                        <h3 className="text-lg font-medium text-gray-900 mb-4">CME Description</h3>
-                                        <Form.Item
-                                            name="cmeDescription"
-                                        >
-                                            <Input.TextArea
-                                                placeholder="Enter CME description"
-                                                rows={4}
-                                                className="rounded-md"
+                                        </div>
+
+                                        <div>
+                                            <InputLabel for="meta_key" value="Meta Keywords" className="text-sm font-medium text-gray-700" />
+                                            <Input
+                                                id="meta_key"
+                                                type="text"
+                                                placeholder="Enter meta keywords"
+                                                value={data.meta_key}
+                                                onChange={(e) => setData('meta_key', e.target.value)}
+                                                className="w-full py-1.5 mt-1 text-sm"
                                             />
-                                        </Form.Item>
+                                        </div>
                                     </div>
-                                    
-                                    {/* Images */}
-                                    <div className="mb-8">
-                                        <h3 className="text-lg font-medium text-gray-900 mb-4">Images</h3>
-                                        <Row gutter={24}>
-                                            {/* Web Banner */}
-                                            <Col xs={24} md={6}>
-                                                <Form.Item
-                                                    label={
-                                                        <span className="text-sm font-medium text-gray-700">
-                                                            Web Banner (360x260)
-                                                        </span>
-                                                    }
-                                                >
-                                                    <Upload
-                                                        name="web_banner"
-                                                        customRequest={customRequest}
-                                                        onChange={(info) => handleImageChange(info, 'web_banner')}
-                                                        showUploadList={false}
-                                                        accept=".jpg,.jpeg,.png"
-                                                    >
-                                                        <Button icon={<UploadOutlined />}>Upload</Button>
-                                                    </Upload>
-                                                    {form.getFieldValue('web_banner_old') && (
-                                                        <div className="mt-2">
-                                                            <img 
-                                                                src={`/uploads/specialty/${form.getFieldValue('web_banner_old')}`} 
-                                                                alt="Web Banner" 
-                                                                className="w-full h-24 object-cover rounded border"
-                                                            />
-                                                        </div>
-                                                    )}
-                                                </Form.Item>
-                                            </Col>
-                                            
-                                            {/* App Banner */}
-                                            <Col xs={24} md={6}>
-                                                <Form.Item
-                                                    label={
-                                                        <span className="text-sm font-medium text-gray-700">
-                                                            App Banner (451x260)
-                                                        </span>
-                                                    }
-                                                >
-                                                    <Upload
-                                                        name="app_banner"
-                                                        customRequest={customRequest}
-                                                        onChange={(info) => handleImageChange(info, 'app_banner')}
-                                                        showUploadList={false}
-                                                        accept=".jpg,.jpeg,.png"
-                                                    >
-                                                        <Button icon={<UploadOutlined />}>Upload</Button>
-                                                    </Upload>
-                                                    {form.getFieldValue('app_banner_old') && (
-                                                        <div className="mt-2">
-                                                            <img 
-                                                                src={`/uploads/specialty/${form.getFieldValue('app_banner_old')}`} 
-                                                                alt="App Banner" 
-                                                                className="w-full h-24 object-cover rounded border"
-                                                            />
-                                                        </div>
-                                                    )}
-                                                </Form.Item>
-                                            </Col>
-                                            
-                                            {/* Icon Image */}
-                                            <Col xs={24} md={6}>
-                                                <Form.Item
-                                                    label={
-                                                        <span className="text-sm font-medium text-gray-700">
-                                                            Icon Image (350x490)
-                                                        </span>
-                                                    }
-                                                >
-                                                    <Upload
-                                                        name="icon_banner"
-                                                        customRequest={customRequest}
-                                                        onChange={(info) => handleImageChange(info, 'icon_banner')}
-                                                        showUploadList={false}
-                                                        accept=".jpg,.jpeg,.png"
-                                                    >
-                                                        <Button icon={<UploadOutlined />}>Upload</Button>
-                                                    </Upload>
-                                                    {form.getFieldValue('icon_banner_old') && (
-                                                        <div className="mt-2">
-                                                            <img 
-                                                                src={`/uploads/specialty/${form.getFieldValue('icon_banner_old')}`} 
-                                                                alt="Icon Image" 
-                                                                className="w-full h-24 object-cover rounded border"
-                                                            />
-                                                        </div>
-                                                    )}
-                                                </Form.Item>
-                                            </Col>
-                                            
-                                            {/* App Banner Image */}
-                                            <Col xs={24} md={6}>
-                                                <Form.Item
-                                                    label={
-                                                        <span className="text-sm font-medium text-gray-700">
-                                                            App Banner Image (451x260)
-                                                        </span>
-                                                    }
-                                                >
-                                                    <Upload
-                                                        name="banner_img"
-                                                        customRequest={customRequest}
-                                                        onChange={(info) => handleImageChange(info, 'banner_img')}
-                                                        showUploadList={false}
-                                                        accept=".jpg,.jpeg,.png"
-                                                    >
-                                                        <Button icon={<UploadOutlined />}>Upload</Button>
-                                                    </Upload>
-                                                    {form.getFieldValue('banner_img_old') && (
-                                                        <div className="mt-2">
-                                                            <img 
-                                                                src={`/uploads/specialty/${form.getFieldValue('banner_img_old')}`} 
-                                                                alt="App Banner Image" 
-                                                                className="w-full h-24 object-cover rounded border"
-                                                            />
-                                                        </div>
-                                                    )}
-                                                </Form.Item>
-                                            </Col>
-                                        </Row>
-                                    </div>
-                                    
-                                    {/* Status */}
-                                    <div className="mb-8">
-                                        <h3 className="text-lg font-medium text-gray-900 mb-4">Status</h3>
-                                        <Form.Item
-                                            name="status"
-                                            valuePropName="checked"
-                                        >
-                                            <Switch 
-                                                checkedChildren="Active" 
-                                                unCheckedChildren="Inactive" 
-                                            />
-                                        </Form.Item>
-                                    </div>
-                                    
-                                    {/* Form Actions */}
+
+
                                     {Object.keys(errors).length > 0 && (
                                         <div className="mb-6">
-                                            <div className="bg-red-50 border border-red-200 rounded-md p-4">
+                                            <div className="rounded-md bg-red-50 p-4">
                                                 <div className="flex">
                                                     <div className="flex-shrink-0">
                                                         <svg className="h-5 w-5 text-red-400" viewBox="0 0 20 20" fill="currentColor">
@@ -640,7 +594,7 @@ export default function SpecialtyForm({ specialty, parentSpecialties }) {
                                                     </div>
                                                     <div className="ml-3">
                                                         <h3 className="text-sm font-medium text-red-800">
-                                                            Validation Errors
+                                                            Validation Error
                                                         </h3>
                                                         <div className="mt-2 text-sm text-red-700">
                                                             <ul className="list-disc pl-5 space-y-1">
@@ -654,23 +608,22 @@ export default function SpecialtyForm({ specialty, parentSpecialties }) {
                                             </div>
                                         </div>
                                     )}
-                                    
-                                    <div className="flex items-center justify-end space-x-4 pt-6">
+
+                                    <div className="flex items-center justify-between pt-6">
                                         <Link href={route('specialties.index')}>
-                                            <Button size="large">
+                                            <Button variant="outline">
                                                 Cancel
                                             </Button>
                                         </Link>
-                                        <Button 
-                                            type="primary" 
-                                            htmlType="submit" 
-                                            loading={processing}
-                                            size="large"
-                                        >
-                                            {isEditing ? 'Update Specialty' : 'Create Specialty'}
-                                        </Button>
+                                        <PrimaryButton type="submit" disabled={processing}>
+                                            Save
+                                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor" class="size-4">
+                                                <path stroke-linecap="round" stroke-linejoin="round" d="M17.25 8.25 21 12m0 0-3.75 3.75M21 12H3" />
+                                            </svg>
+
+                                        </PrimaryButton>
                                     </div>
-                                </Form>
+                                </form>
                             </div>
                         </div>
                     </div>

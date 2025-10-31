@@ -51,6 +51,8 @@ Route::middleware('auth')->group(function () {
     
     // Marketing Campaign Routes
     Route::resource('marketing-campaign', MarketingCampaignController::class);
+    Route::post('/update-marketing-campaign/{id}', [MarketingCampaignController::class, 'updateMarketingCampaign'])->name('marketing-campaigns.updates');
+    Route::get('/api/get-marketing-campaign-target', [MarketingCampaignController::class, 'getCampaignTargets'])->name('api.marketing-campaign-targets');
     
     // Tag Management Routes
     Route::resource('tags', TagController::class);

@@ -2,11 +2,14 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\MarketingCampaign;
-use Illuminate\Http\Request;
 use Inertia\Inertia;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
+use App\Models\MarketingCampaign;
+use App\Models\BusinessPage;
+use App\Models\Course;
 
 class MarketingCampaignController extends Controller
 {
@@ -15,36 +18,59 @@ class MarketingCampaignController extends Controller
      */
     public function index()
     {
-         $campaigns = MarketingCampaign::with('business')
-            ->orderBy('created_on', 'desc')
-            ->get();
+        // Get filter parameters from request
+        $search = request('search');
+        $campaignType = request('campaignType');
+        $campaignStatus = request('campaignStatus');
+
+        // Build query with filters
+        $query = MarketingCampaign::with('business')
+            ->orderBy('campaignID', 'desc');
+
+        // Apply search filter
+        if ($search) {
+            $query->where(function ($q) use ($search) {
+                $q->where('campaignTitle', 'like', '%' . $search . '%')
+                  ->orWhere('campaignType', 'like', '%' . $search . '%');
+            });
+        }
+
+        // Apply campaign type filter
+        if ($campaignType) {
+            $query->where('campaignType', $campaignType);
+        }
+
+        // Apply campaign status filter
+        if ($campaignStatus) {
+            $query->where('campaignStatus', $campaignStatus);
+        }
+
+        $campaigns = $query->paginate(10);
+
+        // Prepare filters array for frontend
+        $filters = [
+            'search' => $search,
+            'campaignType' => $campaignType,
+            'campaignStatus' => $campaignStatus,
+        ];
 
         return Inertia::render('MarketingCampaign/Index', [
             'campaigns' => $campaigns,
+            'filters' => $filters
         ]);
     }
 
     /**
      * Show the form for creating a new marketing campaign.
      */
-    public function create(Request $request)
+    public function create()
     {
-        $businessID = $request->get('businessID');
-        
-        if (empty($businessID)) {
-            return redirect()->back()->with('error', 'No Business ID Found');
-        }
-
-        // Get business information
-        $business = DB::table('business_pages')->where('businessID', $businessID)->first();
-        
-        if (!$business) {
-            return redirect()->back()->with('error', 'Business not found');
-        }
+        $businesses = BusinessPage::select('businessID', 'business_Name')
+            ->orderBy('business_Name')
+            ->get();
 
         // Get courses for sponsored CME
-        $courses = DB::table('zc_course')
-            ->whereIn('status', ['new', 'live', 'draft'])
+        $courses = Course::whereIn('status', ['new', 'live', 'draft'])
             ->orderBy('course_id', 'desc')
             ->get(['course_id', 'course_title'])
             ->toArray();
@@ -81,7 +107,8 @@ class MarketingCampaignController extends Controller
             ->toArray();
 
         return Inertia::render('MarketingCampaign/Form', [
-            'business' => $business,
+            'businesses' => $businesses,
+            'business' => null,
             'campaign' => null,
             'courses' => $courses,
             'seminars' => $seminars,
@@ -99,7 +126,12 @@ class MarketingCampaignController extends Controller
         $businessID = $request->get('businessID');
         
         if (empty($businessID)) {
-            return redirect()->back()->with('error', 'No Business ID Found');
+            // If businessID wasn't in the GET params, check if it's in the POST data
+            $businessID = $request->input('businessID');
+            
+            if (empty($businessID)) {
+                return redirect()->back()->with('error', 'No Business ID Found');
+            }
         }
 
         $validated = $request->validate([
@@ -108,25 +140,22 @@ class MarketingCampaignController extends Controller
             'campaign_type' => 'required|in:sponseredCME,sponserSeminar,specialitySponsor,sponsorMedtalks,sponsoredFaq,sponsoredEpisode,none',
             'campaignTargetID' => 'required|string|max:10',
             'campaignmission' => 'required|in:clicks,impressions,subscriptions,followers,interactions,accessCode',
+            'promotionTimeSettings' => 'nullable|in:none,limtied',
+            'campaignStartTime' => 'nullable|date',
+            'campaignEndTime' => 'nullable|string|max:255',
             'image' => 'nullable|image|mimes:jpeg,jpg,png|max:2048',
-            'image1' => 'nullable|image|mimes:jpeg,jpg,png|max:2048',
-            'image3' => 'nullable|image|mimes:jpeg,jpg,png|max:2048',
-            'image4' => 'nullable|image|mimes:jpeg,jpg,png|max:2048',
-            'image5' => 'nullable|image|mimes:jpeg,jpg,png|max:2048',
+            'image1' => 'nullable|image|mimes:jpeg,jpg,png|max:2048'
         ]);
 
         // Process images
         $imageNames = [];
-        $imageFields = ['image', 'image1', 'image3', 'image4', 'image5'];
+        $imageFields = ['image', 'image1'];
         $dbFields = [
             'image', 'image1', 'image3', 'image4', 'image5'
         ];
         $columnNames = [
             'marketingBannerSquare', 
-            'marketingBannerRectangle', 
-            'marketingBanner1', 
-            'marketingBanner2', 
-            'marketingBanner3'
+            'marketingBannerRectangle'
         ];
         
         foreach ($imageFields as $index => $field) {
@@ -155,11 +184,14 @@ class MarketingCampaignController extends Controller
             'campaignType' => $validated['campaign_type'],
             'campaignTargetID' => $validated['campaignTargetID'],
             'campaignMission' => $validated['campaignmission'],
+            'promotionTimeSettings' => $validated['promotionTimeSettings'] ?? 'none',
+            'campaignStartTime' => $validated['campaignStartTime'] ?? now(),
+            'campaignEndTime' => $validated['campaignEndTime'] ?? '0000-00-00 00:00:00',
             'marketingBannerSquare' => $imageNames['marketingBannerSquare'] ?? '',
             'marketingBannerRectangle' => $imageNames['marketingBannerRectangle'] ?? '',
-            'marketingBanner1' => $imageNames['marketingBanner1'] ?? '',
-            'marketingBanner2' => $imageNames['marketingBanner2'] ?? '',
-            'marketingBanner3' => $imageNames['marketingBanner3'] ?? '',
+            'marketingBanner1' => '',
+            'marketingBanner2' => '',
+            'marketingBanner3' => '',
             'created_by' => auth()->user()->username ?? auth()->user()->display_name,
             'created_ip' => $request->ip(),
         ]);
@@ -182,15 +214,18 @@ class MarketingCampaignController extends Controller
      */
     public function edit(MarketingCampaign $marketing_campaign)
     {
-        $business = DB::table('business_pages')->where('businessID', $marketing_campaign->businessID)->first();
-        
+        $marketing_campaign->business_Name = $business = BusinessPage::select('businessID', 'business_Name')
+            ->where('businessID', $marketing_campaign->businessID)
+            ->value('business_Name');
+         $business = BusinessPage::select('businessID', 'business_Name')
+            ->get();
+
         if (!$business) {
             return redirect()->back()->with('error', 'Business not found');
         }
 
         // Get courses for sponsored CME
-        $courses = DB::table('zc_course')
-            ->whereIn('status', ['new', 'live', 'draft'])
+        $courses = Course::whereIn('status', ['new', 'live', 'draft'])
             ->orderBy('course_id', 'desc')
             ->get(['course_id', 'course_title'])
             ->toArray();
@@ -227,6 +262,7 @@ class MarketingCampaignController extends Controller
             ->toArray();
 
         return Inertia::render('MarketingCampaign/Form', [
+            'businesses' => $business,
             'business' => $business,
             'campaign' => $marketing_campaign,
             'courses' => $courses,
@@ -240,7 +276,7 @@ class MarketingCampaignController extends Controller
     /**
      * Update the specified marketing campaign in storage.
      */
-    public function update(Request $request, MarketingCampaign $marketing_campaign)
+    public function updateMarketingCampaign(Request $request, MarketingCampaign $marketing_campaign)
     {
         $validated = $request->validate([
             'businessID' => 'required|integer',
@@ -248,25 +284,22 @@ class MarketingCampaignController extends Controller
             'campaign_type' => 'required|in:sponseredCME,sponserSeminar,specialitySponsor,sponsorMedtalks,sponsoredFaq,sponsoredEpisode,none',
             'campaignTargetID' => 'required|string|max:10',
             'campaignmission' => 'required|in:clicks,impressions,subscriptions,followers,interactions,accessCode',
+            'promotionTimeSettings' => 'nullable|in:none,limtied',
+            'campaignStartTime' => 'nullable|date',
+            'campaignEndTime' => 'nullable|string|max:255',
             'image' => 'nullable|image|mimes:jpeg,jpg,png|max:2048',
-            'image1' => 'nullable|image|mimes:jpeg,jpg,png|max:2048',
-            'image3' => 'nullable|image|mimes:jpeg,jpg,png|max:2048',
-            'image4' => 'nullable|image|mimes:jpeg,jpg,png|max:2048',
-            'image5' => 'nullable|image|mimes:jpeg,jpg,png|max:2048',
+            'image1' => 'nullable|image|mimes:jpeg,jpg,png|max:2048'
         ]);
 
         // Process images
         $imageNames = [];
-        $imageFields = ['image', 'image1', 'image3', 'image4', 'image5'];
+        $imageFields = ['image', 'image1'];
         $dbFields = [
             'image', 'image1', 'image3', 'image4', 'image5'
         ];
         $columnNames = [
             'marketingBannerSquare', 
-            'marketingBannerRectangle', 
-            'marketingBanner1', 
-            'marketingBanner2', 
-            'marketingBanner3'
+            'marketingBannerRectangle'
         ];
         
         foreach ($imageFields as $index => $field) {
@@ -304,11 +337,14 @@ class MarketingCampaignController extends Controller
             'campaignType' => $validated['campaign_type'],
             'campaignTargetID' => $validated['campaignTargetID'],
             'campaignMission' => $validated['campaignmission'],
+            'promotionTimeSettings' => $validated['promotionTimeSettings'] ?? 'none',
+            'campaignStartTime' => $validated['campaignStartTime'] ?? $marketing_campaign->campaignStartTime,
+            'campaignEndTime' => $validated['campaignEndTime'] ?? $marketing_campaign->campaignEndTime,
             'marketingBannerSquare' => $imageNames['marketingBannerSquare'],
             'marketingBannerRectangle' => $imageNames['marketingBannerRectangle'],
-            'marketingBanner1' => $imageNames['marketingBanner1'],
-            'marketingBanner2' => $imageNames['marketingBanner2'],
-            'marketingBanner3' => $imageNames['marketingBanner3'],
+            'marketingBanner1' => '',
+            'marketingBanner2' => '',
+            'marketingBanner3' => '',
             'modified_by' => auth()->user()->username ?? auth()->user()->display_name,
             'modified_ip' => $request->ip(),
         ]);
@@ -343,5 +379,46 @@ class MarketingCampaignController extends Controller
         $marketing_campaign->delete();
 
         return redirect()->route('marketing-campaign.index')->with('success', 'Marketing campaign deleted successfully!');
+    }
+
+    /**
+     * Get campaign targets based on campaign type.
+     */
+    public function getCampaignTargets(Request $request)
+    {
+        $campaignType = $request->get('campaign_type');
+        
+        switch ($campaignType) {
+            case 'cme':
+                // Fetch records from zc_course table where status is 'new' or 'live'
+                $targets = Course::whereIn('status', ['new', 'live'])
+                    ->orderBy('course_id', 'desc')
+                    ->get(['course_id as id', 'course_title as title'])
+                    ->toArray();
+                break;
+                
+            case 'seminar':
+                // Fetch records from seminar table where video_status is not 'deleted'
+                $targets = DB::table('seminar')
+                    ->where('video_status', '!=', 'deleted')
+                    ->orderBy('schedule_timestamp', 'DESC')
+                    ->get(['seminar_no as id', 'seminar_title as title'])
+                    ->toArray();
+                break;
+                
+            case 'episode':
+                // Fetch records from medtalks_tv table
+                $targets = DB::table('medtalks_tv')
+                    ->select('id', 'title')
+                    ->get()
+                    ->toArray();
+                break;
+                
+            default:
+                $targets = [];
+                break;
+        }
+        
+        return response()->json($targets);
     }
 }

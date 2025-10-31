@@ -567,17 +567,8 @@ export default function Form({ seminar, sponsorPages, specialities }) {
                                                 </div>
                                             </div>
                                         </div>
-
-
-
-
-
-
-
-
-
-
-                                        <div>
+                                        <div className='col-span-2 grid grid-cols-3 gap-4'>
+                                            <div>
                                             <InputLabel value="Featured Image (700 x 393, Max 1MB)" />
                                             <div className="mt-2 rounded-md border-2 border-dashed border-gray-300">
                                                 <Upload
@@ -786,6 +777,8 @@ export default function Form({ seminar, sponsorPages, specialities }) {
                                             </div>
                                             {appSquareError && <div className="mt-1 text-xs text-red-600">{appSquareError}</div>}
                                         </div>
+                                        </div>
+                                       
 
                                     </div>
 

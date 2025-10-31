@@ -5,7 +5,7 @@ import { useState, useMemo } from 'react';
 import { Button } from '@/Components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/Components/ui/card';
 import Input from '@/Components/Input';
-import { Plus, Pencil, Trash2, Search, ChevronUp, ChevronDown } from 'lucide-react';
+import { Plus, Pencil, Trash2, Search, ChevronUp, ChevronDown, Edit } from 'lucide-react';
 import { Popconfirm, message } from 'antd';
 import 'antd/dist/reset.css';
 
@@ -16,7 +16,7 @@ export default function Index({ specialties }) {
     const [sortColumn, setSortColumn] = useState(null);
     const [sortDirection, setSortDirection] = useState('asc');
     const { baseImagePath } = usePage().props;
-    
+
     const pageSize = 25;
 
     const handleDelete = (id) => {
@@ -57,7 +57,7 @@ export default function Index({ specialties }) {
             filtered.sort((a, b) => {
                 let aVal = a[sortColumn] || '';
                 let bVal = b[sortColumn] || '';
-                
+
                 if (aVal < bVal) return sortDirection === 'asc' ? -1 : 1;
                 if (aVal > bVal) return sortDirection === 'asc' ? 1 : -1;
                 return 0;
@@ -84,9 +84,8 @@ export default function Index({ specialties }) {
         };
 
         return (
-            <span className={`inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-semibold ${
-                styles[status] || 'bg-gray-100 text-gray-800 border-gray-200'
-            }`}>
+            <span className={`inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-semibold ${styles[status] || 'bg-gray-100 text-gray-800 border-gray-200'
+                }`}>
                 {status === 'on' ? 'Active' : 'Inactive'}
             </span>
         );
@@ -101,8 +100,8 @@ export default function Index({ specialties }) {
             <div className="flex items-center gap-2">
                 {children}
                 {sortColumn === column && (
-                    sortDirection === 'asc' ? 
-                        <ChevronUp className="h-4 w-4" /> : 
+                    sortDirection === 'asc' ?
+                        <ChevronUp className="h-4 w-4" /> :
                         <ChevronDown className="h-4 w-4" />
                 )}
             </div>
@@ -119,7 +118,7 @@ export default function Index({ specialties }) {
         >
             <Head title="Specialties" />
 
-            <div className="py-12">
+            <div className="py-6">
                 <div className="mx-auto max-w-7xl sm:px-6 lg:px-8">
                     {/* Header Card */}
                     <Card className="mb-6 border-0 shadow-sm">
@@ -127,7 +126,7 @@ export default function Index({ specialties }) {
                             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                                 <div>
                                     <CardTitle className="flex items-center gap-2 text-2xl font-bold text-gray-900">
-                                        Specialties Management
+                                        Speciality Management
                                     </CardTitle>
                                     <CardDescription className="">
                                         Manage your specialty categories and their associated content
@@ -135,13 +134,13 @@ export default function Index({ specialties }) {
                                 </div>
                                 <Link href={route('specialties.create')}>
                                     <Button size="default" className="w-full sm:w-auto">
-                                        <Plus className="mr-2 h-4 w-4" />
-                                        Add Specialty
+                                        <Plus className="h-4 w-4" />
+                                        Add Speciality
                                     </Button>
                                 </Link>
                             </div>
                         </CardHeader>
-                        
+
                         {/* Search */}
                         <div className="px-6 flex justify-end items-center">
                             <div className="relative w-full max-w-md">
@@ -159,11 +158,10 @@ export default function Index({ specialties }) {
                             </div>
                         </div>
                         <CardContent className="p-4">
-                            <div className="overflow-x-auto">
+                            <div className="overflow-x-auto rounded-md border">
                                 <Table>
                                     <TableHeader>
-                                        <TableRow className="bg-muted/50 hover:bg-muted/50 rounded uppercase text-gray-500 text-xs">
-                                            <TableHead className="w-[120px] rounded-t-md rounded-r-md">Thumbnail</TableHead>
+                                        <TableRow className="bg-muted hover:bg-muted/50 rounded uppercase text-gray-500 text-xs">
                                             <SortableHeader column="title">Name</SortableHeader>
                                             <TableHead className="max-w-md">Description</TableHead>
                                             <TableHead>App Image</TableHead>
@@ -190,11 +188,11 @@ export default function Index({ specialties }) {
                                                             <Plus className="h-10 w-10 text-muted-foreground" />
                                                         </div>
                                                         <p className="text-lg font-semibold text-foreground mb-2">
-                                                            {searchQuery ? 'No specialties found' : 'No specialties yet'}
+                                                            {searchQuery ? 'No specialities found' : 'No specialities yet'}
                                                         </p>
                                                         <p className="text-sm text-muted-foreground mb-4 max-w-md">
-                                                            {searchQuery 
-                                                                ? 'Try adjusting your search criteria' 
+                                                            {searchQuery
+                                                                ? 'Try adjusting your search criteria'
                                                                 : 'Get started by creating your first specialty'
                                                             }
                                                         </p>
@@ -211,31 +209,19 @@ export default function Index({ specialties }) {
                                             </TableRow>
                                         ) : (
                                             paginatedSpecialties.map((specialty) => (
-                                                <TableRow 
-                                                    key={specialty.no} 
+                                                <TableRow
+                                                    key={specialty.no}
                                                     className="hover:bg-muted/30 transition-colors"
                                                 >
-                                                    <TableCell>
-                                                        {specialty.thumbnail_img ? (
-                                                            <img
-                                                                src={`/uploads/specialty/${specialty.thumbnail_img}`}
-                                                                alt={specialty.title}
-                                                                className="h-16 w-24 rounded-lg object-cover shadow-sm border border-gray-200"
-                                                            />
-                                                        ) : (
-                                                            <div className="h-16 w-24 bg-muted rounded-lg flex items-center justify-center border border-gray-200">
-                                                                <Plus className="h-6 w-6 text-muted-foreground" />
-                                                            </div>
-                                                        )}
-                                                    </TableCell>
+
                                                     <TableCell className="font-medium max-w-xs truncate">
                                                         {specialty.title}
                                                     </TableCell>
                                                     <TableCell className="max-w-md">
-                                                        <div 
+                                                        <div
                                                             className="line-clamp-2 text-sm text-muted-foreground"
-                                                            dangerouslySetInnerHTML={{ 
-                                                                __html: specialty.spec_desc ? specialty.spec_desc.replace(/<[^>]*>/g, '').substring(0, 100) + (specialty.spec_desc.length > 100 ? '...' : '') : 'No description' 
+                                                            dangerouslySetInnerHTML={{
+                                                                __html: specialty.spec_desc ? specialty.spec_desc.replace(/<[^>]*>/g, '').substring(0, 100) + (specialty.spec_desc.length > 100 ? '...' : '') : 'No description'
                                                             }}
                                                         />
                                                     </TableCell>
@@ -247,8 +233,7 @@ export default function Index({ specialties }) {
                                                                 className="h-16 w-24 rounded-lg object-cover shadow-sm border border-gray-200"
                                                             />
                                                         ) : (
-                                                            <div className="h-16 w-24 bg-muted rounded-lg flex items-center justify-center border border-gray-200">
-                                                                <Plus className="h-6 w-6 text-muted-foreground" />
+                                                            <div className="  flex items-center justify-center">-
                                                             </div>
                                                         )}
                                                     </TableCell>
@@ -260,9 +245,8 @@ export default function Index({ specialties }) {
                                                                 className="h-16 w-24 rounded-lg object-cover shadow-sm border border-gray-200"
                                                             />
                                                         ) : (
-                                                            <div className="h-16 w-24 bg-muted rounded-lg flex items-center justify-center border border-gray-200">
-                                                                <Plus className="h-6 w-6 text-muted-foreground" />
-                                                            </div>
+                                                            <div className=" flex items-center justify-center ">
+                                                                -                                                            </div>
                                                         )}
                                                     </TableCell>
                                                     <TableCell>
@@ -270,10 +254,12 @@ export default function Index({ specialties }) {
                                                     </TableCell>
                                                     <TableCell>
                                                         <div className="flex items-center justify-center gap-2">
-                                                            <Link href={route('specialties.edit', specialty.no)}>
-                                                                <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
-                                                                    <Pencil className="h-4 w-4" />
-                                                                </Button>
+
+                                                            <Link
+                                                                href={route('specialties.edit', specialty.no)}
+                                                                className="inline-flex items-center rounded-md bg-blue-50 px-2 py-2 text-blue-600 hover:bg-blue-100"
+                                                            >
+                                                                <Edit className="h-4 w-4" />
                                                             </Link>
                                                             <Popconfirm
                                                                 title="Delete Specialty"
@@ -281,15 +267,15 @@ export default function Index({ specialties }) {
                                                                 onConfirm={() => handleDelete(specialty.no)}
                                                                 okText="Yes, Delete"
                                                                 cancelText="Cancel"
-                                                                okButtonProps={{ 
+                                                                okButtonProps={{
                                                                     danger: true,
                                                                     loading: loading
                                                                 }}
                                                             >
-                                                                <Button 
-                                                                    variant="ghost" 
-                                                                    size="sm" 
-                                                                    className="h-8 w-8 p-0 hover:bg-destructive hover:text-destructive-foreground"
+                                                                <Button
+                                                                    variant="outline"
+                                                                    size="sm"
+                                                                    className="inline-flex items-center rounded-md bg-red-50 px-2 py-1 text-red-600 hover:bg-red-100"
                                                                 >
                                                                     <Trash2 className="h-4 w-4" />
                                                                 </Button>
@@ -318,7 +304,7 @@ export default function Index({ specialties }) {
                                         >
                                             Previous
                                         </Button>
-                                        
+
                                         <div className="flex items-center gap-1">
                                             {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
                                                 let pageNum;
@@ -331,7 +317,7 @@ export default function Index({ specialties }) {
                                                 } else {
                                                     pageNum = currentPage - 2 + i;
                                                 }
-                                                
+
                                                 return (
                                                     <Button
                                                         key={pageNum}
@@ -345,7 +331,7 @@ export default function Index({ specialties }) {
                                                 );
                                             })}
                                         </div>
-                                        
+
                                         <Button
                                             variant="outline"
                                             size="sm"

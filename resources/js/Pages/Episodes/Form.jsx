@@ -180,8 +180,8 @@ export default function Form({ episode, sponsorPages }) {
                     <div className="overflow-hidden bg-white shadow-sm sm:rounded-lg">
                         <div className="p-6 text-gray-900">
                             <div className="mb-4 flex items-center justify-between">
-                                <h4 className="text-lg font-bold">
-                                    {isEditing ? 'EDIT EPISODE' : 'ADD EPISODE'}
+                                <h4 className="text-2xl font-bold">
+                                    {isEditing ? 'Edit Episode' : 'Add Episode'}
                                 </h4>
                                 <Link
                                     href={route('episodes.index')}
@@ -208,7 +208,7 @@ export default function Form({ episode, sponsorPages }) {
                                                 icon="fa-th-large"
                                                 searchable
                                                 error={errors.episode_type}
-                                                className="w-full mt-1 rounded-sm text-sm"
+                                                className="w-full mt-1 rounded-lg h-[34px]"
                                             />
                                         </div>
 
@@ -320,7 +320,7 @@ export default function Form({ episode, sponsorPages }) {
                                                 ]}
                                                 value={data.video_status}
                                                 onChange={(value) => setData('video_status', value)}
-                                                className="w-full mt-1 rounded-sm text-sm"
+                                                className="w-full mt-1 rounded-sm text-sm h-[36px]"
                                                 error={errors.video_status}
                                             />
 
@@ -340,7 +340,7 @@ export default function Form({ episode, sponsorPages }) {
                                                 ]}
                                                 value={data.videoSource}
                                                 onChange={(value) => setData('videoSource', value)}
-                                                className="w-full mt-1 rounded-sm text-sm"
+                                                className="w-full mt-1 rounded-sm text-sm h-[36px]"
                                                 error={errors.videoSource}
                                             />  
                                            
@@ -417,7 +417,7 @@ export default function Form({ episode, sponsorPages }) {
                                                 ]}
                                                 value={data.login_required}
                                                 onChange={(value) => setData('login_required', value)}
-                                                className="w-full mt-1 rounded-sm text-sm"
+                                                className="w-full mt-1 rounded-sm text-sm h-[36px]"
                                                 error={errors.login_required}
                                                 placeholder="Select login required"
                                             />
@@ -540,7 +540,7 @@ export default function Form({ episode, sponsorPages }) {
                                 <div className="flex items-center justify-between gap-4">
                                     <Link
                                         href={route('episodes.index')}
-                                        className="rounded-md bg-gray-300 px-4 py-2 text-gray-700 hover:bg-gray-400"
+                                        className="rounded-md bg-gray-300 px-4 py-2 text-gray-700 hover:bg-gray-400 uppercase"
                                     >
                                         Cancel
                                     </Link>

@@ -7,19 +7,27 @@ import Input from '@/Components/Input';
 import Dropdown from '@/Components/Dropdown';
 import { Head, Link, useForm } from '@inertiajs/react';
 import { useState, useEffect } from 'react';
-import { Select } from 'antd';
+import { Select, Upload } from 'antd';
+import { Button } from '@/Components/ui/button';
+import { UploadOutlined } from '@ant-design/icons';
 
-export default function MarketingCampaignForm({ 
-    business, 
-    campaign, 
-    courses = [], 
-    seminars = [], 
-    specialities = [], 
+import { Card, CardContent, CardHeader, CardTitle } from '@/Components/ui/card';
+import './marketing-campaign.css';
+
+export default function MarketingCampaignForm({
+    businesses = [],
+    business,
+    campaign,
+    courses = [],
+    seminars = [],
+    specialities = [],
     faqs = [],
     episodes = []
 }) {
+
     const isEditing = !!campaign;
-    
+    const hasBusinesses = businesses && businesses.length > 0;
+
     // State for image previews
     const [squareBannerPreview, setSquareBannerPreview] = useState(
         campaign?.marketingBannerSquare ? `/uploads/marketing-campaign/${campaign.marketingBannerSquare}` : null
@@ -37,14 +45,21 @@ export default function MarketingCampaignForm({
         campaign?.marketingBanner3 ? `/uploads/marketing-campaign/${campaign.marketingBanner3}` : null
     );
 
+    // State for dynamic campaign targets
+    const [campaignTargets, setCampaignTargets] = useState([]);
+    const [loadingTargets, setLoadingTargets] = useState(false);
+
     const { data, setData, post, put, errors, processing } = useForm({
         campaignID: campaign?.campaignID || '',
-        businessID: business?.businessID || '',
-        businessname: business?.business_Name || '',
+        businessID: campaign?.businessID || '',
+        businessname: campaign?.business_Name || '',
         campaigntitle: campaign?.campaignTitle || '',
         campaign_type: campaign?.campaignType || 'none',
         campaignTargetID: campaign?.campaignTargetID || '',
         campaignmission: campaign?.campaignMission || 'interactions',
+        promotionTimeSettings: campaign?.promotionTimeSettings || 'none',
+        campaignStartTime: campaign?.campaignStartTime || '',
+        campaignEndTime: campaign?.campaignEndTime || '',
         image: null,
         image1: null,
         image3: null,
@@ -57,6 +72,25 @@ export default function MarketingCampaignForm({
         image5name: campaign?.marketingBanner3 || '',
     });
 
+    // Fetch campaign targets when campaign type changes
+    useEffect(() => {
+        if (!isEditing && data.campaign_type) {
+            fetchCampaignTargets(data.campaign_type);
+        }
+    }, [data.campaign_type, isEditing]);
+
+    // Handle business selection
+    const handleBusinessChange = (value) => {
+        const selectedBusiness = businesses.find(b => b.businessID == value);
+        if (selectedBusiness) {
+            setData({
+                ...data,
+                businessID: selectedBusiness.businessID,
+                businessname: selectedBusiness.business_Name
+            });
+        }
+    };
+
     // Handle campaign type change
     const handleCampaignTypeChange = (value) => {
         setData({
@@ -64,6 +98,45 @@ export default function MarketingCampaignForm({
             campaign_type: value,
             campaignTargetID: '' // Reset target when type changes
         });
+        fetchCampaignTargets(value)
+    };
+
+    // Fetch campaign targets based on campaign type
+    const fetchCampaignTargets = async (campaignType) => {
+        // Map form campaign types to API campaign types
+        let apiCampaignType = '';
+        switch (campaignType) {
+            case 'sponseredCME':
+                apiCampaignType = 'cme';
+                break;
+            case 'sponserSeminar':
+                apiCampaignType = 'seminar';
+                break;
+            case 'sponsoredEpisode':
+                apiCampaignType = 'episode';
+                break;
+            // For other campaign types that don't need API fetching, we'll use the props data
+            case 'specialitySponsor':
+            case 'sponsorMedtalks':
+            case 'sponsoredFaq':
+            default:
+                setCampaignTargets([]);
+                return;
+        }
+
+        setLoadingTargets(true);
+        try {
+            const response = await fetch(route('api.marketing-campaign-targets', { campaign_type: apiCampaignType }));
+            const targets = await response.json();
+
+            setCampaignTargets(targets);
+            console.log(targets)
+        } catch (error) {
+            console.error('Error fetching campaign targets:', error);
+            setCampaignTargets([]);
+        } finally {
+            setLoadingTargets(false);
+        }
     };
 
     // Handle image change with preview
@@ -75,6 +148,13 @@ export default function MarketingCampaignForm({
         const validTypes = ['image/jpeg', 'image/jpg', 'image/png'];
         if (!validTypes.includes(file.type)) {
             alert('Only JPG, JPEG, or PNG files are allowed.');
+            e.target.value = '';
+            return;
+        }
+
+        // Validate file size (1MB max)
+        if (file.size > 1 * 1024 * 1024) {
+            alert('File size must be less than 1MB.');
             e.target.value = '';
             return;
         }
@@ -100,9 +180,15 @@ export default function MarketingCampaignForm({
 
     const handleSubmit = (e) => {
         e.preventDefault();
-        
+
+        // Validate that a business is selected when creating
+        if (!isEditing && !data.businessID) {
+            alert('Please select a business before creating a campaign.');
+            return;
+        }
+
         const formData = new FormData();
-        
+
         // Append all form data
         Object.keys(data).forEach(key => {
             if (data[key] !== null && data[key] !== undefined) {
@@ -111,7 +197,7 @@ export default function MarketingCampaignForm({
         });
 
         if (isEditing) {
-            put(route('marketing-campaign.update', campaign.campaignID), {
+            post(route('marketing-campaigns.updates', campaign.campaignID), {
                 data: formData,
                 headers: {
                     'Content-Type': 'multipart/form-data',
@@ -129,17 +215,49 @@ export default function MarketingCampaignForm({
 
     // Filter options based on campaign type
     const getCampaignTargetOptions = () => {
+        // For editing mode, use the passed props
+        if (isEditing) {
+            switch (data.campaign_type) {
+                case 'sponseredCME':
+                    return courses.map(course => ({
+                        value: course.course_id,
+                        label: course.course_title
+                    }));
+                case 'sponserSeminar':
+                    return seminars.map(seminar => ({
+                        value: seminar.seminar_no,
+                        label: seminar.seminar_title
+                    }));
+                case 'specialitySponsor':
+                    return specialities.map(speciality => ({
+                        value: speciality.no,
+                        label: speciality.title
+                    }));
+                case 'sponsoredFaq':
+                    return faqs.map(faq => ({
+                        value: faq.articleID,
+                        label: faq.title
+                    }));
+                case 'sponsoredEpisode':
+                    return episodes.map(episode => ({
+                        value: episode.id,
+                        label: episode.title
+                    }));
+                default:
+                    return [];
+            }
+        }
+
+        // For create mode, use dynamically fetched targets for API-supported types
         switch (data.campaign_type) {
             case 'sponseredCME':
-                return courses.map(course => ({
-                    value: course.course_id,
-                    label: course.course_title
-                }));
             case 'sponserSeminar':
-                return seminars.map(seminar => ({
-                    value: seminar.seminar_no,
-                    label: seminar.seminar_title
+            case 'sponsoredEpisode':
+                return campaignTargets.map(target => ({
+                    value: target.id,
+                    label: target.title
                 }));
+            // For other types, use the props data (these should be passed in even in create mode)
             case 'specialitySponsor':
                 return specialities.map(speciality => ({
                     value: speciality.no,
@@ -149,11 +267,6 @@ export default function MarketingCampaignForm({
                 return faqs.map(faq => ({
                     value: faq.articleID,
                     label: faq.title
-                }));
-            case 'sponsoredEpisode':
-                return episodes.map(episode => ({
-                    value: episode.id,
-                    label: episode.title
                 }));
             default:
                 return [];
@@ -168,369 +281,323 @@ export default function MarketingCampaignForm({
                 <div className="mx-auto max-w-7xl sm:px-6 lg:px-8">
                     <div className="overflow-hidden bg-white shadow-sm sm:rounded-lg">
                         <div className="p-6 text-gray-900">
-                            <div className="mb-4 flex items-center justify-between">
-                                <h4 className="text-lg font-bold">
-                                    {isEditing ? 'EDIT MARKETING CAMPAIGN' : 'ADD NEW MARKETING CAMPAIGN'}
-                                </h4>
+                            <div className="mb-6 flex items-center justify-between">
+                                <div>
+                                    <h2 className="text-2xl font-bold">
+                                        {isEditing ? 'Edit Marketing Campaign' : 'Add Marketing Campaign'}
+                                    </h2>
+                                    <p className="mt-1 text-sm text-gray-600">
+                                        {isEditing
+                                            ? 'Update the details of your marketing campaign'
+                                            : 'Create a new marketing campaign'}
+                                    </p>
+                                </div>
                                 <Link
                                     href={route('marketing-campaign.index')}
-                                    className="text-gray-600 hover:text-gray-900"
+                                    className="text-sm text-gray-600 hover:text-gray-900"
                                 >
                                     ← Back to Campaigns
                                 </Link>
                             </div>
 
-                            <hr className="my-4" />
+                            <form onSubmit={handleSubmit} className="space-y-8">
 
-                            <form onSubmit={handleSubmit} className="space-y-6">
-                                {/* Business Information */}
-                                <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
-                                    <div>
-                                        <InputLabel htmlFor="business_name" value="Business Name" />
-                                        <Input
-                                            id="business_name"
-                                            type="text"
-                                            value={data.businessname}
-                                            readOnly
-                                            className="bg-gray-100"
-                                        />
-                                        <input type="hidden" name="businessID" value={data.businessID} />
-                                        {errors.businessname && <InputError message={errors.businessname} />}
-                                    </div>
 
-                                    <div>
-                                        <InputLabel htmlFor="campaign_title" value="Campaign Title *" />
-                                        <Input
-                                            id="campaign_title"
-                                            type="text"
-                                            value={data.campaigntitle}
-                                            onChange={(e) => setData('campaigntitle', e.target.value)}
-                                            placeholder="Enter campaign title"
-                                        />
-                                        {errors.campaigntitle && <InputError message={errors.campaigntitle} />}
-                                    </div>
-                                </div>
 
-                                {/* Campaign Type */}
-                                <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
-                                    <div>
-                                        <InputLabel htmlFor="campaign_type" value="Campaign Type *" />
-                                        <Dropdown
-                                            options={[
-                                                { value: 'none', label: 'Choose one' },
-                                                { value: 'sponseredCME', label: 'Sponsored CME' },
-                                                { value: 'sponserSeminar', label: 'Sponsor Seminar' },
-                                                { value: 'specialitySponsor', label: 'Speciality Sponsor' },
-                                                { value: 'sponsorMedtalks', label: 'Sponsor Medtalks' },
-                                                { value: 'sponsoredFaq', label: 'Sponsored FAQ' },
-                                                { value: 'sponsoredEpisode', label: 'Sponsored Episode' }
-                                            ]}
-                                            value={data.campaign_type}
-                                            onChange={handleCampaignTypeChange}
-                                            placeholder="Select campaign type"
-                                        />
-                                        {errors.campaign_type && <InputError message={errors.campaign_type} />}
-                                    </div>
+                                {/* Campaign Details Card */}
 
-                                    {/* Campaign Target */}
-                                    <div>
-                                        <InputLabel htmlFor="campaignTargetID" value="Campaign Target *" />
-                                        <Select
-                                            id="campaignTargetID"
-                                            value={data.campaignTargetID}
-                                            onChange={(value) => setData('campaignTargetID', value)}
-                                            options={getCampaignTargetOptions()}
-                                            placeholder="Select campaign target"
-                                            className="w-full"
-                                            showSearch
-                                            filterOption={(input, option) =>
-                                                option.label.toLowerCase().indexOf(input.toLowerCase()) >= 0
-                                            }
-                                        />
-                                        {errors.campaignTargetID && <InputError message={errors.campaignTargetID} />}
-                                    </div>
-                                </div>
+                                <Card>
 
-                                {/* Campaign Mission */}
-                                <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
-                                    <div>
-                                        <InputLabel htmlFor="campaign_mission" value="Campaign Mission *" />
-                                        <Dropdown
-                                            options={[
-                                                { value: 'clicks', label: 'Clicks' },
-                                                { value: 'impressions', label: 'Impressions' },
-                                                { value: 'subscriptions', label: 'Subscriptions' },
-                                                { value: 'followers', label: 'Followers' },
-                                                { value: 'interactions', label: 'Interactions' },
-                                                { value: 'accessCode', label: 'Access Code' }
-                                            ]}
-                                            value={data.campaignmission}
-                                            onChange={(value) => setData('campaignmission', value)}
-                                            placeholder="Select campaign mission"
-                                        />
-                                        {errors.campaignmission && <InputError message={errors.campaignmission} />}
-                                    </div>
-                                </div>
+                                    <CardContent className="space-y-6">
+                                        <div className="grid grid-cols-2 gap-4 pt-6">
+                                            <div>
+                                                <InputLabel htmlFor="business_selection" value="Business *" />
+                                                <Select
+                                                    id="business_selection"
+                                                    placeholder="Select a business"
+                                                    value={data.businessID}
+                                                    options={business.map(b => ({
+                                                        value: b.businessID,
+                                                        label: b.business_Name
+                                                    }))}
+                                                    onChange={handleBusinessChange}
+                                                    className='w-full mt-1 h-[36px]'
+                                                    showSearch
+                                                    filterOption={(input, option) =>
+                                                        option.label.toLowerCase().indexOf(input.toLowerCase()) >= 0
+                                                    }
+                                                />
 
-                                {/* Banner Images */}
-                                <div className="space-y-6">
-                                    <h3 className="text-lg font-semibold text-gray-800">Banner Images</h3>
-                                    <hr className="my-4" />
-
-                                    {/* Square Banner */}
-                                    <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
-                                        <div>
-                                            <InputLabel value="Square Banner Image" />
-                                            <div className="mt-2 rounded-md border-2 border-dashed border-gray-300 p-6">
-                                                {!squareBannerPreview ? (
-                                                    <div className="text-center">
-                                                        <div className="mb-4">
-                                                            <i className="fa fa-cloud-upload text-5xl text-gray-400"></i>
-                                                        </div>
-                                                        <p className="mb-2 text-sm font-medium text-gray-700">
-                                                            Upload Square Banner Image
-                                                        </p>
-                                                        <p className="mb-4 text-xs text-gray-500">
-                                                            JPG, JPEG, or PNG files only
-                                                        </p>
-                                                        <label className="cursor-pointer rounded-md bg-[#00895f] px-4 py-2 text-sm text-white hover:bg-emerald-700">
-                                                            <i className="fa fa-upload mr-2"></i>
-                                                            Choose Image
-                                                            <input
-                                                                type="file"
-                                                                className="hidden"
-                                                                accept=".jpg,.jpeg,.png"
-                                                                onChange={(e) => handleImageChange(e, 'image', setSquareBannerPreview, 'imagename')}
-                                                            />
-                                                        </label>
-                                                    </div>
-                                                ) : (
-                                                    <div className="relative">
-                                                        <img
-                                                            src={squareBannerPreview}
-                                                            alt="Square Banner Preview"
-                                                            className="mx-auto max-h-48 rounded-md"
-                                                        />
-                                                        <button
-                                                            type="button"
-                                                            onClick={() => removeImage('image', setSquareBannerPreview, 'imagename')}
-                                                            className="mt-4 w-full rounded-md bg-red-600 px-4 py-2 text-white hover:bg-red-700"
-                                                        >
-                                                            <i className="fa fa-trash mr-2"></i>
-                                                            Remove Image
-                                                        </button>
-                                                    </div>
-                                                )}
                                             </div>
-                                            {errors.image && <InputError message={errors.image} />}
-                                        </div>
-
-                                        {/* Rectangle Banner */}
-                                        <div>
-                                            <InputLabel value="Rectangle Banner Image" />
-                                            <div className="mt-2 rounded-md border-2 border-dashed border-gray-300 p-6">
-                                                {!rectangleBannerPreview ? (
-                                                    <div className="text-center">
-                                                        <div className="mb-4">
-                                                            <i className="fa fa-cloud-upload text-5xl text-gray-400"></i>
-                                                        </div>
-                                                        <p className="mb-2 text-sm font-medium text-gray-700">
-                                                            Upload Rectangle Banner Image
-                                                        </p>
-                                                        <p className="mb-4 text-xs text-gray-500">
-                                                            JPG, JPEG, or PNG files only
-                                                        </p>
-                                                        <label className="cursor-pointer rounded-md bg-[#00895f] px-4 py-2 text-sm text-white hover:bg-emerald-700">
-                                                            <i className="fa fa-upload mr-2"></i>
-                                                            Choose Image
-                                                            <input
-                                                                type="file"
-                                                                className="hidden"
-                                                                accept=".jpg,.jpeg,.png"
-                                                                onChange={(e) => handleImageChange(e, 'image1', setRectangleBannerPreview, 'image1name')}
-                                                            />
-                                                        </label>
-                                                    </div>
-                                                ) : (
-                                                    <div className="relative">
-                                                        <img
-                                                            src={rectangleBannerPreview}
-                                                            alt="Rectangle Banner Preview"
-                                                            className="mx-auto max-h-48 rounded-md"
-                                                        />
-                                                        <button
-                                                            type="button"
-                                                            onClick={() => removeImage('image1', setRectangleBannerPreview, 'image1name')}
-                                                            className="mt-4 w-full rounded-md bg-red-600 px-4 py-2 text-white hover:bg-red-700"
-                                                        >
-                                                            <i className="fa fa-trash mr-2"></i>
-                                                            Remove Image
-                                                        </button>
-                                                    </div>
-                                                )}
+                                            <div>
+                                                <InputLabel htmlFor="business_name" value="Business Name" />
+                                                <Input
+                                                    id="business_name"
+                                                    type="text"
+                                                    value={data.businessname}
+                                                    readOnly
+                                                    className="bg-gray-100 py-1.5"
+                                                />
+                                                <input type="hidden" name="businessID" value={data.businessID} />
+                                                {errors.businessname && <InputError message={errors.businessname} />}
                                             </div>
-                                            {errors.image1 && <InputError message={errors.image1} />}
                                         </div>
-                                    </div>
-
-                                    {/* Additional Banners */}
-                                    <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
-                                        {/* Banner 1 */}
-                                        <div>
-                                            <InputLabel value="Banner Image 1" />
-                                            <div className="mt-2 rounded-md border-2 border-dashed border-gray-300 p-6">
-                                                {!banner1Preview ? (
-                                                    <div className="text-center">
-                                                        <div className="mb-4">
-                                                            <i className="fa fa-cloud-upload text-5xl text-gray-400"></i>
-                                                        </div>
-                                                        <p className="mb-2 text-sm font-medium text-gray-700">
-                                                            Upload Banner Image
-                                                        </p>
-                                                        <p className="mb-4 text-xs text-gray-500">
-                                                            JPG, JPEG, or PNG files only
-                                                        </p>
-                                                        <label className="cursor-pointer rounded-md bg-[#00895f] px-4 py-2 text-sm text-white hover:bg-emerald-700">
-                                                            <i className="fa fa-upload mr-2"></i>
-                                                            Choose Image
-                                                            <input
-                                                                type="file"
-                                                                className="hidden"
-                                                                accept=".jpg,.jpeg,.png"
-                                                                onChange={(e) => handleImageChange(e, 'image3', setBanner1Preview, 'image3name')}
-                                                            />
-                                                        </label>
-                                                    </div>
-                                                ) : (
-                                                    <div className="relative">
-                                                        <img
-                                                            src={banner1Preview}
-                                                            alt="Banner 1 Preview"
-                                                            className="mx-auto max-h-48 rounded-md"
-                                                        />
-                                                        <button
-                                                            type="button"
-                                                            onClick={() => removeImage('image3', setBanner1Preview, 'image3name')}
-                                                            className="mt-4 w-full rounded-md bg-red-600 px-4 py-2 text-white hover:bg-red-700"
-                                                        >
-                                                            <i className="fa fa-trash mr-2"></i>
-                                                            Remove Image
-                                                        </button>
-                                                    </div>
-                                                )}
+                                        <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
+                                            <div>
+                                                <InputLabel htmlFor="campaign_title" value="Campaign Title *" />
+                                                <Input
+                                                    id="campaign_title"
+                                                    type="text"
+                                                    value={data.campaigntitle}
+                                                    onChange={(e) => setData('campaigntitle', e.target.value)}
+                                                    placeholder="Enter campaign title"
+                                                    className="py-1.5"
+                                                    required
+                                                />
+                                                {errors.campaigntitle && <InputError message={errors.campaigntitle} />}
                                             </div>
-                                            {errors.image3 && <InputError message={errors.image3} />}
-                                        </div>
-
-                                        {/* Banner 2 */}
-                                        <div>
-                                            <InputLabel value="Banner Image 2" />
-                                            <div className="mt-2 rounded-md border-2 border-dashed border-gray-300 p-6">
-                                                {!banner2Preview ? (
-                                                    <div className="text-center">
-                                                        <div className="mb-4">
-                                                            <i className="fa fa-cloud-upload text-5xl text-gray-400"></i>
-                                                        </div>
-                                                        <p className="mb-2 text-sm font-medium text-gray-700">
-                                                            Upload Banner Image
-                                                        </p>
-                                                        <p className="mb-4 text-xs text-gray-500">
-                                                            JPG, JPEG, or PNG files only
-                                                        </p>
-                                                        <label className="cursor-pointer rounded-md bg-[#00895f] px-4 py-2 text-sm text-white hover:bg-emerald-700">
-                                                            <i className="fa fa-upload mr-2"></i>
-                                                            Choose Image
-                                                            <input
-                                                                type="file"
-                                                                className="hidden"
-                                                                accept=".jpg,.jpeg,.png"
-                                                                onChange={(e) => handleImageChange(e, 'image4', setBanner2Preview, 'image4name')}
-                                                            />
-                                                        </label>
-                                                    </div>
-                                                ) : (
-                                                    <div className="relative">
-                                                        <img
-                                                            src={banner2Preview}
-                                                            alt="Banner 2 Preview"
-                                                            className="mx-auto max-h-48 rounded-md"
-                                                        />
-                                                        <button
-                                                            type="button"
-                                                            onClick={() => removeImage('image4', setBanner2Preview, 'image4name')}
-                                                            className="mt-4 w-full rounded-md bg-red-600 px-4 py-2 text-white hover:bg-red-700"
-                                                        >
-                                                            <i className="fa fa-trash mr-2"></i>
-                                                            Remove Image
-                                                        </button>
-                                                    </div>
-                                                )}
+                                            <div>
+                                                <InputLabel htmlFor="campaign_type" value="Campaign Type *" />
+                                                <Select
+                                                    options={[
+                                                        { value: 'none', label: 'Choose one' },
+                                                        { value: 'sponseredCME', label: 'Sponsored CME' },
+                                                        { value: 'sponserSeminar', label: 'Sponsor Seminar' },
+                                                        { value: 'specialitySponsor', label: 'Speciality Sponsor' },
+                                                        { value: 'sponsorMedtalks', label: 'Sponsor Medtalks' },
+                                                        { value: 'sponsoredFaq', label: 'Sponsored FAQ' },
+                                                        { value: 'sponsoredEpisode', label: 'Sponsored Episode' }
+                                                    ]}
+                                                    value={data.campaign_type}
+                                                    onChange={handleCampaignTypeChange}
+                                                    placeholder="Select campaign type"
+                                                    className='w-full mt-1 h-[36px]'
+                                                    required
+                                                />
+                                                {errors.campaign_type && <InputError message={errors.campaign_type} />}
                                             </div>
-                                            {errors.image4 && <InputError message={errors.image4} />}
-                                        </div>
 
-                                        {/* Banner 3 */}
-                                        <div>
-                                            <InputLabel value="Banner Image 3" />
-                                            <div className="mt-2 rounded-md border-2 border-dashed border-gray-300 p-6">
-                                                {!banner3Preview ? (
-                                                    <div className="text-center">
-                                                        <div className="mb-4">
-                                                            <i className="fa fa-cloud-upload text-5xl text-gray-400"></i>
-                                                        </div>
-                                                        <p className="mb-2 text-sm font-medium text-gray-700">
-                                                            Upload Banner Image
-                                                        </p>
-                                                        <p className="mb-4 text-xs text-gray-500">
-                                                            JPG, JPEG, or PNG files only
-                                                        </p>
-                                                        <label className="cursor-pointer rounded-md bg-[#00895f] px-4 py-2 text-sm text-white hover:bg-emerald-700">
-                                                            <i className="fa fa-upload mr-2"></i>
-                                                            Choose Image
-                                                            <input
-                                                                type="file"
-                                                                className="hidden"
-                                                                accept=".jpg,.jpeg,.png"
-                                                                onChange={(e) => handleImageChange(e, 'image5', setBanner3Preview, 'image5name')}
-                                                            />
-                                                        </label>
-                                                    </div>
-                                                ) : (
-                                                    <div className="relative">
-                                                        <img
-                                                            src={banner3Preview}
-                                                            alt="Banner 3 Preview"
-                                                            className="mx-auto max-h-48 rounded-md"
-                                                        />
-                                                        <button
-                                                            type="button"
-                                                            onClick={() => removeImage('image5', setBanner3Preview, 'image5name')}
-                                                            className="mt-4 w-full rounded-md bg-red-600 px-4 py-2 text-white hover:bg-red-700"
-                                                        >
-                                                            <i className="fa fa-trash mr-2"></i>
-                                                            Remove Image
-                                                        </button>
-                                                    </div>
-                                                )}
+                                            <div>
+                                                <InputLabel htmlFor="campaignTargetID" value="Campaign Target *" />
+                                                <Select
+                                                    id="campaignTargetID"
+                                                    value={data.campaignTargetID}
+                                                    onChange={(value) => setData('campaignTargetID', value)}
+                                                    options={campaignTargets.map(target => ({
+                                                        value: target.id,
+                                                        label: target.title
+                                                    }))}
+                                                    placeholder="Select campaign target"
+                                                    showSearch
+                                                    loading={loadingTargets}
+                                                    filterOption={(input, option) =>
+                                                        option.label.toLowerCase().indexOf(input.toLowerCase()) >= 0
+                                                    }
+                                                    className='w-full mt-1 h-[36px]'
+                                                    required
+                                                />
+                                                {errors.campaignTargetID && <InputError message={errors.campaignTargetID} />}
                                             </div>
-                                            {errors.image5 && <InputError message={errors.image5} />}
+                                            <div>
+                                                <InputLabel htmlFor="campaign_mission" value="Campaign Mission *" />
+                                                <Select options={[
+                                                    { value: 'clicks', label: 'Clicks' },
+                                                    { value: 'impressions', label: 'Impressions' },
+                                                    { value: 'subscriptions', label: 'Subscriptions' },
+                                                    { value: 'followers', label: 'Followers' },
+                                                    { value: 'interactions', label: 'Interactions' },
+                                                    { value: 'accessCode', label: 'Access Code' }
+                                                ]}
+
+                                                    value={data.campaignmission}
+                                                    onChange={(value) => setData('campaignmission', value)}
+                                                    placeholder="Select campaign mission"
+                                                    className='w-full mt-1 h-[36px]'
+                                                    required
+                                                />
+                                                {errors.campaignmission && <InputError message={errors.campaignmission} />}
+                                            </div>
                                         </div>
-                                    </div>
-                                </div>
+                                    </CardContent>
+                                </Card>
+
+
+                                {/* Banner Images Card */}
+                                {(business || data.businessID) && (
+                                    <Card>
+                                        <CardHeader>
+                                            <CardTitle>Banner Images</CardTitle>
+                                            <p className="text-sm text-gray-500">
+                                                Upload banner images for your campaign. Supported formats: JPG, JPEG, PNG (max 1MB each)
+                                            </p>
+                                        </CardHeader>
+                                        <CardContent className="space-y-8">
+                                            {/* Square and Rectangle Banners */}
+                                            <div className="grid grid-cols-1 gap-8 md:grid-cols-2">
+                                                {/* Square Banner */}
+                                                <div>
+                                                    <InputLabel value="Square Banner Image" />
+                                                    <Upload
+                                                        name="image"
+                                                        beforeUpload={(file) => {
+                                                            // Validate file type
+                                                            const isValidType = ['image/jpeg', 'image/jpg', 'image/png'].includes(file.type);
+                                                            if (!isValidType) {
+                                                                alert('Only JPG, JPEG, or PNG files are allowed.');
+                                                                return Upload.LIST_IGNORE;
+                                                            }
+
+                                                            // Validate file size (1MB max)
+                                                            const isLt1M = file.size / 1024 / 1024 < 1;
+                                                            if (!isLt1M) {
+                                                                alert('File size must be less than 1MB.');
+                                                                return Upload.LIST_IGNORE;
+                                                            }
+
+                                                            // Update form data
+                                                            setData('image', file);
+                                                            setData('imagename', file.name);
+
+                                                            // Create preview
+                                                            const reader = new FileReader();
+                                                            reader.onload = (event) => {
+                                                                setSquareBannerPreview(event.target.result);
+                                                            };
+                                                            reader.readAsDataURL(file);
+
+                                                            return false; // Prevent automatic upload
+                                                        }}
+                                                        onRemove={() => {
+                                                            setData('image', null);
+                                                            setData('imagename', '');
+                                                            setSquareBannerPreview(null);
+                                                        }}
+                                                        fileList={data.image ? [{
+                                                            uid: '-1',
+                                                            name: data.imagename,
+                                                            status: 'done',
+                                                            url: squareBannerPreview,
+                                                        }] : []}
+                                                        listType="picture"
+                                                        maxCount={1}
+                                                        className="mt-2"
+                                                    >
+                                                        {!squareBannerPreview ? (<>
+                                                            <div class="flex items-center justify-between border rounded-lg p-2 bg-white shadow-sm w-full max-w-md mt-2  cursor-pointer">
+                                                                <div class="flex items-center space-x-3">
+                                                                    <button type='button' class="text-gray-400 hover:text-red-500 bg-gray-300 p-4 rounded-md">
+                                                                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="size-5">
+                                                                            <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+                                                                        </svg>
+
+                                                                    </button>
+                                                                    <div>
+                                                                        <p><span class="text-sm text-gray-700 font-medium truncate">Upload Square Banner</span></p>
+                                                                        <p className='text-xs text-gray-400'>Supported formats: JPG, JPEG, PNG (max 1MB each)</p>
+                                                                    </div>                                                                    
+                                                                </div>
+                                                            </div>
+                                                           
+                                                        </>
+
+                                                        ) : null}
+                                                    </Upload>
+                                                    {errors.image && <InputError message={errors.image} />}
+                                                </div>
+
+                                                {/* Rectangle Banner */}
+                                                <div>
+                                                    <InputLabel value="Rectangle Banner Image" />
+                                                    <Upload
+                                                        name="image1"
+                                                        beforeUpload={(file) => {
+                                                            // Validate file type
+                                                            const isValidType = ['image/jpeg', 'image/jpg', 'image/png'].includes(file.type);
+                                                            if (!isValidType) {
+                                                                alert('Only JPG, JPEG, or PNG files are allowed.');
+                                                                return Upload.LIST_IGNORE;
+                                                            }
+
+                                                            // Validate file size (1MB max)
+                                                            const isLt1M = file.size / 1024 / 1024 < 1;
+                                                            if (!isLt1M) {
+                                                                alert('File size must be less than 1MB.');
+                                                                return Upload.LIST_IGNORE;
+                                                            }
+
+                                                            // Update form data
+                                                            setData('image1', file);
+                                                            setData('image1name', file.name);
+
+                                                            // Create preview
+                                                            const reader = new FileReader();
+                                                            reader.onload = (event) => {
+                                                                setRectangleBannerPreview(event.target.result);
+                                                            };
+                                                            reader.readAsDataURL(file);
+
+                                                            return false; // Prevent automatic upload
+                                                        }}
+                                                        onRemove={() => {
+                                                            setData('image1', null);
+                                                            setData('image1name', '');
+                                                            setRectangleBannerPreview(null);
+                                                        }}
+                                                        fileList={data.image1 ? [{
+                                                            uid: '-1',
+                                                            name: data.image1name,
+                                                            status: 'done',
+                                                            url: rectangleBannerPreview,
+                                                        }] : []}
+                                                        listType="picture"
+                                                        maxCount={1}
+                                                        className="mt-2"
+                                                    >
+                                                        {!rectangleBannerPreview ? (<>
+                                                        <div class="flex items-center justify-between border rounded-lg p-2 bg-white shadow-sm w-full max-w-md mt-2 cursor-pointer">
+                                                                <div class="flex items-center space-x-3">
+                                                                    <button type='button' class="text-gray-400 hover:text-red-500 bg-gray-300 p-4 rounded-md">
+                                                                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="size-5">
+                                                                            <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+                                                                        </svg>
+
+                                                                    </button>
+                                                                    <div>
+                                                                        <p><span class="text-sm text-gray-700 font-medium truncate">Upload Rectangle Banner</span></p>
+                                                                        <p className='text-xs text-gray-400'>Supported formats: JPG, JPEG, PNG (max 1MB each)</p>
+                                                                    </div>                                                                    
+                                                                </div>
+                                                            </div></>
+                                                        ) : null}
+                                                    </Upload>
+                                                    {errors.image1 && <InputError message={errors.image1} />}
+                                                </div>
+                                            </div>
+                                        </CardContent>
+                                    </Card>
+                                )}
 
                                 {/* Actions */}
-                                <div className="flex items-center justify-between border-t pt-4">
-                                    <Link
-                                        href={route('marketing-campaign.index')}
-                                        className="rounded-md bg-gray-100 px-4 py-2 text-sm font-medium text-gray-600 hover:bg-gray-200 hover:text-gray-900 focus:outline-none focus:ring-2 focus:ring-gray-400 focus:ring-offset-2"
-                                    >
-                                        Cancel
-                                    </Link>
-                                    <PrimaryButton processing={processing}>
-                                        {isEditing ? 'Update Campaign' : 'Create Campaign'}
-                                        <i className="fa fa-arrow-right ml-2"></i>
-                                    </PrimaryButton>
-                                </div>
+                                {(business || data.businessID) && (
+                                    <div className="flex items-center justify-between gap-4">
+                                        <Link
+                                            href={route('marketing-campaign.index')}
+                                        >
+                                            <Button variant="outline">
+                                                Cancel
+                                            </Button>
+                                        </Link>
+                                        <PrimaryButton
+                                            processing={processing}
+                                            className="px-6 py-2"
+                                        >
+                                            Save
+                                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor" class="size-4">
+                                                <path stroke-linecap="round" stroke-linejoin="round" d="M17.25 8.25 21 12m0 0-3.75 3.75M21 12H3" />
+                                            </svg>
+                                        </PrimaryButton>
+                                    </div>
+                                )}
                             </form>
                         </div>
                     </div>

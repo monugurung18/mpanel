@@ -1,11 +1,17 @@
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { Head, Link, useForm } from '@inertiajs/react';
-import { Button, Input, Select, Form, Card, Row, Col, message, Alert } from 'antd';
+import { Button } from '@/Components/ui/button';
+import Input from '@/Components/Input';
+import Dropdown from '@/Components/Dropdown';
 import { useState, useEffect } from 'react';
 import { LeftOutlined } from '@ant-design/icons';
+import PrimaryButton from '@/Components/PrimaryButton';
+import InputError from '@/Components/InputError';
+import InputLabel from '@/Components/InputLabel';
+import { Select } from 'antd';
+
 
 export default function TagForm({ tag, specialities }) {
-    const [form] = Form.useForm();
     const [tagError, setTagError] = useState('');
     const [displayNameError, setDisplayNameError] = useState('');
     
@@ -19,47 +25,22 @@ export default function TagForm({ tag, specialities }) {
 
     const isEditing = !!tag;
 
-    useEffect(() => {
-        if (tag) {
-            form.setFieldsValue({
-                display_name: tag.display_name,
-                tagString: tag.tagString,
-                tagCategory1: tag.tagCategory1,
-                tagCategory2: tag.tagCategory2,
-                tagCategory3: tag.tagCategory3,
-            });
-        }
-    }, [tag, form]);
-
-    const handleSubmit = (values) => {
+    const handleSubmit = (e) => {
+        e.preventDefault();
+        
         // Prepare data for submission
         const formData = {
-            display_name: values.display_name,
-            tagString: values.tagString,
-            tagCategory1: values.tagCategory1 || null,
-            tagCategory2: values.tagCategory2 || null,
-            tagCategory3: values.tagCategory3 || null,
+            display_name: data.display_name,
+            tagString: data.tagString,
+            tagCategory1: data.tagCategory1 || null,
+            tagCategory2: data.tagCategory2 || null,
+            tagCategory3: data.tagCategory3 || null,
         };
 
         if (isEditing) {
-            put(route('tags.update', tag.tagId), formData, {
-                onSuccess: () => {
-                    message.success('Tag updated successfully!');
-                },
-                onError: (errors) => {
-                    message.error('Failed to update tag.');
-                }
-            });
+            put(route('tags.update', tag.tagId), formData);
         } else {
-            post(route('tags.store'), formData, {
-                onSuccess: () => {
-                    message.success('Tag created successfully!');
-                    form.resetFields();
-                },
-                onError: (errors) => {
-                    message.error('Failed to create tag.');
-                }
-            });
+            post(route('tags.store'), formData);
         }
     };
 
@@ -110,195 +91,141 @@ export default function TagForm({ tag, specialities }) {
                 <div className="mx-auto max-w-7xl sm:px-6 lg:px-8">
                     <div className="bg-white shadow-sm sm:rounded-lg">
                         <div className="px-6 py-6">
-                            <div className="mb-6">
-                                <Link 
+                            <div className="mb-6 flex justify-between items-center">
+                               
+                                <h2 className="mt-2 text-2xl font-bold text-gray-900 ">
+                                    {isEditing ? "Edit Tag" : "Create New Tag"}
+                                </h2>
+                                 <Link 
                                     href={route('tags.index')} 
                                     className="inline-flex items-center text-sm font-medium text-gray-600 hover:text-gray-900"
                                 >
                                     <LeftOutlined className="mr-1" />
                                     Back to Tags
                                 </Link>
-                                <h2 className="mt-2 text-2xl font-bold text-gray-900">
-                                    {isEditing ? "Edit Tag" : "Create New Tag"}
-                                </h2>
-                                <p className="mt-1 text-sm text-gray-500">
-                                    {isEditing 
-                                        ? "Update the details for this tag below." 
-                                        : "Fill in the details to create a new tag."}
-                                </p>
+                               
                             </div>
 
                             <div className="rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
-                                <Form
-                                    form={form}
-                                    layout="vertical"
-                                    onFinish={handleSubmit}
-                                    initialValues={data}
-                                    requiredMark={false}
-                                >
-                                    <Row gutter={24}>
-                                        <Col xs={24} md={12}>
-                                            <Form.Item
-                                                label={
-                                                    <span className="text-sm font-medium text-gray-700">
-                                                        Tag Name
-                                                    </span>
-                                                }
-                                                name="tagString"
-                                                rules={[
-                                                    { 
-                                                        required: true, 
-                                                        message: 'Please input the tag name!' 
-                                                    },
-                                                    {
-                                                        validator: (_, value) => checkTagExists(value, 'tag')
-                                                    }
-                                                ]}
-                                                help={tagError}
-                                                validateStatus={tagError ? 'error' : ''}
-                                            >
-                                                <Input
-                                                    placeholder="Enter tag name"
-                                                    className="rounded-md"
-                                                    size="large"
-                                                />
-                                            </Form.Item>
-                                        </Col>
+                                <form onSubmit={handleSubmit} className="space-y-6">
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                        <div>
+                                            <InputLabel for="tagString" value="Tag Name" className="text-sm font-medium text-gray-700" />
+                                            <Input
+                                                id="tagString"
+                                                type="text"
+                                                placeholder="Enter tag name"
+                                                value={data.tagString}
+                                                onChange={(e) => setData('tagString', e.target.value)}
+                                                className="w-full py-1.5 mt-1 text-sm"
+                                                required
+                                            />
+                                            {tagError && <InputError message={tagError} className="mt-2" />}
+                                        </div>
                                         
-                                        <Col xs={24} md={12}>
-                                            <Form.Item
-                                                label={
-                                                    <span className="text-sm font-medium text-gray-700">
-                                                        Display Name
-                                                    </span>
-                                                }
-                                                name="display_name"
-                                                rules={[
-                                                    { 
-                                                        required: true, 
-                                                        message: 'Please input the display name!' 
-                                                    },
-                                                    {
-                                                        validator: (_, value) => checkTagExists(value, 'dname')
-                                                    }
-                                                ]}
-                                                help={displayNameError}
-                                                validateStatus={displayNameError ? 'error' : ''}
-                                            >
-                                                <Input
-                                                    placeholder="Enter display name"
-                                                    className="rounded-md"
-                                                    size="large"
-                                                />
-                                            </Form.Item>
-                                        </Col>
-                                    </Row>
-                                    
-                                    <div className="mb-6">
-                                        <h3 className="text-lg font-medium text-gray-900">Specialities</h3>
-                                        <p className="mt-1 text-sm text-gray-500">
-                                            Assign specialities to this tag (optional)
-                                        </p>
+                                        <div>
+                                            <InputLabel for="display_name" value="Display Name" className="text-sm font-medium text-gray-700" />
+                                            <Input
+                                                id="display_name"
+                                                type="text"
+                                                placeholder="Enter display name"
+                                                value={data.display_name}
+                                                onChange={(e) => setData('display_name', e.target.value)}
+                                                className="w-full py-1.5 mt-1 text-sm"
+                                                required
+                                            />
+                                            {displayNameError && <InputError message={displayNameError} className="mt-2" />}
+                                        </div>
                                     </div>
+                                   
                                     
-                                    <Row gutter={24}>
-                                        <Col xs={24} md={8}>
-                                            <Form.Item
-                                                label={
-                                                    <span className="text-sm font-medium text-gray-700">
-                                                        Speciality 1
-                                                    </span>
-                                                }
-                                                name="tagCategory1"
-                                            >
-                                                <Select
-                                                    showSearch
-                                                    placeholder="Select speciality"
-                                                    optionFilterProp="children"
-                                                    options={specialities}
-                                                    className="rounded-md"
-                                                    size="large"
-                                                    allowClear
-                                                />
-                                            </Form.Item>
-                                        </Col>
+                                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                                        <div>
+                                            <InputLabel for="tagCategory1" value="Speciality 1" className="text-sm font-medium text-gray-700" />
+                                            <Select
+                                                id="tagCategory1"
+                                                placeholder="Select speciality"
+                                                value={data.tagCategory1}
+                                                onChange={(value) => setData('tagCategory1', value)}
+                                                options={specialities}
+                                                icon="fa-th-large"
+                                                searchable
+                                                error={errors.tagCategory1}
+                                                className="w-full mt-1 rounded-lg h-[36px]"
+                                            />
+                                            
+                                        </div>
                                         
-                                        <Col xs={24} md={8}>
-                                            <Form.Item
-                                                label={
-                                                    <span className="text-sm font-medium text-gray-700">
-                                                        Speciality 2
-                                                    </span>
-                                                }
-                                                name="tagCategory2"
-                                            >
-                                                <Select
-                                                    showSearch
-                                                    placeholder="Select speciality"
-                                                    optionFilterProp="children"
-                                                    options={specialities}
-                                                    className="rounded-md"
-                                                    size="large"
-                                                    allowClear
-                                                />
-                                            </Form.Item>
-                                        </Col>
+                                        <div>
+                                            <InputLabel for="tagCategory2" value="Speciality 2" className="text-sm font-medium text-gray-700" />
+                                            <Select
+                                                id="tagCategory2"
+                                                placeholder="Select speciality"
+                                                value={data.tagCategory2}
+                                                onChange={(value) => setData('tagCategory2', value)}
+                                                options={specialities}
+                                                icon="fa-th-large"
+                                                searchable
+                                                error={errors.episode_type}
+                                                className="w-full mt-1 rounded-lg h-[36px]"
+                                            />                              
+                                        </div>
                                         
-                                        <Col xs={24} md={8}>
-                                            <Form.Item
-                                                label={
-                                                    <span className="text-sm font-medium text-gray-700">
-                                                        Speciality 3
-                                                    </span>
-                                                }
-                                                name="tagCategory3"
-                                            >
-                                                <Select
-                                                    showSearch
-                                                    placeholder="Select speciality"
-                                                    optionFilterProp="children"
-                                                    options={specialities}
-                                                    className="rounded-md"
-                                                    size="large"
-                                                    allowClear
-                                                />
-                                            </Form.Item>
-                                        </Col>
-                                    </Row>
+                                        <div>
+                                            <InputLabel for="tagCategory3" value="Speciality 3" className="text-sm font-medium text-gray-700" />
+                                            <Select
+                                                id="tagCategory3"
+                                                placeholder="Select speciality"
+                                                options={specialities}
+                                                value={data.tagCategory3}
+                                                onChange={(value) => setData('tagCategory3', value)}
+                                                icon="fa-th-large"
+                                                error={errors.tagCategory3}
+                                                searchable
+                                                clearable
+                                                className="w-full mt-1 rounded-lg h-[36px]"
+                                            />
+                                        </div>
+                                    </div>
                                     
                                     {Object.keys(errors).length > 0 && (
                                         <div className="mb-6">
-                                            <Alert
-                                                message="Validation Error"
-                                                description={
-                                                    <ul className="list-disc pl-5">
-                                                        {Object.entries(errors).map(([key, value]) => (
-                                                            <li key={key} className="text-sm">{value}</li>
-                                                        ))}
-                                                    </ul>
-                                                }
-                                                type="error"
-                                                showIcon
-                                            />
+                                            <div className="rounded-md bg-red-50 p-4">
+                                                <div className="flex">
+                                                    <div className="flex-shrink-0">
+                                                        <svg className="h-5 w-5 text-red-400" viewBox="0 0 20 20" fill="currentColor">
+                                                            <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+                                                        </svg>
+                                                    </div>
+                                                    <div className="ml-3">
+                                                        <h3 className="text-sm font-medium text-red-800">
+                                                            Validation Error
+                                                        </h3>
+                                                        <div className="mt-2 text-sm text-red-700">
+                                                            <ul className="list-disc pl-5 space-y-1">
+                                                                {Object.entries(errors).map(([key, value]) => (
+                                                                    <li key={key}>{value}</li>
+                                                                ))}
+                                                            </ul>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
                                         </div>
                                     )}
                                     
-                                    <div className="flex items-center justify-end space-x-4 pt-6">
+                                    <div className="flex items-center justify-between pt-6">
                                         <Link href={route('tags.index')}>
-                                            <Button size="large">
+                                            <Button variant="outline" className="uppercase">
                                                 Cancel
                                             </Button>
                                         </Link>
-                                        <Button 
-                                            type="primary" 
-                                            htmlType="submit" 
-                                            loading={processing}
-                                            size="large"
-                                        >
+                                        <PrimaryButton type="submit" disabled={processing}>
                                             {isEditing ? 'Update Tag' : 'Create Tag'}
-                                        </Button>
+                                            <i className="fa fa-arrow-right ml-2"></i>
+                                        </PrimaryButton>
                                     </div>
-                                </Form>
+                                </form>
                             </div>
                         </div>
                     </div>

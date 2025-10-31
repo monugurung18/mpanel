@@ -18,6 +18,7 @@ class DatabaseSeeder extends Seeder
         // Seed users from zc_mindpress_users table
         $this->call([
             UserSeeder::class,
+            BusinessPageSeeder::class,
         ]);
     }
 }

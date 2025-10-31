@@ -477,6 +477,9 @@ class PostController extends Controller
         }
         if ($request->hasFile('s_image1')) {
             if ($post->s_image1) {
+                //
+                $livePath = '/var/www/html/uploads/faqs';
+
                 $old = public_path('uploads/post/orginal/' . $post->s_image1);
                 if (file_exists($old)) unlink($old);
             }

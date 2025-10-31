@@ -2,7 +2,7 @@ import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { Head, Link, router, usePage } from '@inertiajs/react';
 import { useState, useMemo } from 'react';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/Components/ui/table';
-import { Search, ChevronUp, ChevronDown, Calendar, FileText, Eye,Trash2, Pencil } from 'lucide-react';
+import { Plus,Search, ChevronUp, ChevronDown, Calendar, FileText, Eye, Trash2, Pencil, Edit } from 'lucide-react';
 import { getPostImageUrl } from '@/Utils/imageHelper';
 import { Button, message, Popconfirm } from 'antd';
 
@@ -138,23 +138,27 @@ export default function Index({ posts }) {
                             {/* Header */}
                             <div className="mb-6 flex items-center justify-between">
                                 <div>
-                                    <h2 className="text-2xl font-bold text-gray-900">Posts Management</h2>
-                                    <p className="mt-1 text-sm text-gray-600">
-                                        Manage your blog posts and articles
-                                    </p>
+
+                                    <h2 className="text-2xl font-bold text-gray-900 ">Posts Management</h2>
+                                    <p>Manage your blog posts and articles</p>
                                 </div>
                                 <Link
                                     href={route('posts.create')}
-                                    className="inline-flex items-center rounded-md bg-[#00895f] px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-emerald-700 focus:outline-none focus:ring-2 focus:ring-[#00895f] focus:ring-offset-2"
+                                    className="inline-flex items-center rounded-md bg-[#00895f] px-4 py-2 text-sm  text-white shadow-sm hover:bg-emerald-700 focus:outline-none focus:ring-2 focus:ring-[#00895f] focus:ring-offset-2"
                                 >
-                                    <i className="fa fa-plus mr-2"></i>
+                                    <Plus className="mr-2 h-4 w-4" />
                                     Add New Post
                                 </Link>
                             </div>
 
                             {/* Search Bar */}
-                            <div className="mb-6">
-                                <div className="relative">
+                            <div className="mb-6 flex justify-between items-center">
+                                {/* Results count */}
+                            <div className=" text-sm text-gray-600">
+                                Showing {paginatedPosts.length} of {filteredAndSortedPosts.length} posts
+                                {searchQuery && ` (filtered from ${posts.length} total)`}
+                            </div>
+                                <div className="relative w-full max-w-md">
                                     <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
                                         <Search className="h-5 w-5 text-gray-400" />
                                     </div>
@@ -166,13 +170,13 @@ export default function Index({ posts }) {
                                             setSearchQuery(e.target.value);
                                             setCurrentPage(1);
                                         }}
-                                        className="block w-full rounded-lg border border-gray-300 bg-white py-3 pl-10 pr-3 text-sm placeholder-gray-500 focus:border-[#00895f] focus:outline-none focus:ring-1 focus:ring-[#00895f]"
+                                        className="block w-full rounded-lg border border-gray-300 bg-white py-2 pl-10 pr-3 text-sm placeholder-gray-500 focus:border-[#00895f] focus:outline-none focus:ring-1 focus:ring-[#00895f]"
                                     />
                                 </div>
                             </div>
 
                             {/* Stats */}
-                            <div className="mb-6 grid grid-cols-1 gap-4 sm:grid-cols-4">
+                            {/* <div className="mb-6 grid grid-cols-1 gap-4 sm:grid-cols-4">
                                 <div className="rounded-lg bg-blue-50 p-4">
                                     <div className="flex items-center">
                                         <div className="flex-shrink-0">
@@ -223,13 +227,9 @@ export default function Index({ posts }) {
                                         </div>
                                     </div>
                                 </div>
-                            </div>
+                            </div> */}
 
-                            {/* Results count */}
-                            <div className="mb-4 text-sm text-gray-600">
-                                Showing {paginatedPosts.length} of {filteredAndSortedPosts.length} posts
-                                {searchQuery && ` (filtered from ${posts.length} total)`}
-                            </div>
+                            
 
                             {/* Table */}
                             <div className="overflow-hidden rounded-lg border border-gray-200">
@@ -344,10 +344,10 @@ export default function Index({ posts }) {
                                                         <div className="flex items-center justify-center gap-2">
                                                             <Link
                                                                 href={route('posts.edit', post.articleID)}
-                                                                className="text-blue-600 hover:text-blue-800"
-                                                                title="Edit"
-                                                            >
-                                                               <Pencil className="h-4 w-4" />
+                                                                title='Edit'
+                                                                 className="inline-flex items-center rounded-md bg-blue-50 px-2 py-2 text-blue-600 hover:bg-blue-100"
+                                                                >
+                                                                    <Edit className="mr-1 h-4 w-4" />
                                                             </Link>
                                                             <Popconfirm
                                                                 title="Delete the task"
@@ -377,20 +377,54 @@ export default function Index({ posts }) {
                                         Page {currentPage} of {totalPages}
                                     </div>
                                     <div className="flex gap-2">
-                                        <button
+                                        <Button
                                             onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
                                             disabled={currentPage === 1}
-                                            className="rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50"
+                                            variant="outline"
+                                            size="sm"
                                         >
                                             Previous
-                                        </button>
-                                        <button
+                                        </Button>
+                                        
+                                        {/* Page Number Navigation */}
+                                        {[...Array(totalPages)].map((_, i) => {
+                                            const page = i + 1;
+                                            // Show first, last, current, and nearby pages
+                                            if (
+                                                page === 1 ||
+                                                page === totalPages ||
+                                                (page >= currentPage - 1 && page <= currentPage + 1)
+                                            ) {
+                                                return (
+                                                    <Button
+                                                        key={page}
+                                                        onClick={() => setCurrentPage(page)}
+                                                        variant={currentPage === page ? "default" : "outline"}
+                                                        size="sm"
+                                                    >
+                                                        {page}
+                                                    </Button>
+                                                );
+                                            }
+                                            // Show ellipsis for skipped pages
+                                            if (page === currentPage - 2 || page === currentPage + 2) {
+                                                return (
+                                                    <span key={page} className="px-2 py-2 text-gray-500">
+                                                        ...
+                                                    </span>
+                                                );
+                                            }
+                                            return null;
+                                        })}
+                                        
+                                        <Button
                                             onClick={() => setCurrentPage(Math.min(totalPages, currentPage + 1))}
                                             disabled={currentPage === totalPages}
-                                            className="rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50"
+                                            variant="outline"
+                                            size="sm"
                                         >
                                             Next
-                                        </button>
+                                        </Button>
                                     </div>
                                 </div>
                             )}

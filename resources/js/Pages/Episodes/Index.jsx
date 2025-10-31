@@ -6,7 +6,7 @@ import { getEpisodeImageUrl } from '@/Utils/imageHelper';
 import { Button } from '@/Components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/Components/ui/card';
 import Input from '@/Components/Input';
-import { Plus, Film, Pencil, Trash2, Search, ChevronUp, ChevronDown } from 'lucide-react';
+import { Plus, Film, Pencil, Trash2, Search, ChevronUp, ChevronDown, Edit } from 'lucide-react';
 import { Popconfirm, message } from 'antd';
 import 'antd/dist/reset.css';
 
@@ -17,7 +17,7 @@ export default function Index({ episodes }) {
     const [sortColumn, setSortColumn] = useState(null);
     const [sortDirection, setSortDirection] = useState('asc');
     const { baseImagePath } = usePage().props;
-    
+
     const pageSize = 25;
 
     const handleDelete = (id) => {
@@ -59,12 +59,12 @@ export default function Index({ episodes }) {
             filtered.sort((a, b) => {
                 let aVal = a[sortColumn] || '';
                 let bVal = b[sortColumn] || '';
-                
+
                 if (sortColumn === 'date_time') {
                     aVal = new Date(aVal);
                     bVal = new Date(bVal);
                 }
-                
+
                 if (aVal < bVal) return sortDirection === 'asc' ? -1 : 1;
                 if (aVal > bVal) return sortDirection === 'asc' ? 1 : -1;
                 return 0;
@@ -93,9 +93,8 @@ export default function Index({ episodes }) {
         };
 
         return (
-            <span className={`inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-semibold ${
-                styles[status] || 'bg-gray-100 text-gray-800 border-gray-200'
-            }`}>
+            <span className={`inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-semibold ${styles[status] || 'bg-gray-100 text-gray-800 border-gray-200'
+                }`}>
                 {status}
             </span>
         );
@@ -110,8 +109,8 @@ export default function Index({ episodes }) {
             <div className="flex items-center gap-2">
                 {children}
                 {sortColumn === column && (
-                    sortDirection === 'asc' ? 
-                        <ChevronUp className="h-4 w-4" /> : 
+                    sortDirection === 'asc' ?
+                        <ChevronUp className="h-4 w-4" /> :
                         <ChevronDown className="h-4 w-4" />
                 )}
             </div>
@@ -135,7 +134,7 @@ export default function Index({ episodes }) {
                         <CardHeader className="px-6 pt-5">
                             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                                 <div>
-                                    <CardTitle className="flex items-center gap-2 text-2xl font-bold text-gray-900">
+                                    <CardTitle className="flex items-center gap-2 text-2xl font-bold text-gray-900 ">
                                         Episodes Management
                                     </CardTitle>
                                     <CardDescription className="">
@@ -150,9 +149,12 @@ export default function Index({ episodes }) {
                                 </Link>
                             </div>
                         </CardHeader>
-                        
+
                         {/* Search */}
-                        <div className="px-6 flex justify-end items-center">
+                        <div className="px-6 flex justify-between items-center gap-4">
+                            <div className="text-sm text-muted-foreground">
+                                Showing {((currentPage - 1) * pageSize) + 1} to {Math.min(currentPage * pageSize, filteredAndSortedEpisodes.length)} of {filteredAndSortedEpisodes.length} episodes
+                            </div>
                             <div className="relative w-full max-w-md">
                                 <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                                 <Input
@@ -168,7 +170,7 @@ export default function Index({ episodes }) {
                             </div>
                         </div>
                         <CardContent className="p-4">
-                            <div className="overflow-x-auto">
+                            <div className="overflow-x-auto rounded-md border">
                                 <Table>
                                     <TableHeader>
                                         <TableRow className="bg-muted/50 hover:bg-muted/50 rounded uppercase text-gray-500 text-xs">
@@ -202,8 +204,8 @@ export default function Index({ episodes }) {
                                                             {searchQuery ? 'No episodes found' : 'No episodes yet'}
                                                         </p>
                                                         <p className="text-sm text-muted-foreground mb-4 max-w-md">
-                                                            {searchQuery 
-                                                                ? 'Try adjusting your search criteria' 
+                                                            {searchQuery
+                                                                ? 'Try adjusting your search criteria'
                                                                 : 'Get started by creating your first episode'
                                                             }
                                                         </p>
@@ -220,8 +222,8 @@ export default function Index({ episodes }) {
                                             </TableRow>
                                         ) : (
                                             paginatedEpisodes.map((episode) => (
-                                                <TableRow 
-                                                    key={episode.id} 
+                                                <TableRow
+                                                    key={episode.id}
                                                     className="hover:bg-muted/30 transition-colors"
                                                 >
                                                     <TableCell>
@@ -241,10 +243,10 @@ export default function Index({ episodes }) {
                                                         {episode.title}
                                                     </TableCell>
                                                     <TableCell className="max-w-md">
-                                                        <div 
+                                                        <div
                                                             className="line-clamp-2 text-sm text-muted-foreground"
-                                                            dangerouslySetInnerHTML={{ 
-                                                                __html: episode.desc ? episode.desc.replace(/<[^>]*>/g, '').substring(0, 100) + (episode.desc.length > 100 ? '...' : '') : 'No description' 
+                                                            dangerouslySetInnerHTML={{
+                                                                __html: episode.desc ? episode.desc.replace(/<[^>]*>/g, '').substring(0, 100) + (episode.desc.length > 100 ? '...' : '') : 'No description'
                                                             }}
                                                         />
                                                     </TableCell>
@@ -260,8 +262,9 @@ export default function Index({ episodes }) {
                                                     <TableCell>
                                                         <div className="flex items-center justify-center gap-2">
                                                             <Link href={route('episodes.edit', episode.id)}>
-                                                                <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
-                                                                    <Pencil className="h-4 w-4" />
+                                                                <Button variant="ghost" size="sm" className="inline-flex items-center rounded-md bg-blue-50 px-2 py-1 text-blue-600 hover:bg-blue-100"
+                                                                >
+                                                                    <Edit className="mr-1 h-4 w-4" />
                                                                 </Button>
                                                             </Link>
                                                             <Popconfirm
@@ -270,17 +273,17 @@ export default function Index({ episodes }) {
                                                                 onConfirm={() => handleDelete(episode.id)}
                                                                 okText="Yes, Delete"
                                                                 cancelText="Cancel"
-                                                                okButtonProps={{ 
+                                                                okButtonProps={{
                                                                     danger: true,
                                                                     loading: loading
                                                                 }}
                                                             >
-                                                                <Button 
-                                                                    variant="ghost" 
-                                                                    size="sm" 
-                                                                    className="h-8 w-8 p-0 hover:bg-destructive hover:text-destructive-foreground"
+                                                                <Button
+                                                                    variant="ghost"
+                                                                    size="sm"
+                                                                    className="inline-flex items-center rounded-md bg-red-50 px-2 py-1 text-red-600 hover:bg-red-100"
                                                                 >
-                                                                    <Trash2 className="h-4 w-4" />
+                                                                    <Trash2 className="mr-1 h-4 w-4" />
                                                                 </Button>
                                                             </Popconfirm>
                                                         </div>
@@ -307,7 +310,7 @@ export default function Index({ episodes }) {
                                         >
                                             Previous
                                         </Button>
-                                        
+
                                         <div className="flex items-center gap-1">
                                             {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
                                                 let pageNum;
@@ -320,7 +323,7 @@ export default function Index({ episodes }) {
                                                 } else {
                                                     pageNum = currentPage - 2 + i;
                                                 }
-                                                
+
                                                 return (
                                                     <Button
                                                         key={pageNum}
@@ -334,7 +337,7 @@ export default function Index({ episodes }) {
                                                 );
                                             })}
                                         </div>
-                                        
+
                                         <Button
                                             variant="outline"
                                             size="sm"
@@ -351,7 +354,7 @@ export default function Index({ episodes }) {
 
                     {/* Table Card */}
                     <Card className="border-0 shadow-sm">
-                        
+
                     </Card>
                 </div>
             </div>
