@@ -1,14 +1,13 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { Head, Link, router } from '@inertiajs/react';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/Components/ui/table';
 import { Button } from '@/Components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/Components/ui/card';
+import Input from '@/Components/Input';
 import { Plus, Pencil, Trash2, Search, Edit } from 'lucide-react';
 import { Popconfirm } from 'antd';
-
-
 import { Pagination } from 'antd';
-import { Input } from 'antd';
 import './marketing-campaign.css';
 
 export default function MarketingCampaignsIndex({ campaigns, filters }) {
@@ -58,7 +57,12 @@ export default function MarketingCampaignsIndex({ campaigns, filters }) {
     };
 
     const getCampaignReference = (campaign) => {
-        // This would be enhanced to show actual reference based on campaign type
+        // Display the actual target title if available, otherwise fallback to generic reference
+        if (campaign.targetTitle) {
+            return campaign.targetTitle;
+        }
+        
+        // Fallback to generic reference based on campaign type
         switch (campaign.campaignType) {
             case 'sponseredCME':
                 return 'CME Course';
@@ -105,11 +109,11 @@ export default function MarketingCampaignsIndex({ campaigns, filters }) {
             <Head title="Marketing Campaigns" />
             <div className="py-6">
                 <div className="mx-auto max-w-7xl sm:px-6 lg:px-8">
-                    <div className="overflow-hidden bg-white shadow-sm sm:rounded-lg">
-                        <div className="p-6 text-gray-900">
-                            <div className="mb-6 flex flex-col sm:flex-row sm:items-center sm:justify-between">
+                    <Card className="shadow-sm">
+                        <CardHeader className="border-b">
+                            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between">
                                 <div>
-                                    <h2 className="text-2xl font-bold">Marketing Campaigns</h2>
+                                    <CardTitle className="text-2xl">Marketing Campaigns</CardTitle>
                                     <p className="mt-1 text-sm text-gray-600">
                                         Manage your marketing campaigns
                                     </p>
@@ -118,66 +122,43 @@ export default function MarketingCampaignsIndex({ campaigns, filters }) {
                                     href={route('marketing-campaign.create')}
                                 >
                                     <Button className="mt-4 sm:mt-0">
-                                        <Plus className="h-4 w-4" />
+                                        <Plus className="h-4 w-4 mr-2" />
                                         Create Campaign
                                     </Button>
                                 </Link>
                             </div>
-
+                        </CardHeader>
+                        <CardContent className="p-6">
                             {/* Search and Filters */}
-                            <div className="mb-6 space-y-4">
-                                <form onSubmit={handleSearch} className="flex flex-col gap-4 sm:flex-row">
-                                    <div className="flex-grow">
+                            <div className="mb-6 space-y-4 flex justify-between items-center">
+                                <div className="text-sm text-muted-foreground">
+                                    {meta && (
+                                        <>Showing {meta.from || 0} to {meta.to || 0} of {meta.total || 0} campaigns</>
+                                    )}
+                                </div>
+                                <form onSubmit={handleSearch} className="flex flex-col gap-4 sm:flex-row max-w-md w-full">
+                                    <div className="relative flex-grow">
+                                        <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                                         <Input
+                                            type="text"
                                             placeholder="Search campaigns..."
                                             value={searchTerm}
                                             onChange={(e) => setSearchTerm(e.target.value)}
-                                            prefix={<Search className="h-4 w-4 text-gray-400" />}
+                                            className="pl-10"
                                         />
                                     </div>
-                                    <Button type="submit" className="sm:w-auto">
+                                    <Button type="submit" className="sm:w-auto text-xs py-2">
                                         Search
                                     </Button>
                                     <Button
                                         type="button"
                                         variant="outline"
                                         onClick={resetFilters}
-                                        className="sm:w-auto"
+                                        className="sm:w-auto py-2"
                                     >
                                         Reset
                                     </Button>
-                                </form>
-
-                                {/* Additional Filters */}
-                                <div className="flex flex-wrap gap-4">
-                                    <select
-                                        value={filters.campaignType || ''}
-                                        onChange={(e) => handleFilterChange('campaignType', e.target.value)}
-                                        className="rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
-                                    >
-                                        <option value="">All Campaign Types</option>
-                                        <option value="sponseredCME">Sponsored CME</option>
-                                        <option value="sponserSeminar">Sponsor Seminar</option>
-                                        <option value="specialitySponsor">Speciality Sponsor</option>
-                                        <option value="sponsorMedtalks">Sponsor Medtalks</option>
-                                        <option value="sponsoredFaq">Sponsored FAQ</option>
-                                        <option value="sponsoredEpisode">Sponsored Episode</option>
-                                    </select>
-
-                                    <select
-                                        value={filters.campaignStatus || ''}
-                                        onChange={(e) => handleFilterChange('campaignStatus', e.target.value)}
-                                        className="rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
-                                    >
-                                        <option value="">All Statuses</option>
-                                        <option value="live">Live</option>
-                                        <option value="draft">Draft</option>
-                                        <option value="suspended">Suspended</option>
-                                        <option value="completed">Completed</option>
-                                        <option value="archived">Archived</option>
-                                        <option value="awaitingModeration">Awaiting Moderation</option>
-                                    </select>
-                                </div>
+                                </form>                              
                             </div>
 
                             {/* Campaigns Table */}
@@ -188,15 +169,13 @@ export default function MarketingCampaignsIndex({ campaigns, filters }) {
                                             <TableHead>Campaign Title</TableHead>
                                             <TableHead>Campaign Type</TableHead>
                                             <TableHead>Campaign Reference</TableHead>
-
-
                                             <TableHead className="text-right">Actions</TableHead>
                                         </TableRow>
                                     </TableHeader>
                                     <TableBody>
                                         {data.length === 0 ? (
                                             <TableRow>
-                                                <TableCell colSpan={7} className="text-center py-8">
+                                                <TableCell colSpan={4} className="text-center py-8">
                                                     <p className="text-gray-500">No campaigns found</p>
                                                 </TableCell>
                                             </TableRow>
@@ -214,13 +193,11 @@ export default function MarketingCampaignsIndex({ campaigns, filters }) {
                                                     <TableCell>
                                                         {getCampaignReference(campaign)}
                                                     </TableCell>
-
                                                     <TableCell className="text-right">
                                                         <div className="flex justify-end space-x-2">
-
                                                             <Link
                                                                 href={route('marketing-campaign.edit', campaign.campaignID)}
-                                                                 className="inline-flex items-center rounded-md bg-blue-50 px-2 py-2 text-blue-600 hover:bg-blue-100"
+                                                                className="inline-flex items-center rounded-md bg-blue-50 px-2 py-2 text-blue-600 hover:bg-blue-100"
                                                             >
                                                                 <Edit className="h-4 w-4" />
                                                             </Link>
@@ -255,26 +232,88 @@ export default function MarketingCampaignsIndex({ campaigns, filters }) {
 
                             {/* Pagination */}
                             {meta && meta.last_page > 1 && (
-                                <div className="mt-6 flex justify-center">
-                                    <Pagination
-                                        current={meta.current_page}
-                                        total={meta.total}
-                                        pageSize={meta.per_page}
-                                        onChange={(page) => {
-                                            router.get(route('marketing-campaign.index'), {
-                                                ...filters,
-                                                page
-                                            }, {
-                                                preserveState: true,
-                                                replace: true
-                                            });
-                                        }}
-                                        showSizeChanger={false}
-                                    />
+                                <div className="flex flex-col sm:flex-row items-center justify-between gap-4 border-t px-6 py-4 mt-4">
+                                    <div className="text-sm text-muted-foreground">
+                                        Showing {meta.from || 0} to {meta.to || 0} of {meta.total || 0} campaigns
+                                    </div>
+                                    <div className="flex items-center gap-2">
+                                        <Button
+                                            variant="outline"
+                                            size="sm"
+                                            onClick={() => {
+                                                if (meta.current_page > 1) {
+                                                    router.get(route('marketing-campaign.index'), {
+                                                        ...filters,
+                                                        page: meta.current_page - 1
+                                                    }, {
+                                                        preserveState: true,
+                                                        replace: true
+                                                    });
+                                                }
+                                            }}
+                                            disabled={meta.current_page === 1}
+                                        >
+                                            Previous
+                                        </Button>
+
+                                        <div className="flex items-center gap-1">
+                                            {Array.from({ length: Math.min(5, meta.last_page) }, (_, i) => {
+                                                let pageNum;
+                                                if (meta.last_page <= 5) {
+                                                    pageNum = i + 1;
+                                                } else if (meta.current_page <= 3) {
+                                                    pageNum = i + 1;
+                                                } else if (meta.current_page >= meta.last_page - 2) {
+                                                    pageNum = meta.last_page - 4 + i;
+                                                } else {
+                                                    pageNum = meta.current_page - 2 + i;
+                                                }
+
+                                                return (
+                                                    <Button
+                                                        key={pageNum}
+                                                        variant={meta.current_page === pageNum ? "default" : "outline"}
+                                                        size="sm"
+                                                        onClick={() => {
+                                                            router.get(route('marketing-campaign.index'), {
+                                                                ...filters,
+                                                                page: pageNum
+                                                            }, {
+                                                                preserveState: true,
+                                                                replace: true
+                                                            });
+                                                        }}
+                                                        className="w-8 h-8 p-0"
+                                                    >
+                                                        {pageNum}
+                                                    </Button>
+                                                );
+                                            })}
+                                        </div>
+
+                                        <Button
+                                            variant="outline"
+                                            size="sm"
+                                            onClick={() => {
+                                                if (meta.current_page < meta.last_page) {
+                                                    router.get(route('marketing-campaign.index'), {
+                                                        ...filters,
+                                                        page: meta.current_page + 1
+                                                    }, {
+                                                        preserveState: true,
+                                                        replace: true
+                                                    });
+                                                }
+                                            }}
+                                            disabled={meta.current_page === meta.last_page}
+                                        >
+                                            Next
+                                        </Button>
+                                    </div>
                                 </div>
                             )}
-                        </div>
-                    </div>
+                        </CardContent>
+                    </Card>
                 </div>
             </div>
         </AuthenticatedLayout>

@@ -10,24 +10,17 @@ import { useState, useEffect } from 'react';
 import { Select, Upload } from 'antd';
 import { Button } from '@/Components/ui/button';
 import { UploadOutlined } from '@ant-design/icons';
-
+import { LeftOutlined } from '@ant-design/icons';
 import { Card, CardContent, CardHeader, CardTitle } from '@/Components/ui/card';
 import './marketing-campaign.css';
+import UploadCard from '@/Components/UploadCard';
 
 export default function MarketingCampaignForm({
     businesses = [],
     business,
-    campaign,
-    courses = [],
-    seminars = [],
-    specialities = [],
-    faqs = [],
-    episodes = []
+    campaign
 }) {
-
     const isEditing = !!campaign;
-    const hasBusinesses = businesses && businesses.length > 0;
-
     // State for image previews
     const [squareBannerPreview, setSquareBannerPreview] = useState(
         campaign?.marketingBannerSquare ? `/uploads/marketing-campaign/${campaign.marketingBannerSquare}` : null
@@ -55,7 +48,7 @@ export default function MarketingCampaignForm({
         businessname: campaign?.business_Name || '',
         campaigntitle: campaign?.campaignTitle || '',
         campaign_type: campaign?.campaignType || 'none',
-        campaignTargetID: campaign?.campaignTargetID || '',
+        campaignTargetID: parseInt(campaign?.campaignTargetID) || '',
         campaignmission: campaign?.campaignMission || 'interactions',
         promotionTimeSettings: campaign?.promotionTimeSettings || 'none',
         campaignStartTime: campaign?.campaignStartTime || '',
@@ -74,7 +67,7 @@ export default function MarketingCampaignForm({
 
     // Fetch campaign targets when campaign type changes
     useEffect(() => {
-        if (!isEditing && data.campaign_type) {
+        if (data.campaign_type) {
             fetchCampaignTargets(data.campaign_type);
         }
     }, [data.campaign_type, isEditing]);
@@ -117,8 +110,11 @@ export default function MarketingCampaignForm({
                 break;
             // For other campaign types that don't need API fetching, we'll use the props data
             case 'specialitySponsor':
-            case 'sponsorMedtalks':
+                apiCampaignType = 'speciality';
+                break;          
             case 'sponsoredFaq':
+                apiCampaignType = 'faq';
+                break;
             default:
                 setCampaignTargets([]);
                 return;
@@ -145,9 +141,9 @@ export default function MarketingCampaignForm({
         if (!file) return;
 
         // Validate file type
-        const validTypes = ['image/jpeg', 'image/jpg', 'image/png'];
+        const validTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp'];
         if (!validTypes.includes(file.type)) {
-            alert('Only JPG, JPEG, or PNG files are allowed.');
+            alert('Only JPG, JPEG, PNG, or WEBP files are allowed.');
             e.target.value = '';
             return;
         }
@@ -214,64 +210,7 @@ export default function MarketingCampaignForm({
     };
 
     // Filter options based on campaign type
-    const getCampaignTargetOptions = () => {
-        // For editing mode, use the passed props
-        if (isEditing) {
-            switch (data.campaign_type) {
-                case 'sponseredCME':
-                    return courses.map(course => ({
-                        value: course.course_id,
-                        label: course.course_title
-                    }));
-                case 'sponserSeminar':
-                    return seminars.map(seminar => ({
-                        value: seminar.seminar_no,
-                        label: seminar.seminar_title
-                    }));
-                case 'specialitySponsor':
-                    return specialities.map(speciality => ({
-                        value: speciality.no,
-                        label: speciality.title
-                    }));
-                case 'sponsoredFaq':
-                    return faqs.map(faq => ({
-                        value: faq.articleID,
-                        label: faq.title
-                    }));
-                case 'sponsoredEpisode':
-                    return episodes.map(episode => ({
-                        value: episode.id,
-                        label: episode.title
-                    }));
-                default:
-                    return [];
-            }
-        }
-
-        // For create mode, use dynamically fetched targets for API-supported types
-        switch (data.campaign_type) {
-            case 'sponseredCME':
-            case 'sponserSeminar':
-            case 'sponsoredEpisode':
-                return campaignTargets.map(target => ({
-                    value: target.id,
-                    label: target.title
-                }));
-            // For other types, use the props data (these should be passed in even in create mode)
-            case 'specialitySponsor':
-                return specialities.map(speciality => ({
-                    value: speciality.no,
-                    label: speciality.title
-                }));
-            case 'sponsoredFaq':
-                return faqs.map(faq => ({
-                    value: faq.articleID,
-                    label: faq.title
-                }));
-            default:
-                return [];
-        }
-    };
+   
 
     return (
         <AuthenticatedLayout>
@@ -296,7 +235,9 @@ export default function MarketingCampaignForm({
                                     href={route('marketing-campaign.index')}
                                     className="text-sm text-gray-600 hover:text-gray-900"
                                 >
-                                    ← Back to Campaigns
+                                    <LeftOutlined
+                                        className="mr-1"
+                                    />Back to Campaigns
                                 </Link>
                             </div>
 
@@ -316,7 +257,7 @@ export default function MarketingCampaignForm({
                                                     id="business_selection"
                                                     placeholder="Select a business"
                                                     value={data.businessID}
-                                                    options={business.map(b => ({
+                                                    options={businesses.map(b => ({
                                                         value: b.businessID,
                                                         label: b.business_Name
                                                     }))}
@@ -364,7 +305,6 @@ export default function MarketingCampaignForm({
                                                         { value: 'sponseredCME', label: 'Sponsored CME' },
                                                         { value: 'sponserSeminar', label: 'Sponsor Seminar' },
                                                         { value: 'specialitySponsor', label: 'Speciality Sponsor' },
-                                                        { value: 'sponsorMedtalks', label: 'Sponsor Medtalks' },
                                                         { value: 'sponsoredFaq', label: 'Sponsored FAQ' },
                                                         { value: 'sponsoredEpisode', label: 'Sponsored Episode' }
                                                     ]}
@@ -441,9 +381,9 @@ export default function MarketingCampaignForm({
                                                         name="image"
                                                         beforeUpload={(file) => {
                                                             // Validate file type
-                                                            const isValidType = ['image/jpeg', 'image/jpg', 'image/png'].includes(file.type);
+                                                            const isValidType = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp'].includes(file.type);
                                                             if (!isValidType) {
-                                                                alert('Only JPG, JPEG, or PNG files are allowed.');
+                                                                alert('Only JPG, JPEG, PNG, or WEBP files are allowed.');
                                                                 return Upload.LIST_IGNORE;
                                                             }
 
@@ -472,9 +412,9 @@ export default function MarketingCampaignForm({
                                                             setData('imagename', '');
                                                             setSquareBannerPreview(null);
                                                         }}
-                                                        fileList={data.image ? [{
+                                                        fileList={squareBannerPreview ? [{
                                                             uid: '-1',
-                                                            name: data.imagename,
+                                                            name: data.imagename || campaign?.marketingBannerSquare,
                                                             status: 'done',
                                                             url: squareBannerPreview,
                                                         }] : []}
@@ -482,24 +422,11 @@ export default function MarketingCampaignForm({
                                                         maxCount={1}
                                                         className="mt-2"
                                                     >
-                                                        {!squareBannerPreview ? (<>
-                                                            <div class="flex items-center justify-between border rounded-lg p-2 bg-white shadow-sm w-full max-w-md mt-2  cursor-pointer">
-                                                                <div class="flex items-center space-x-3">
-                                                                    <button type='button' class="text-gray-400 hover:text-red-500 bg-gray-300 p-4 rounded-md">
-                                                                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="size-5">
-                                                                            <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
-                                                                        </svg>
-
-                                                                    </button>
-                                                                    <div>
-                                                                        <p><span class="text-sm text-gray-700 font-medium truncate">Upload Square Banner</span></p>
-                                                                        <p className='text-xs text-gray-400'>Supported formats: JPG, JPEG, PNG (max 1MB each)</p>
-                                                                    </div>                                                                    
-                                                                </div>
-                                                            </div>
-                                                           
-                                                        </>
-
+                                                        {!squareBannerPreview ? (
+                                                            <UploadCard 
+                                                                title="Upload Square Banner" 
+                                                                description="Supported formats: JPG, JPEG, PNG, WEBP (max 1MB each)" 
+                                                            />
                                                         ) : null}
                                                     </Upload>
                                                     {errors.image && <InputError message={errors.image} />}
@@ -512,9 +439,9 @@ export default function MarketingCampaignForm({
                                                         name="image1"
                                                         beforeUpload={(file) => {
                                                             // Validate file type
-                                                            const isValidType = ['image/jpeg', 'image/jpg', 'image/png'].includes(file.type);
+                                                            const isValidType = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp'].includes(file.type);
                                                             if (!isValidType) {
-                                                                alert('Only JPG, JPEG, or PNG files are allowed.');
+                                                                alert('Only JPG, JPEG, PNG, or WEBP files are allowed.');
                                                                 return Upload.LIST_IGNORE;
                                                             }
 
@@ -543,9 +470,9 @@ export default function MarketingCampaignForm({
                                                             setData('image1name', '');
                                                             setRectangleBannerPreview(null);
                                                         }}
-                                                        fileList={data.image1 ? [{
+                                                        fileList={rectangleBannerPreview ? [{
                                                             uid: '-1',
-                                                            name: data.image1name,
+                                                            name: data.image1name || campaign?.marketingBannerRectangle,
                                                             status: 'done',
                                                             url: rectangleBannerPreview,
                                                         }] : []}
@@ -553,21 +480,11 @@ export default function MarketingCampaignForm({
                                                         maxCount={1}
                                                         className="mt-2"
                                                     >
-                                                        {!rectangleBannerPreview ? (<>
-                                                        <div class="flex items-center justify-between border rounded-lg p-2 bg-white shadow-sm w-full max-w-md mt-2 cursor-pointer">
-                                                                <div class="flex items-center space-x-3">
-                                                                    <button type='button' class="text-gray-400 hover:text-red-500 bg-gray-300 p-4 rounded-md">
-                                                                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="size-5">
-                                                                            <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
-                                                                        </svg>
-
-                                                                    </button>
-                                                                    <div>
-                                                                        <p><span class="text-sm text-gray-700 font-medium truncate">Upload Rectangle Banner</span></p>
-                                                                        <p className='text-xs text-gray-400'>Supported formats: JPG, JPEG, PNG (max 1MB each)</p>
-                                                                    </div>                                                                    
-                                                                </div>
-                                                            </div></>
+                                                        {!rectangleBannerPreview ? (
+                                                            <UploadCard 
+                                                                title="Upload Rectangle Banner" 
+                                                                description="Supported formats: JPG, JPEG, PNG, WEBP (max 1MB each)" 
+                                                            />
                                                         ) : null}
                                                     </Upload>
                                                     {errors.image1 && <InputError message={errors.image1} />}

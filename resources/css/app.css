@@ -129,7 +129,7 @@
 }
 .ant-upload, .ant-upload-select{
     width: 100% !important;
-    height: 200px !important;
+    /* height: 200px !important; */
 }
 .ant-select-selector{
     border-radius: 8px;

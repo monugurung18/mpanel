@@ -5,8 +5,10 @@ import { useState, useMemo } from 'react';
 import { Button } from '@/Components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/Components/ui/card';
 import Input from '@/Components/Input';
-import { Plus, Video, Pencil, Trash2, Search, ChevronUp, ChevronDown, Calendar } from 'lucide-react';
+import { Plus, Video, Pencil, Trash2, Search, ChevronUp, ChevronDown, Calendar, Edit } from 'lucide-react';
 import { getSeminarImageUrl } from '@/Utils/imageHelper';
+import { Popconfirm } from 'antd';
+import 'antd/dist/reset.css';
 
 export default function Index({ seminars }) {
     const [loading, setLoading] = useState(false);
@@ -15,18 +17,16 @@ export default function Index({ seminars }) {
     const [sortColumn, setSortColumn] = useState(null);
     const [sortDirection, setSortDirection] = useState('asc');
     const { baseImagePath } = usePage().props;
-    
+
     const pageSize = 25;
 
     const handleDelete = (id) => {
-        if (confirm('Are you sure you want to delete this seminar?')) {
-            setLoading(true);
-            router.delete(route('seminars.destroy', id), {
-                preserveScroll: true,
-                onSuccess: () => {},
-                onFinish: () => setLoading(false),
-            });
-        }
+        setLoading(true);
+        router.delete(route('seminars.destroy', id), {
+            preserveScroll: true,
+            onSuccess: () => { },
+            onFinish: () => setLoading(false),
+        });
     };
 
     // Handle sorting
@@ -61,12 +61,12 @@ export default function Index({ seminars }) {
             filtered.sort((a, b) => {
                 let aVal = a[sortColumn] || '';
                 let bVal = b[sortColumn] || '';
-                
+
                 if (sortColumn === 'schedule_timestamp') {
                     aVal = new Date(aVal);
                     bVal = new Date(bVal);
                 }
-                
+
                 if (aVal < bVal) return sortDirection === 'asc' ? -1 : 1;
                 if (aVal > bVal) return sortDirection === 'asc' ? 1 : -1;
                 return 0;
@@ -95,9 +95,8 @@ export default function Index({ seminars }) {
         };
 
         return (
-            <span className={`inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-semibold uppercase ${
-                styles[status] || 'bg-gray-100 text-gray-800 border-gray-200'
-            }`}>
+            <span className={`inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-semibold uppercase ${styles[status] || 'bg-gray-100 text-gray-800 border-gray-200'
+                }`}>
                 {status}
             </span>
         );
@@ -112,8 +111,8 @@ export default function Index({ seminars }) {
             <div className="flex items-center gap-2">
                 {children}
                 {sortColumn === column && (
-                    sortDirection === 'asc' ? 
-                        <ChevronUp className="h-4 w-4" /> : 
+                    sortDirection === 'asc' ?
+                        <ChevronUp className="h-4 w-4" /> :
                         <ChevronDown className="h-4 w-4" />
                 )}
             </div>
@@ -128,11 +127,10 @@ export default function Index({ seminars }) {
                 <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
                     {/* Header Card */}
                     <Card className="mb-6 border-0 shadow-lg">
-                        <CardHeader>
+                        <CardHeader className="px-6 pt-5">
                             <div className="flex items-center justify-between">
                                 <div>
                                     <CardTitle className="flex items-center gap-2">
-                                        <Video className="h-6 w-6 text-primary" />
                                         Seminars Management
                                     </CardTitle>
                                     <CardDescription className="mt-2">
@@ -147,28 +145,26 @@ export default function Index({ seminars }) {
                                 </Link>
                             </div>
                         </CardHeader>
-                    </Card>
-
-                    {/* Search */}
-                    <div className="mb-4">
-                        <div className="relative max-w-md">
-                            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
-                            <Input
-                                type="text"
-                                placeholder="Search by title, description, or type..."
-                                value={searchQuery}
-                                onChange={(e) => {
-                                    setSearchQuery(e.target.value);
-                                    setCurrentPage(1);
-                                }}
-                                className="pl-10"
-                            />
+                        {/* Search */}
+                        <div className="px-6 flex justify-between items-center">
+                            <div className="text-sm text-muted-foreground">
+                                Showing {((currentPage - 1) * pageSize) + 1} to {Math.min(currentPage * pageSize, filteredAndSortedSeminars.length)} of {filteredAndSortedSeminars.length} seminars
+                            </div>
+                            <div className="relative w-full max-w-md">
+                                <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
+                                <Input
+                                    type="text"
+                                    placeholder="Search by title, description, or type..."
+                                    value={searchQuery}
+                                    onChange={(e) => {
+                                        setSearchQuery(e.target.value);
+                                        setCurrentPage(1);
+                                    }}
+                                    className="pl-10"
+                                />
+                            </div>
                         </div>
-                    </div>
-
-                    {/* Table Card */}
-                    <Card className="border-0 shadow-md">
-                        <CardContent className="p-0">
+                        <CardContent className="p-4">
                             <div className="overflow-x-auto">
                                 <Table>
                                     <TableHeader>
@@ -202,8 +198,8 @@ export default function Index({ seminars }) {
                                                             {searchQuery ? 'No seminars found' : 'No seminars yet'}
                                                         </p>
                                                         <p className="text-sm text-muted-foreground mb-4">
-                                                            {searchQuery 
-                                                                ? 'Try adjusting your search criteria' 
+                                                            {searchQuery
+                                                                ? 'Try adjusting your search criteria'
                                                                 : 'Start by creating your first seminar'
                                                             }
                                                         </p>
@@ -241,7 +237,7 @@ export default function Index({ seminars }) {
                                                             </div>
                                                             <div className="text-xs text-gray-500 line-clamp-2">
                                                                 <div contentEditable='true' dangerouslySetInnerHTML={{ __html: stripHtml(seminar.desc).substring(0, 80) || '' }}></div>
-                                                               
+
                                                                 {stripHtml(seminar.desc).length > 80 ? '...' : ''}
                                                             </div>
                                                         </div>
@@ -265,24 +261,35 @@ export default function Index({ seminars }) {
                                                         <StatusBadge status={seminar.video_status} />
                                                     </TableCell>
                                                     <TableCell className="text-sm">
-                                                        {seminar.speciality_name  || '-'}
+                                                        {seminar.speciality_name || '-'}
                                                     </TableCell>
                                                     <TableCell>
                                                         <div className="flex items-center justify-center gap-2">
-                                                            <Link href={route('seminars.edit', seminar.id)}>
-                                                                <Button variant="ghost" size="sm">
-                                                                    <Pencil className="h-4 w-4" />
-                                                                </Button>
-                                                            </Link>
-                                                            <Button
-                                                                variant="ghost"
-                                                                size="sm"
-                                                                onClick={() => handleDelete(seminar.id)}
+                                                            <Link href={route('seminars.edit', seminar.id)}
+                                                                className="inline-flex items-center rounded-md bg-blue-50 px-2 py-2 text-blue-600 hover:bg-blue-100"
                                                             >
-                                                                <Trash2 className="h-4 w-4 text-destructive" />
-                                                            </Button>
+                                                                <Edit className="h-4 w-4" />
+
+                                                            </Link>
+                                                            <Popconfirm
+                                                                title="Delete Seminar"
+                                                                description="Are you sure you want to delete this seminar?"
+                                                                onConfirm={() => handleDelete(seminar.id)}
+                                                                okText="Yes"
+                                                                cancelText="No"
+                                                                placement="topRight"
+                                                            >
+                                                                <Button
+                                                                    variant="ghost"
+                                                                    size="sm"
+                                                                    className="inline-flex items-center rounded-md bg-red-50 px-2 py-1 text-red-600 hover:bg-red-100"
+                                                                >
+                                                                    <Trash2 className="h-4 w-4" />
+                                                                </Button>
+                                                            </Popconfirm>
                                                         </div>
                                                     </TableCell>
+
                                                 </TableRow>
                                             ))
                                         )}
@@ -317,7 +324,7 @@ export default function Index({ seminars }) {
                                                 } else {
                                                     pageNum = currentPage - 2 + i;
                                                 }
-                                                
+
                                                 return (
                                                     <Button
                                                         key={pageNum}
@@ -344,6 +351,8 @@ export default function Index({ seminars }) {
                             )}
                         </CardContent>
                     </Card>
+
+
                 </div>
             </div>
         </AuthenticatedLayout>

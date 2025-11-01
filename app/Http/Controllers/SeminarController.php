@@ -109,6 +109,7 @@ class SeminarController extends Controller
             'seo_OgTitle' => 'nullable|string|max:256',
             'seo_canonical' => 'nullable|string|max:255',
             'education_partners' => 'nullable|array',
+            'html_json' => 'nullable|string',
             'image' => 'nullable|image|mimes:jpeg,jpg,png,gif,webp|max:1024|dimensions:width=700,height=393',
             's_image1' => 'nullable|image|mimes:jpeg,jpg,png,gif,webp|max:1024|dimensions:width=640,height=360',
             's_image2' => 'nullable|image|mimes:jpeg,jpg,png,gif,webp|max:1024|dimensions:width=400,height=400',
@@ -160,6 +161,12 @@ class SeminarController extends Controller
      */
     public function edit(Seminar $seminar)
     {
+        // Parse html_json for Step 3 fields
+        $htmlJsonData = [];
+        if ($seminar->html_json) {
+            $htmlJsonData = json_decode($seminar->html_json, true);
+        }
+
         return Inertia::render('Seminars/Form', [
             'seminar' => [
                 'id' => $seminar->seminar_no,
@@ -187,6 +194,43 @@ class SeminarController extends Controller
                 's_image1' => $seminar->s_image1,
                 's_image2' => $seminar->s_image2,
                 'education_partners' => $seminar->education_partners ?? [],
+                // Step 3 data from html_json
+                'reg_title_enabled' => isset($htmlJsonData['title']) && !empty($htmlJsonData['title']),
+                'reg_title_required' => isset($htmlJsonData['title']['required']) && $htmlJsonData['title']['required'] === "1",
+                'reg_title_options' => isset($htmlJsonData['title']['titles']) ? $htmlJsonData['title']['titles'] : ['Dr.', 'Mr.', 'Miss.', 'Mrs.'],
+                'reg_first_name_enabled' => isset($htmlJsonData['first_name']) && !empty($htmlJsonData['first_name']),
+                'reg_first_name_required' => isset($htmlJsonData['first_name']['required']) && $htmlJsonData['first_name']['required'] === "1",
+                'reg_last_name_enabled' => isset($htmlJsonData['last_name']) && !empty($htmlJsonData['last_name']),
+                'reg_last_name_required' => isset($htmlJsonData['last_name']['required']) && $htmlJsonData['last_name']['required'] === "1",
+                'reg_email_enabled' => isset($htmlJsonData['email']) && !empty($htmlJsonData['email']),
+                'reg_email_required' => isset($htmlJsonData['email']['required']) && $htmlJsonData['email']['required'] === "1",
+                'reg_mobile_enabled' => isset($htmlJsonData['mobile']) && !empty($htmlJsonData['mobile']),
+                'reg_mobile_required' => isset($htmlJsonData['mobile']['required']) && $htmlJsonData['mobile']['required'] === "1",
+                'reg_city_enabled' => isset($htmlJsonData['city']) && !empty($htmlJsonData['city']),
+                'reg_city_required' => isset($htmlJsonData['city']['required']) && $htmlJsonData['city']['required'] === "1",
+                'reg_state_enabled' => isset($htmlJsonData['state']) && !empty($htmlJsonData['state']),
+                'reg_state_required' => isset($htmlJsonData['state']['required']) && $htmlJsonData['state']['required'] === "1",
+                'reg_specialty_enabled' => isset($htmlJsonData['specialty']) && !empty($htmlJsonData['specialty']),
+                'reg_specialty_required' => isset($htmlJsonData['specialty']['required']) && $htmlJsonData['specialty']['required'] === "1",
+                'reg_specialty_options' => isset($htmlJsonData['specialty']['specialities']) ? $htmlJsonData['specialty']['specialities'] : [],
+                'reg_medical_reg_enabled' => isset($htmlJsonData['medical_regisration_no']) && !empty($htmlJsonData['medical_regisration_no']),
+                'reg_medical_reg_required' => isset($htmlJsonData['medical_regisration_no']['required']) && $htmlJsonData['medical_regisration_no']['required'] === "1",
+                'reg_medical_council_enabled' => isset($htmlJsonData['medical_council']) && !empty($htmlJsonData['medical_council']),
+                'reg_medical_council_required' => isset($htmlJsonData['medical_council']['required']) && $htmlJsonData['medical_council']['required'] === "1",
+                'reg_profession_enabled' => isset($htmlJsonData['profession']) && !empty($htmlJsonData['profession']),
+                'reg_profession_required' => isset($htmlJsonData['profession']['required']) && $htmlJsonData['profession']['required'] === "1",
+                'reg_drl_code_enabled' => isset($htmlJsonData['drl_code']) && !empty($htmlJsonData['drl_code']),
+                'reg_drl_code_required' => isset($htmlJsonData['drl_code']['required']) && $htmlJsonData['drl_code']['required'] === "1",
+                'reg_country_enabled' => isset($htmlJsonData['country']) && !empty($htmlJsonData['country']),
+                'reg_country_required' => isset($htmlJsonData['country']['required']) && $htmlJsonData['country']['required'] === "1",
+                'note_text' => isset($htmlJsonData['note_text']['text']) ? $htmlJsonData['note_text']['text'] : '',
+                'left_text' => isset($htmlJsonData['left_text']['text']) ? $htmlJsonData['left_text']['text'] : '',
+                'theme_color' => isset($htmlJsonData['theme_color']) ? $htmlJsonData['theme_color'] : '#5d9cec',
+                'allowed_by' => isset($htmlJsonData['allowed_by']) ? $htmlJsonData['allowed_by'] : 'email',
+                'moderators' => isset($htmlJsonData['moderators']) ? $htmlJsonData['moderators'] : [],
+                'panelists' => isset($htmlJsonData['panelists']) ? $htmlJsonData['panelists'] : [],
+                'speakers' => isset($htmlJsonData['speakers']) ? $htmlJsonData['speakers'] : [],
+                'chief_guests' => isset($htmlJsonData['chief_guests']) ? $htmlJsonData['chief_guests'] : [],
             ],
             'sponsorPages' => $this->getSponsorPages(),
             'specialities' => $this->getSpecialities(),
@@ -242,6 +286,7 @@ class SeminarController extends Controller
             'seo_OgTitle' => 'nullable|string|max:256',
             'seo_canonical' => 'nullable|string|max:255',
             'education_partners' => 'nullable|array',
+            'html_json' => 'nullable|string',
             'image' => 'nullable|image|mimes:jpeg,jpg,png,gif,webp|max:1024|dimensions:width=700,height=393',
             's_image1' => 'nullable|image|mimes:jpeg,jpg,png,gif,webp|max:1024|dimensions:width=640,height=360',
             's_image2' => 'nullable|image|mimes:jpeg,jpg,png,gif,webp|max:1024|dimensions:width=400,height=400',
@@ -291,6 +336,7 @@ class SeminarController extends Controller
             }
             $validated['s_image2'] = $this->handleImageUpload($request->file('s_image2'), 'app_square');
         }
+        
         $seminar = Seminar::find($request->seminar_id);
         
         // Use the seminar instance from route model binding directly

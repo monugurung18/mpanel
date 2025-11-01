@@ -22,7 +22,7 @@ class SpecialtyController extends Controller
             'title',
             'spec_desc',
             'mobileThumb',
-            'banner_img',
+            'thumbnail_img',
             'status'
         )->get();
 
@@ -160,7 +160,7 @@ class SpecialtyController extends Controller
             ->get()
             ->map(function ($spec) {
                 return [
-                    'value' => (string) $spec->no,
+                    'value' => (int) $spec->no,
                     'label' => $spec->title,
                 ];
             })
@@ -168,15 +168,14 @@ class SpecialtyController extends Controller
 
         return Inertia::render('Specialties/Form', [
             'specialty' => $specialty,
-            'parentSpecialties' => 
-                $parentSpecialties
+            'parentSpecialties' => $parentSpecialties
         ]);
     }
 
     /**
      * Update the specified specialty in storage.
      */
-    public function update(Request $request, Specialty $specialty)
+    public function updateSpecialty(Request $request, Specialty $specialty)
     {
         // Debug: Log all request data
         \Log::info('Specialty update request data:', $request->all());
@@ -197,8 +196,13 @@ class SpecialtyController extends Controller
             'parentID4' => 'nullable|integer',
             'parentID5' => 'nullable|integer',
             'status' => 'nullable|in:on,off', // Add validation for status
+            'web_banner' => 'nullable|image|mimes:jpeg,png,jpg,gif,webp|max:2048',
+            'app_banner' => 'nullable|image|mimes:jpeg,png,jpg,gif,webp|max:2048',
+            'icon_banner' => 'nullable|image|mimes:jpeg,png,jpg,gif,webp|max:2048',
+            'banner_img' => 'nullable|image|mimes:jpeg,png,jpg,gif,webp|max:2048',
         ]);
 
+        $specialty = Specialty::find($request->input('no'));
         // Validate images with custom validation
         $this->validateSpecialtyImages($request);
 

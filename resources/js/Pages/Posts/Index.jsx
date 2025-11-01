@@ -309,7 +309,7 @@ export default function Index({ posts }) {
                                                     <TableCell>
                                                         {post.catagory1 ? (
                                                             <span className="inline-flex items-center rounded-full bg-blue-100 px-2.5 py-0.5 text-xs font-medium text-blue-800">
-                                                                {post.catagory1}
+                                                                {post.catagory1_title}
                                                             </span>
                                                         ) : (
                                                             <span className="text-gray-400">-</span>
@@ -397,6 +397,7 @@ export default function Index({ posts }) {
                                             ) {
                                                 return (
                                                     <Button
+                                                    
                                                         key={page}
                                                         onClick={() => setCurrentPage(page)}
                                                         variant={currentPage === page ? "default" : "outline"}

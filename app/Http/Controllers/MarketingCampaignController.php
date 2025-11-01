@@ -7,9 +7,8 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
-use App\Models\MarketingCampaign;
-use App\Models\BusinessPage;
-use App\Models\Course;
+use App\Models\{MarketingCampaign, BusinessPage, Course, Seminar, Specialty, Post};
+
 
 class MarketingCampaignController extends Controller
 {
@@ -25,6 +24,7 @@ class MarketingCampaignController extends Controller
 
         // Build query with filters
         $query = MarketingCampaign::with('business')
+        
             ->orderBy('campaignID', 'desc');
 
         // Apply search filter
@@ -47,6 +47,9 @@ class MarketingCampaignController extends Controller
 
         $campaigns = $query->paginate(10);
 
+        // Fetch target titles for all campaigns in this page
+        $this->addTargetTitlesToCampaigns($campaigns);
+
         // Prepare filters array for frontend
         $filters = [
             'search' => $search,
@@ -58,6 +61,93 @@ class MarketingCampaignController extends Controller
             'campaigns' => $campaigns,
             'filters' => $filters
         ]);
+    }
+
+    /**
+     * Add target titles to campaigns based on their type and target ID
+     */
+    private function addTargetTitlesToCampaigns($campaigns)
+    {
+        // Group campaigns by type for efficient querying
+        $campaignsByType = [];
+        foreach ($campaigns as $campaign) {
+            $campaignsByType[$campaign->campaignType][] = $campaign;
+        }
+
+        // Process each campaign type
+        foreach ($campaignsByType as $type => $typeCampaigns) {
+            $targetIds = array_map(function ($campaign) {
+                return $campaign->campaignTargetID;
+            }, $typeCampaigns);
+
+            $targetTitles = [];
+
+            switch ($type) {
+                case 'sponserSeminar':
+                    // Fetch seminar titles
+                    $seminars = Seminar::whereIn('seminar_no', $targetIds)
+                        ->pluck('seminar_title', 'seminar_no');
+                    foreach ($typeCampaigns as $campaign) {
+                        $campaign->targetTitle = $seminars->get($campaign->campaignTargetID, 'Unknown Seminar');
+                    }
+                    break;
+
+                case 'specialitySponsor':
+                    // Fetch specialty titles
+                    $specialties = Specialty::whereIn('no', $targetIds)
+                        ->pluck('title', 'no');
+                    foreach ($typeCampaigns as $campaign) {
+                        $campaign->targetTitle = $specialties->get($campaign->campaignTargetID, 'Unknown Specialty');
+                    }
+                    break;
+
+                case 'sponseredCME':
+                    // Fetch course titles
+                    $courses = Course::whereIn('course_id', $targetIds)
+                        ->pluck('course_title', 'course_id');
+                    foreach ($typeCampaigns as $campaign) {
+                        $campaign->targetTitle = $courses->get($campaign->campaignTargetID, 'Unknown Course');
+                    }
+                    break;
+
+                case 'sponsoredFaq':
+                    // Fetch FAQ titles
+                    $faqs = DB::table('post')
+                        ->whereIn('articleID', $targetIds)
+                        ->pluck('title', 'articleID');
+                    foreach ($typeCampaigns as $campaign) {
+                        $campaign->targetTitle = $faqs->get($campaign->campaignTargetID, 'Unknown FAQ');
+                    }
+                    break;
+
+                case 'sponsoredEpisode':
+                    // Fetch episode titles
+                    $episodes = DB::table('medtalks_tv')
+                        ->whereIn('id', $targetIds)
+                        ->pluck('title', 'id');
+                    foreach ($typeCampaigns as $campaign) {
+                        $campaign->targetTitle = $episodes->get($campaign->campaignTargetID, 'Unknown Episode');
+                    }
+                    break;
+
+                case 'sponsorMedtalks':
+                    // Fetch medtalks titles (similar to episodes)
+                    $medtalks = DB::table('medtalks_tv')
+                        ->whereIn('id', $targetIds)
+                        ->pluck('title', 'id');
+                    foreach ($typeCampaigns as $campaign) {
+                        $campaign->targetTitle = $medtalks->get($campaign->campaignTargetID, 'Unknown Medtalk');
+                    }
+                    break;
+
+                default:
+                    // For other types, set a default value
+                    foreach ($typeCampaigns as $campaign) {
+                        $campaign->targetTitle = 'N/A';
+                    }
+                    break;
+            }
+        }
     }
 
     /**
@@ -143,8 +233,8 @@ class MarketingCampaignController extends Controller
             'promotionTimeSettings' => 'nullable|in:none,limtied',
             'campaignStartTime' => 'nullable|date',
             'campaignEndTime' => 'nullable|string|max:255',
-            'image' => 'nullable|image|mimes:jpeg,jpg,png|max:2048',
-            'image1' => 'nullable|image|mimes:jpeg,jpg,png|max:2048'
+            'image' => 'nullable|image|mimes:jpeg,jpg,png,webp|max:2048',
+            'image1' => 'nullable|image|mimes:jpeg,jpg,png,webp|max:2048'
         ]);
 
         // Process images
@@ -199,15 +289,7 @@ class MarketingCampaignController extends Controller
         return redirect()->route('marketing-campaign.index')->with('success', 'Marketing campaign created successfully!');
     }
 
-    /**
-     * Display the specified resource.
-     */
-    public function show(MarketingCampaign $marketing_campaign)
-    {
-        return Inertia::render('MarketingCampaign/Show', [
-            'campaign' => $marketing_campaign,
-        ]);
-    }
+   
 
     /**
      * Show the form for editing the specified marketing campaign.
@@ -287,9 +369,13 @@ class MarketingCampaignController extends Controller
             'promotionTimeSettings' => 'nullable|in:none,limtied',
             'campaignStartTime' => 'nullable|date',
             'campaignEndTime' => 'nullable|string|max:255',
-            'image' => 'nullable|image|mimes:jpeg,jpg,png|max:2048',
-            'image1' => 'nullable|image|mimes:jpeg,jpg,png|max:2048'
+            'image' => 'nullable|image|mimes:jpeg,jpg,png,webp|max:1024',
+            'image1' => 'nullable|image|mimes:jpeg,jpg,png,webp|max:1024'
         ]);
+        $marketing_campaign = MarketingCampaign::find($request->id);
+        if (!$marketing_campaign) {
+            return redirect()->back()->with('error', 'Marketing campaign not found');
+        }
 
         // Process images
         $imageNames = [];
@@ -330,6 +416,12 @@ class MarketingCampaignController extends Controller
             }
         }
 
+        \Log::info('Marketing Campaign Updated:', [
+            'marketing_campaign_id' => $marketing_campaign,
+            'image'=>$imageNames['marketingBannerSquare'],
+            'user_id' => auth()->user()->id,
+            'user_ip' => $request->ip(),
+        ]);
         // Update campaign in database
         $marketing_campaign->update([
             'businessID' => $validated['businessID'],
@@ -386,6 +478,11 @@ class MarketingCampaignController extends Controller
      */
     public function getCampaignTargets(Request $request)
     {
+        \Log::info('Getting campaign targets:', [
+            'user_id' => auth()->user()->id,
+            'user_ip' => $request->ip(),
+            'campaign_type' => $request->get('campaign_type')
+        ]);
         $campaignType = $request->get('campaign_type');
         
         switch ($campaignType) {
@@ -404,16 +501,29 @@ class MarketingCampaignController extends Controller
                     ->orderBy('schedule_timestamp', 'DESC')
                     ->get(['seminar_no as id', 'seminar_title as title'])
                     ->toArray();
-                break;
+                break;         
                 
-            case 'episode':
-                // Fetch records from medtalks_tv table
-                $targets = DB::table('medtalks_tv')
-                    ->select('id', 'title')
-                    ->get()
+            case 'speciality':
+                // Fetch records from specialty table
+                $targets = Specialty::where(['status' => 'on'])
+                    ->orderBy('title', 'asc')
+                    ->select('no as id', 'title')->get()
                     ->toArray();
                 break;
-                
+            case 'episode':
+                // Fetch records from medtalks_tv table
+                $targets = MedtalksTv::select('id as id', 'title as title')
+                ->where('video_status', '!=', 'deleted')
+                ->orderBy('id', 'DESC')->get()
+                    ->toArray();
+                break;
+            case 'faq':
+                // Fetch records from faqs table
+                $targets = Post::select('articleID as id', 'title as title')
+                    ->where('status', '=', 'published')
+                    ->orderBy('articleID', 'desc')->get()
+                    ->toArray();
+                break;
             default:
                 $targets = [];
                 break;

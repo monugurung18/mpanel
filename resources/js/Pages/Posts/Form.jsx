@@ -2,9 +2,9 @@ import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import InputError from '@/Components/InputError';
 import InputLabel from '@/Components/InputLabel';
 import PrimaryButton from '@/Components/PrimaryButton';
-import SecondaryButton from '@/Components/SecondaryButton';
 import Input from '@/Components/Input';
-import Dropdown from '@/Components/Dropdown';
+import { LeftOutlined } from '@ant-design/icons';
+
 import RichTextEditor from '@/Components/RichTextEditor';
 import { Head, Link, useForm, usePage } from '@inertiajs/react';
 import { useState, useEffect } from 'react';
@@ -12,20 +12,26 @@ import { Select, Switch, Upload } from 'antd';
 import { getPostImageUrl } from '@/Utils/imageHelper';
 import 'antd/dist/reset.css';
 import '../../../css/antd-custom.css';
+import { Card, CardContent, CardHeader, CardTitle } from '@/Components/ui/card';
+import UploadCard from '@/Components/UploadCard';
+import { Button } from '@/Components/ui/button';
 
-export default function Form({ post, categories, specialities, relatedPostsOptions = [] }) {
+export default function Form({ post, specialities, relatedPostsOptions = [] }) {
     const { props } = usePage();
     const { baseImagePath } = props;
     const isEditing = !!post;
 
-    const [imageError, setImageError] = useState(null);
-    const [featuredError, setFeaturedError] = useState(null);
-    const [squareError, setSquareError] = useState(null);
-    const [bannerError, setBannerError] = useState(null);
-    const [appError, setAppError] = useState(null);
+    // State for image validation errors
+    const [imageValidationErrors, setImageValidationErrors] = useState({
+        featuredThumbnail: '',
+        SquareThumbnail: '',
+        bannerImage: '',
+        s_image1: ''
+    });
+
     const [speakers, setSpeakers] = useState([]);
     const [tags, setTags] = useState([]);
-    const [selectedTags, setSelectedTags] = useState(post?.tags.split(',') || []);
+    const [selectedTags, setSelectedTags] = useState(post?.tags ? post?.tags.split(',') : []);
 
     const [loadingTags, setLoadingTags] = useState(false);
     const [loadingSpeakers, setLoadingSpeakers] = useState(false);
@@ -45,7 +51,7 @@ export default function Form({ post, categories, specialities, relatedPostsOptio
         catagory3: post?.catagory3 || '',
         diseaseRelations: post?.diseaseRelations || '',
         author1: post?.author1 || '',
-        article_language: post?.article_language || '',
+        article_language: post?.article_language || 'English',
         status: post?.status || 'published',
         isFeatured: !!post?.isFeatured,
         post_date: post?.post_date
@@ -114,6 +120,7 @@ export default function Form({ post, categories, specialities, relatedPostsOptio
             try {
                 const response = await fetch('/api/tags');
                 const result = await response.json();
+                console.log('Tags data:', result); // For debugging
                 setTags(result);
             } catch (error) {
                 console.error('Error fetching tags:', error);
@@ -143,97 +150,33 @@ export default function Form({ post, categories, specialities, relatedPostsOptio
         }
     }, [isEditing, data.post_date, setData]);
 
-    const setErrorForField = (field, message) => {
-        setImageError(message);
-        if (field === 'featuredThumbnail') setFeaturedError(message);
-        if (field === 'SquareThumbnail') setSquareError(message);
-        if (field === 'bannerImage') setBannerError(message);
-        if (field === 's_image1') setAppError(message);
-    };
-
-    const clearErrorForField = (field) => {
-        setImageError(null);
-        if (field === 'featuredThumbnail') setFeaturedError(null);
-        if (field === 'SquareThumbnail') setSquareError(null);
-        if (field === 'bannerImage') setBannerError(null);
-        if (field === 's_image1') setAppError(null);
-    };
-
-    const handleImageChange = (e, field = 'featuredThumbnail') => {
-        const file = e.target.files?.[0];
-        if (!file) return;
-
-        clearErrorForField(field);
-
-        // Size <= 1MB
-        const maxSize = 1 * 1024 * 1024;
-        if (file.size > maxSize) {
-            setErrorForField(field, 'Image size must be less than 1MB');
-            e.target.value = '';
-            return;
-        }
-
-        // Type
-        const validTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp'];
-        if (!validTypes.includes(file.type)) {
-            setErrorForField(field, 'Only JPG, JPEG, PNG, GIF, or WEBP are allowed.');
-            e.target.value = '';
-            return;
-        }
-
-        // Dimension checks per field
-        const requiredSizes = {
-            featuredThumbnail: { w: 360, h: 260, label: 'Featured Article Image' },
-            SquareThumbnail: { w: 600, h: 600, label: 'Square Thumbnail' },
-            bannerImage: { w: 1200, h: 400, label: 'Banner Image' },
-            s_image1: { w: 770, h: 550, label: 'App Image' },
-        };
-
-        const cfg = requiredSizes[field] || null;
-
-        const applyFile = () => {
-            clearErrorForField(field);
-            setData(field, file);
-
-            const url = URL.createObjectURL(file);
-            if (field === 'featuredThumbnail') setImagePreview(url);
-            if (field === 'SquareThumbnail') setSquarePreview(url);
-            if (field === 'bannerImage') setBannerPreview(url);
-            if (field === 's_image1') setAppImagePreview(url);
-        };
-
-        if (!cfg) {
-            applyFile();
-            return;
-        }
-
-        const img = new Image();
-        const objectUrl = URL.createObjectURL(file);
-        img.src = objectUrl;
-        img.onload = function () {
-            URL.revokeObjectURL(objectUrl);
-            if (this.width !== cfg.w || this.height !== cfg.h) {
-                setErrorForField(
-                    field,
-                    `${cfg.label} must be exactly ${cfg.w} x ${cfg.h} px. Current: ${this.width} x ${this.height}`
-                );
-                e.target.value = '';
-                return;
-            }
-            applyFile();
-        };
-        img.onerror = function () {
-            URL.revokeObjectURL(objectUrl);
-            setErrorForField(field, 'Failed to load image. Please try another file.');
-            e.target.value = '';
-        };
+    // Function to validate image dimensions
+    const validateImageDimensions = (file, expectedWidth, expectedHeight) => {
+        return new Promise((resolve, reject) => {
+            const img = new Image();
+            img.onload = () => {
+                const { width, height } = img;
+                if (width !== expectedWidth || height !== expectedHeight) {
+                    reject(`Image dimensions must be exactly ${expectedWidth}x${expectedHeight}px. Current dimensions: ${width}x${height}px`);
+                } else {
+                    resolve();
+                }
+            };
+            img.onerror = () => {
+                reject('Invalid image file');
+            };
+            img.src = URL.createObjectURL(file);
+        });
     };
 
     const handleSubmit = (e) => {
         e.preventDefault();
 
         // Block submit if any image validation error
-        if (featuredError || squareError || bannerError || appError) {
+        if (imageValidationErrors.featuredThumbnail ||
+            imageValidationErrors.SquareThumbnail ||
+            imageValidationErrors.bannerImage ||
+            imageValidationErrors.s_image1) {
             console.error('Image validation errors prevent submission');
             return;
         }
@@ -291,7 +234,9 @@ export default function Form({ post, categories, specialities, relatedPostsOptio
                                     {isEditing ? 'EDIT POST' : 'ADD NEW POST'}
                                 </h4>
                                 <Link href={route('posts.index')} className="text-gray-600 hover:text-gray-900">
-                                    ← Back to Posts
+                                    <LeftOutlined
+                                        className="mr-1"
+                                    /> Back to Posts
                                 </Link>
                             </div>
 
@@ -415,7 +360,7 @@ export default function Form({ post, categories, specialities, relatedPostsOptio
 
                                         </div>
 
-                                        {/* Categories */}
+                                        {/* specialities */}
                                         <div>
                                             <InputLabel htmlFor="catagory1" value="Catagory1" />
                                             <Select
@@ -423,7 +368,7 @@ export default function Form({ post, categories, specialities, relatedPostsOptio
                                                 placeholder="Select speciality"
                                                 value={data.catagory1}
                                                 onChange={(value) => setData('catagory1', value)}
-                                                options={categories}
+                                                options={specialities}
                                                 className="w-full mt-1 rounded-sm text-sm"
                                                 style={{ width: '100%' }}
                                             />
@@ -435,7 +380,7 @@ export default function Form({ post, categories, specialities, relatedPostsOptio
                                                 placeholder="Select speciality"
                                                 value={data.catagory2}
                                                 onChange={(value) => setData('catagory2', value)}
-                                                options={categories}
+                                                options={specialities}
                                                 className="w-full mt-1 rounded-sm text-sm"
                                                 style={{ width: '100%' }}
                                             />
@@ -447,7 +392,7 @@ export default function Form({ post, categories, specialities, relatedPostsOptio
                                                 placeholder="Select speciality"
                                                 value={data.catagory3}
                                                 onChange={(value) => setData('catagory3', value)}
-                                                options={categories}
+                                                options={specialities}
                                                 className="w-full mt-1 rounded-sm text-sm"
                                                 style={{ width: '100%' }}
                                             />
@@ -547,438 +492,392 @@ export default function Form({ post, categories, specialities, relatedPostsOptio
                                     <h3 className="text-lg font-semibold text-gray-800">Media & Images</h3>
                                     <hr className="my-4" />
 
-                                    <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
-                                        {/* Featured Image */}
-                                        <div className="lg:col-span-1">
-                                            <InputLabel value="Featured Image 360*260 (Max 1MB)" />
-                                            <Upload
-                                                name="featuredThumbnail"
-                                                listType="picture-card"
-                                                className="mt-2"
-                                                showUploadList={false}
-                                                beforeUpload={(file) => {
-                                                    // Size validation (1MB max)
-                                                    const isLt1M = file.size / 1024 / 1024 < 1;
-                                                    if (!isLt1M) {
-                                                        setErrorForField('featuredThumbnail', 'Image size must be less than 1MB');
-                                                        return Upload.LIST_IGNORE;
-                                                    }
+                                    <Card>
+                                        <CardHeader>
+                                            <CardTitle >Post Images</CardTitle>
+                                            <p className="text-sm text-gray-500">
+                                                Upload images for your post. Supported formats: JPG, JPEG, PNG, WEBP (max 1MB each)
+                                            </p>
+                                        </CardHeader>
+                                        <CardContent className="space-y-8">
+                                            <div className="grid grid-cols-1 gap-8 md:grid-cols-2">
+                                                {/* Featured Image */}
+                                                <div>
+                                                    <InputLabel value="Featured Image (360x260px)" />
+                                                    <Upload
+                                                        name="featuredThumbnail"
+                                                        beforeUpload={(file) => {
+                                                            // Clear previous validation error
+                                                            setImageValidationErrors(prev => ({
+                                                                ...prev,
+                                                                featuredThumbnail: ''
+                                                            }));
 
-                                                    // Type validation - only allow PNG, JPG, JPEG, and WEBP
-                                                    const validTypes = ['image/png', 'image/jpg', 'image/jpeg', 'image/webp'];
-                                                    if (!validTypes.includes(file.type)) {
-                                                        setErrorForField('featuredThumbnail', 'Only PNG, JPG, JPEG, and WEBP files are allowed.');
-                                                        return Upload.LIST_IGNORE;
-                                                    }
-
-                                                    // Clear previous errors
-                                                    clearErrorForField('featuredThumbnail');
-
-                                                    // Validate dimensions
-                                                    const img = new Image();
-                                                    const objectUrl = URL.createObjectURL(file);
-                                                    img.src = objectUrl;
-
-                                                    img.onload = function () {
-                                                        URL.revokeObjectURL(objectUrl);
-                                                        if (this.width !== 360 || this.height !== 260) {
-                                                            setErrorForField(
-                                                                'featuredThumbnail',
-                                                                `Featured Article Image must be exactly 360 x 260 px. Current: ${this.width} x ${this.height}`
-                                                            );
-                                                            return;
-                                                        }
-
-                                                        // All validations passed
-                                                        clearErrorForField('featuredThumbnail');
-                                                        setData('featuredThumbnail', file);
-                                                        setImagePreview(URL.createObjectURL(file));
-                                                    };
-
-                                                    img.onerror = function () {
-                                                        URL.revokeObjectURL(objectUrl);
-                                                        setErrorForField('featuredThumbnail', 'Failed to load image. Please try another file.');
-                                                    };
-
-                                                    // Return false to prevent automatic upload
-                                                    return false;
-                                                }}
-                                                onRemove={() => {
-                                                    setData('featuredThumbnail', null);
-                                                    setImagePreview(null);
-                                                    clearErrorForField('featuredThumbnail');
-                                                    return true;
-                                                }}
-                                            >
-                                                {imagePreview ? (
-                                                    <div className="relative w-full h-[200px]">
-                                                        <img src={imagePreview} alt="Preview" className="w-full h-full object-cover rounded-md" />
-                                                        <button
-                                                            type="button"
-                                                            onClick={(e) => {
-                                                                e.stopPropagation();
-                                                                setData('featuredThumbnail', null);
-                                                                setImagePreview(null);
-                                                                clearErrorForField('featuredThumbnail');
-                                                            }}
-                                                            className="absolute top-1 right-1 bg-red-600 text-white rounded-full p-1 hover:bg-red-700"
-                                                        >
-                                                            <i className="fa fa-times"></i>
-                                                        </button>
-                                                    </div>
-                                                ) : (
-                                                    <div className="text-center">
-                                                        <div className="mb-2">
-                                                            <i className="fa fa-cloud-upload text-2xl text-gray-400"></i>
-                                                        </div>
-                                                        <p className="text-xs text-gray-500">Upload Image (PNG, JPG, JPEG, WEBP)</p>
-                                                    </div>
-                                                )}
-                                            </Upload>
-                                            {featuredError && (
-                                                <div className="mt-2 flex items-center space-x-1 text-sm text-red-600">
-                                                    <i className="fa fa-exclamation-circle"></i>
-                                                    <span>{featuredError}</span>
-                                                </div>
-                                            )}
-                                        </div>
-
-                                        {/* Square Thumbnail */}
-                                        <div className="lg:col-span-1">
-                                            <InputLabel value="Square Thumbnail 600*600 (Max 1MB)" />
-                                            <Upload
-                                                name="SquareThumbnail"
-                                                listType="picture-card"
-                                                className="mt-2"
-                                                showUploadList={false}
-                                                beforeUpload={(file) => {
-                                                    // Size validation (1MB max)
-                                                    const isLt1M = file.size / 1024 / 1024 < 1;
-                                                    if (!isLt1M) {
-                                                        setErrorForField('SquareThumbnail', 'Image size must be less than 1MB');
-                                                        return Upload.LIST_IGNORE;
-                                                    }
-
-                                                    // Type validation - only allow PNG, JPG, JPEG, and WEBP
-                                                    const validTypes = ['image/png', 'image/jpg', 'image/jpeg', 'image/webp'];
-                                                    if (!validTypes.includes(file.type)) {
-                                                        setErrorForField('SquareThumbnail', 'Only PNG, JPG, JPEG, and WEBP files are allowed.');
-                                                        return Upload.LIST_IGNORE;
-                                                    }
-
-                                                    // Clear previous errors
-                                                    clearErrorForField('SquareThumbnail');
-
-                                                    // Validate dimensions
-                                                    const img = new Image();
-                                                    const objectUrl = URL.createObjectURL(file);
-                                                    img.src = objectUrl;
-
-                                                    img.onload = function () {
-                                                        URL.revokeObjectURL(objectUrl);
-                                                        if (this.width !== 600 || this.height !== 600) {
-                                                            setErrorForField(
-                                                                'SquareThumbnail',
-                                                                `Square Thumbnail must be exactly 600 x 600 px. Current: ${this.width} x ${this.height}`
-                                                            );
-                                                            return;
-                                                        }
-
-                                                        // All validations passed
-                                                        clearErrorForField('SquareThumbnail');
-                                                        setData('SquareThumbnail', file);
-                                                        setSquarePreview(URL.createObjectURL(file));
-                                                    };
-
-                                                    img.onerror = function () {
-                                                        URL.revokeObjectURL(objectUrl);
-                                                        setErrorForField('SquareThumbnail', 'Failed to load image. Please try another file.');
-                                                    };
-
-                                                    // Return false to prevent automatic upload
-                                                    return false;
-                                                }}
-                                                onRemove={() => {
-                                                    setData('SquareThumbnail', null);
-                                                    setSquarePreview(null);
-                                                    clearErrorForField('SquareThumbnail');
-                                                    return true;
-                                                }}
-                                            >
-                                                {squarePreview ? (
-                                                    <div className="relative w-full">
-                                                        <img src={squarePreview} alt="Square" className="w-full h-[200px] object-cover rounded-md" />
-                                                        <button
-                                                            type="button"
-                                                            onClick={(e) => {
-                                                                e.stopPropagation();
-                                                                setData('SquareThumbnail', null);
-                                                                setSquarePreview(null);
-                                                                clearErrorForField('SquareThumbnail');
-                                                            }}
-                                                            className="absolute top-1 right-1 bg-red-600 text-white rounded-full hover:bg-red-700 h-6 w-6"
-                                                        >
-                                                            <i className="fa fa-times"></i>
-                                                        </button>
-                                                    </div>
-                                                ) : (
-                                                    <div className="text-center">
-                                                        <div className="mb-2">
-                                                            <i className="fa fa-cloud-upload text-2xl text-gray-400"></i>
-                                                        </div>
-                                                        <p className="text-xs text-gray-500">Upload Image (PNG, JPG, JPEG, WEBP)</p>
-                                                    </div>
-                                                )}
-                                            </Upload>
-                                            {squareError && (
-                                                <div className="mt-2 flex items-center space-x-1 text-sm text-red-600">
-                                                    <i className="fa fa-exclamation-circle"></i>
-                                                    <span>{squareError}</span>
-                                                </div>
-                                            )}
-                                        </div>
-
-                                        {/* Banner Image */}
-                                        <div className="lg:col-span-1">
-                                            <InputLabel value="Banner Image 1200*400 (Max 1MB)" />
-                                            <Upload
-                                                name="bannerImage"
-                                                listType="picture-card"
-                                                className="mt-2"
-                                                showUploadList={false}
-                                                beforeUpload={(file) => {
-                                                    // Size validation (1MB max)
-                                                    const isLt1M = file.size / 1024 / 1024 < 1;
-                                                    if (!isLt1M) {
-                                                        setErrorForField('bannerImage', 'Image size must be less than 1MB');
-                                                        return Upload.LIST_IGNORE;
-                                                    }
-
-                                                    // Type validation - only allow PNG, JPG, JPEG, and WEBP
-                                                    const validTypes = ['image/png', 'image/jpg', 'image/jpeg', 'image/webp'];
-                                                    if (!validTypes.includes(file.type)) {
-                                                        setErrorForField('bannerImage', 'Only PNG, JPG, JPEG, and WEBP files are allowed.');
-                                                        return Upload.LIST_IGNORE;
-                                                    }
-
-                                                    // Clear previous errors
-                                                    clearErrorForField('bannerImage');
-
-                                                    // Validate dimensions
-                                                    const img = new Image();
-                                                    const objectUrl = URL.createObjectURL(file);
-                                                    img.src = objectUrl;
-
-                                                    img.onload = function () {
-                                                        URL.revokeObjectURL(objectUrl);
-                                                        if (this.width !== 1200 || this.height !== 400) {
-                                                            setErrorForField(
-                                                                'bannerImage',
-                                                                `Banner Image must be exactly 1200 x 400 px. Current: ${this.width} x ${this.height}`
-                                                            );
-                                                            return;
-                                                        }
-
-                                                        // All validations passed
-                                                        clearErrorForField('bannerImage');
-                                                        setData('bannerImage', file);
-                                                        setBannerPreview(URL.createObjectURL(file));
-                                                    };
-
-                                                    img.onerror = function () {
-                                                        URL.revokeObjectURL(objectUrl);
-                                                        setErrorForField('bannerImage', 'Failed to load image. Please try another file.');
-                                                    };
-
-                                                    // Return false to prevent automatic upload
-                                                    return false;
-                                                }}
-                                                onRemove={() => {
-                                                    setData('bannerImage', null);
-                                                    setBannerPreview(null);
-                                                    clearErrorForField('bannerImage');
-                                                    return true;
-                                                }}
-                                            >
-                                                {bannerPreview ? (
-                                                    <div className="relative w-full h-[200px]">
-                                                        <img src={bannerPreview} alt="Banner" className="w-full h-full object-cover rounded-md" />
-                                                        <button
-                                                            type="button"
-                                                            onClick={(e) => {
-                                                                e.stopPropagation();
-                                                                setData('bannerImage', null);
-                                                                setBannerPreview(null);
-                                                                clearErrorForField('bannerImage');
-                                                            }}
-                                                            className="absolute top-1 right-1 bg-red-600 text-white rounded-full hover:bg-red-700 h-6 w-6"
-                                                        >
-                                                            <i className="fa fa-times"></i>
-                                                        </button>
-                                                    </div>
-                                                ) : (
-                                                    <div className="text-center">
-                                                        <div className="mb-2">
-                                                            <i className="fa fa-cloud-upload text-2xl text-gray-400"></i>
-                                                        </div>
-                                                        <p className="text-xs text-gray-500">Upload Image (PNG, JPG, JPEG, WEBP)</p>
-                                                    </div>
-                                                )}
-                                            </Upload>
-                                            {bannerError && (
-                                                <div className="mt-2 flex items-center space-x-1 text-sm text-red-600">
-                                                    <i className="fa fa-exclamation-circle"></i>
-                                                    <span>{bannerError}</span>
-                                                </div>
-                                            )}
-                                        </div>
-
-                                        {/* App Image */}
-                                        <div className="lg:col-span-1">
-                                            <InputLabel value="App Image 770*550 (Max 1MB)" />
-                                            <Upload
-                                                name="s_image1"
-                                                listType="picture-card"
-                                                className="mt-2"
-                                                showUploadList={false}
-                                                beforeUpload={(file) => {
-                                                    // Size validation (1MB max)
-                                                    const isLt1M = file.size / 1024 / 1024 < 1;
-                                                    if (!isLt1M) {
-                                                        setErrorForField('s_image1', 'Image size must be less than 1MB');
-                                                        return false;
-                                                    }
-
-                                                    // Type validation
-                                                    const validTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp'];
-                                                    if (!validTypes.includes(file.type)) {
-                                                        setErrorForField('s_image1', 'Only JPG, JPEG, PNG, GIF, or WEBP are allowed.');
-                                                        return false;
-                                                    }
-
-                                                    // Clear previous errors
-                                                    clearErrorForField('s_image1');
-                                                    return true;
-                                                }}
-                                                onChange={(info) => {
-                                                    if (info.file.status === 'done') {
-                                                        // Validate dimensions
-                                                        const img = new Image();
-                                                        const objectUrl = URL.createObjectURL(info.file.originFileObj);
-                                                        img.src = objectUrl;
-                                                        img.onload = function () {
-                                                            URL.revokeObjectURL(objectUrl);
-                                                            if (this.width !== 770 || this.height !== 550) {
-                                                                setErrorForField(
-                                                                    's_image1',
-                                                                    `App Image must be exactly 770 x 550 px. Current: ${this.width} x ${this.height}`
-                                                                );
-                                                                // Clear the file
-                                                                setData('s_image1', null);
-                                                                setAppImagePreview(null);
-                                                                return;
+                                                            // Validate file type
+                                                            const isValidType = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp'].includes(file.type);
+                                                            if (!isValidType) {
+                                                                const errorMessage = 'Only JPG, JPEG, PNG, or WEBP files are allowed.';
+                                                                setImageValidationErrors(prev => ({
+                                                                    ...prev,
+                                                                    featuredThumbnail: errorMessage
+                                                                }));
+                                                                return Upload.LIST_IGNORE;
                                                             }
 
-                                                            // All validations passed
-                                                            clearErrorForField('s_image1');
-                                                            setData('s_image1', info.file.originFileObj);
-                                                            setAppImagePreview(URL.createObjectURL(info.file.originFileObj));
-                                                        };
-                                                        img.onerror = function () {
-                                                            URL.revokeObjectURL(objectUrl);
-                                                            setErrorForField('s_image1', 'Failed to load image. Please try another file.');
-                                                        };
-                                                    } else if (info.file.status === 'error') {
-                                                        setErrorForField('s_image1', 'Upload failed. Please try again.');
-                                                    }
-                                                }}
-                                                onRemove={() => {
-                                                    setData('s_image1', null);
-                                                    setAppImagePreview(null);
-                                                    clearErrorForField('s_image1');
-                                                }}
-                                            >
-                                                {appImagePreview ? (
-                                                    <div className="relative w-full h-[200px]">
-                                                        <img src={appImagePreview} alt="App" className="w-full h-full object-cover rounded-md" />
-                                                        <button
-                                                            type="button"
-                                                            onClick={(e) => {
-                                                                e.stopPropagation();
-                                                                setData('s_image1', null);
-                                                                setAppImagePreview(null);
-                                                                clearErrorForField('s_image1');
-                                                            }}
-                                                            className="absolute top-1 right-1 bg-red-600 text-white rounded-full p-1 hover:bg-red-700"
-                                                        >
-                                                            <i className="fa fa-times"></i>
-                                                        </button>
-                                                    </div>
-                                                ) : (
-                                                    <div className="text-center">
-                                                        <div className="mb-2">
-                                                            <i className="fa fa-cloud-upload text-2xl text-gray-400"></i>
-                                                        </div>
-                                                        <p className="text-xs text-gray-500">Upload Image</p>
-                                                    </div>
-                                                )}
-                                            </Upload>
-                                            {appError && (
-                                                <div className="mt-2 flex items-center space-x-1 text-sm text-red-600">
-                                                    <i className="fa fa-exclamation-circle"></i>
-                                                    <span>{appError}</span>
+                                                            // Validate file size (1MB max)
+                                                            const isLt1M = file.size / 1024 / 1024 < 1;
+                                                            if (!isLt1M) {
+                                                                const errorMessage = 'File size must be less than 1MB.';
+                                                                setImageValidationErrors(prev => ({
+                                                                    ...prev,
+                                                                    featuredThumbnail: errorMessage
+                                                                }));
+                                                                return Upload.LIST_IGNORE;
+                                                            }
+
+                                                            // Validate dimensions (360x260)
+                                                            validateImageDimensions(file, 360, 260)
+                                                                .then(() => {
+                                                                    // Update form data
+                                                                    setData('featuredThumbnail', file);
+                                                                    setImagePreview(URL.createObjectURL(file));
+                                                                })
+                                                                .catch(error => {
+                                                                    setImageValidationErrors(prev => ({
+                                                                        ...prev,
+                                                                        featuredThumbnail: error
+                                                                    }));
+                                                                    return Upload.LIST_IGNORE;
+                                                                });
+
+                                                            return false; // Prevent automatic upload
+                                                        }}
+                                                        onRemove={() => {
+                                                            setData('featuredThumbnail', null);
+                                                            setImagePreview(null);
+                                                            // Clear validation error
+                                                            setImageValidationErrors(prev => ({
+                                                                ...prev,
+                                                                featuredThumbnail: ''
+                                                            }));
+                                                        }}
+                                                        fileList={imagePreview ? [{
+                                                            uid: '-1',
+                                                            name: data.featuredThumbnail?.name || post?.featuredThumbnail,
+                                                            status: 'done',
+                                                            url: imagePreview,
+                                                        }] : []}
+                                                        listType="picture"
+                                                        maxCount={1}
+                                                        className="mt-2"
+                                                    >
+                                                        {!imagePreview ? (
+                                                            <UploadCard
+                                                                title="Upload Featured Image"
+                                                                description="Supported formats: JPG, JPEG, PNG, WEBP (max 1MB each) | Dimensions: 360x260px"
+                                                            />
+                                                        ) : null}
+                                                    </Upload>
+                                                    {imageValidationErrors.featuredThumbnail && <InputError message={imageValidationErrors.featuredThumbnail} className="mt-2" />}
                                                 </div>
-                                            )}
-                                        </div>
 
-                                        {/* Related Posts */}
-                                        <div className="lg:col-span-2">
-                                            <InputLabel value="Related Posts" />
-                                            <Select
-                                                mode="multiple"
-                                                size="large"
-                                                placeholder="Search and select related posts"
-                                                value={data.related_post_id}
-                                                onChange={(value) => setData('related_post_id', value)}
-                                                options={relatedPostsOptions}
-                                                className="w-full"
-                                                style={{ width: '100%' }}
-                                                showSearch
-                                                filterOption={(input, option) =>
-                                                    (option?.label ?? '').toLowerCase().includes(input.toLowerCase())
-                                                }
-                                                optionFilterProp="label"
-                                                maxTagCount="responsive"
-                                            />
-                                        </div>
+                                                {/* Square Thumbnail */}
+                                                <div>
+                                                    <InputLabel value="Square Thumbnail (600x600px)" />
+                                                    <Upload
+                                                        name="SquareThumbnail"
+                                                        beforeUpload={(file) => {
+                                                            // Clear previous validation error
+                                                            setImageValidationErrors(prev => ({
+                                                                ...prev,
+                                                                SquareThumbnail: ''
+                                                            }));
 
-                                        {/* Related Tags */}
-                                        <div className="lg:col-span-2">
-                                            <InputLabel value="Related Tags" />
-                                            <Select
-                                                mode="tags"
-                                                size="large"
-                                                placeholder="Add tags (press Enter after each tag)"
-                                                value={selectedTags}
-                                                onChange={(value) => setData('tags', value)}
-                                                className="w-full"
-                                                style={{ width: '100%' }}
-                                                options={tags}
-                                                optionFilterProp="label"
-                                                tokenSeparators={[',']}
-                                            />
-                                            <p className="mt-1 text-xs text-gray-500">Add relevant tags to help categorize your post</p>
-                                        </div>
-                                    </div>
+                                                            // Validate file type
+                                                            const isValidType = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp'].includes(file.type);
+                                                            if (!isValidType) {
+                                                                const errorMessage = 'Only JPG, JPEG, PNG, or WEBP files are allowed.';
+                                                                setImageValidationErrors(prev => ({
+                                                                    ...prev,
+                                                                    SquareThumbnail: errorMessage
+                                                                }));
+                                                                return Upload.LIST_IGNORE;
+                                                            }
+
+                                                            // Validate file size (1MB max)
+                                                            const isLt1M = file.size / 1024 / 1024 < 1;
+                                                            if (!isLt1M) {
+                                                                const errorMessage = 'File size must be less than 1MB.';
+                                                                setImageValidationErrors(prev => ({
+                                                                    ...prev,
+                                                                    SquareThumbnail: errorMessage
+                                                                }));
+                                                                return Upload.LIST_IGNORE;
+                                                            }
+
+                                                            // Validate dimensions (600x600)
+                                                            validateImageDimensions(file, 600, 600)
+                                                                .then(() => {
+                                                                    // Update form data
+                                                                    setData('SquareThumbnail', file);
+                                                                    setSquarePreview(URL.createObjectURL(file));
+                                                                })
+                                                                .catch(error => {
+                                                                    setImageValidationErrors(prev => ({
+                                                                        ...prev,
+                                                                        SquareThumbnail: error
+                                                                    }));
+                                                                    return Upload.LIST_IGNORE;
+                                                                });
+
+                                                            return false; // Prevent automatic upload
+                                                        }}
+                                                        onRemove={() => {
+                                                            setData('SquareThumbnail', null);
+                                                            setSquarePreview(null);
+                                                            // Clear validation error
+                                                            setImageValidationErrors(prev => ({
+                                                                ...prev,
+                                                                SquareThumbnail: ''
+                                                            }));
+                                                        }}
+                                                        fileList={squarePreview ? [{
+                                                            uid: '-1',
+                                                            name: data.SquareThumbnail?.name || post?.SquareThumbnail,
+                                                            status: 'done',
+                                                            url: squarePreview,
+                                                        }] : []}
+                                                        listType="picture"
+                                                        maxCount={1}
+                                                        className="mt-2"
+                                                    >
+                                                        {!squarePreview ? (
+                                                            <UploadCard
+                                                                title="Upload Square Thumbnail"
+                                                                description="Supported formats: JPG, JPEG, PNG, WEBP (max 1MB each) | Dimensions: 600x600px"
+                                                            />
+                                                        ) : null}
+                                                    </Upload>
+                                                    {imageValidationErrors.SquareThumbnail && <InputError message={imageValidationErrors.SquareThumbnail} className="mt-2" />}
+
+                                                </div>
+
+                                                {/* Banner Image */}
+                                                <div>
+                                                    <InputLabel value="Banner Image (1200x400px)" />
+                                                    <Upload
+                                                        name="bannerImage"
+                                                        beforeUpload={(file) => {
+                                                            // Clear previous validation error
+                                                            setImageValidationErrors(prev => ({
+                                                                ...prev,
+                                                                bannerImage: ''
+                                                            }));
+
+                                                            // Validate file type
+                                                            const isValidType = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp'].includes(file.type);
+                                                            if (!isValidType) {
+                                                                const errorMessage = 'Only JPG, JPEG, PNG, or WEBP files are allowed.';
+                                                                setImageValidationErrors(prev => ({
+                                                                    ...prev,
+                                                                    bannerImage: errorMessage
+                                                                }));
+                                                                return Upload.LIST_IGNORE;
+                                                            }
+
+                                                            // Validate file size (1MB max)
+                                                            const isLt1M = file.size / 1024 / 1024 < 1;
+                                                            if (!isLt1M) {
+                                                                const errorMessage = 'File size must be less than 1MB.';
+                                                                setImageValidationErrors(prev => ({
+                                                                    ...prev,
+                                                                    bannerImage: errorMessage
+                                                                }));
+                                                                return Upload.LIST_IGNORE;
+                                                            }
+
+                                                            // Validate dimensions (1200x400)
+                                                            validateImageDimensions(file, 1200, 400)
+                                                                .then(() => {
+                                                                    // Update form data
+                                                                    setData('bannerImage', file);
+                                                                    setBannerPreview(URL.createObjectURL(file));
+                                                                })
+                                                                .catch(error => {
+                                                                    setImageValidationErrors(prev => ({
+                                                                        ...prev,
+                                                                        bannerImage: error
+                                                                    }));
+                                                                    return Upload.LIST_IGNORE;
+                                                                });
+
+                                                            return false; // Prevent automatic upload
+                                                        }}
+                                                        onRemove={() => {
+                                                            setData('bannerImage', null);
+                                                            setBannerPreview(null);
+                                                            // Clear validation error
+                                                            setImageValidationErrors(prev => ({
+                                                                ...prev,
+                                                                bannerImage: ''
+                                                            }));
+                                                        }}
+                                                        fileList={bannerPreview ? [{
+                                                            uid: '-1',
+                                                            name: data.bannerImage?.name || post?.bannerImage,
+                                                            status: 'done',
+                                                            url: bannerPreview,
+                                                        }] : []}
+                                                        listType="picture"
+                                                        maxCount={1}
+                                                        className="mt-2"
+                                                    >
+                                                        {!bannerPreview ? (
+                                                            <UploadCard
+                                                                title="Upload Banner Image"
+                                                                description="Supported formats: JPG, JPEG, PNG, WEBP (max 1MB each) | Dimensions: 1200x400px"
+                                                            />
+                                                        ) : null}
+                                                    </Upload>
+                                                    {imageValidationErrors.bannerImage && <InputError message={imageValidationErrors.bannerImage} className="mt-2" />}
+
+                                                </div>
+
+                                                {/* App Image */}
+                                                <div>
+                                                    <InputLabel value="App Image (770x550px)" />
+                                                    <Upload
+                                                        name="s_image1"
+                                                        beforeUpload={(file) => {
+                                                            // Clear previous validation error
+                                                            setImageValidationErrors(prev => ({
+                                                                ...prev,
+                                                                s_image1: ''
+                                                            }));
+
+                                                            // Validate file type
+                                                            const isValidType = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp'].includes(file.type);
+                                                            if (!isValidType) {
+                                                                const errorMessage = 'Only JPG, JPEG, PNG, or WEBP files are allowed.';
+                                                                setImageValidationErrors(prev => ({
+                                                                    ...prev,
+                                                                    s_image1: errorMessage
+                                                                }));
+                                                                return Upload.LIST_IGNORE;
+                                                            }
+
+                                                            // Validate file size (1MB max)
+                                                            const isLt1M = file.size / 1024 / 1024 < 1;
+                                                            if (!isLt1M) {
+                                                                const errorMessage = 'File size must be less than 1MB.';
+                                                                setImageValidationErrors(prev => ({
+                                                                    ...prev,
+                                                                    s_image1: errorMessage
+                                                                }));
+                                                                return Upload.LIST_IGNORE;
+                                                            }
+
+                                                            // Validate dimensions (770x550)
+                                                            validateImageDimensions(file, 770, 550)
+                                                                .then(() => {
+                                                                    // Update form data
+                                                                    setData('s_image1', file);
+                                                                    setAppImagePreview(URL.createObjectURL(file));
+                                                                })
+                                                                .catch(error => {
+                                                                    setImageValidationErrors(prev => ({
+                                                                        ...prev,
+                                                                        s_image1: error
+                                                                    }));
+                                                                    return Upload.LIST_IGNORE;
+                                                                });
+
+                                                            return false; // Prevent automatic upload
+                                                        }}
+                                                        onRemove={() => {
+                                                            setData('s_image1', null);
+                                                            setAppImagePreview(null);
+                                                            // Clear validation error
+                                                            setImageValidationErrors(prev => ({
+                                                                ...prev,
+                                                                s_image1: ''
+                                                            }));
+                                                        }}
+                                                        fileList={appImagePreview ? [{
+                                                            uid: '-1',
+                                                            name: data.s_image1?.name || post?.s_image1,
+                                                            status: 'done',
+                                                            url: appImagePreview,
+                                                        }] : []}
+                                                        listType="picture"
+                                                        maxCount={1}
+                                                        className="mt-2"
+                                                    >
+                                                        {!appImagePreview ? (
+                                                            <UploadCard
+                                                                title="Upload App Image"
+                                                                description="Supported formats: JPG, JPEG, PNG, WEBP (max 1MB each) | Dimensions: 770x550px"
+                                                            />
+                                                        ) : null}
+                                                    </Upload>
+                                                    {imageValidationErrors.s_image1 && <InputError message={imageValidationErrors.s_image1} className="mt-2" />}
+
+                                                </div>
+                                            </div>
+
+                                            {/* Related Posts */}
+                                            <div>
+                                                <InputLabel value="Related Posts" />
+                                                <Select
+                                                    mode="multiple"
+                                                    size="large"
+                                                    placeholder="Search and select related posts"
+                                                    value={data.related_post_id}
+                                                    onChange={(value) => setData('related_post_id', value)}
+                                                    options={relatedPostsOptions}
+                                                    className="w-full"
+                                                    style={{ width: '100%' }}
+                                                    showSearch
+                                                    filterOption={(input, option) =>
+                                                        (option?.label ?? '').toLowerCase().includes(input.toLowerCase())
+                                                    }
+                                                    optionFilterProp="label"
+                                                    maxTagCount="responsive"
+                                                />
+                                            </div>
+
+                                            {/* Related Tags */}
+                                            <div>
+                                                <InputLabel value="Related Tags" />
+                                                <Select
+                                                    mode="tags"
+                                                    size="large"
+                                                    placeholder="Add tags (press Enter after each tag)"
+                                                    value={data.tags}
+                                                    onChange={(value) => setData('tags', value)}
+                                                    className="w-full"
+                                                    style={{ width: '100%' }}
+                                                    options={tags.map(tag => ({
+                                                        value: tag.label,
+                                                        label: tag.label
+                                                    }))}
+                                                    optionFilterProp="label"
+                                                    tokenSeparators={[',']}
+                                                />
+                                                <p className="mt-1 text-xs text-gray-500">Add relevant tags to help categorize your post</p>
+                                            </div>
+                                        </CardContent>
+                                    </Card>
                                 </div>
 
                                 {/* Actions */}
                                 <div className="flex items-center justify-between border-t pt-4">
                                     <Link
                                         href={route('posts.index')}
-                                        className="rounded-md bg-gray-100 px-4 py-2 text-sm font-medium text-gray-600 hover:bg-gray-200 hover:text-gray-900 focus:outline-none focus:ring-2 focus:ring-gray-400 focus:ring-offset-2"
                                     >
-                                        Cancel
+                                        <Button variant="outline">
+                                            Cancel
+                                        </Button>
                                     </Link>
 
                                     {/* Make sure this is a submit button */}

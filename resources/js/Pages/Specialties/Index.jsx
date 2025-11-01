@@ -10,6 +10,7 @@ import { Popconfirm, message } from 'antd';
 import 'antd/dist/reset.css';
 
 export default function Index({ specialties }) {
+    console.log(specialties);
     const [loading, setLoading] = useState(false);
     const [currentPage, setCurrentPage] = useState(1);
     const [searchQuery, setSearchQuery] = useState('');
@@ -128,7 +129,7 @@ export default function Index({ specialties }) {
                                     <CardTitle className="flex items-center gap-2 text-2xl font-bold text-gray-900">
                                         Speciality Management
                                     </CardTitle>
-                                    <CardDescription className="">
+                                    <CardDescription >
                                         Manage your specialty categories and their associated content
                                     </CardDescription>
                                 </div>
@@ -142,7 +143,10 @@ export default function Index({ specialties }) {
                         </CardHeader>
 
                         {/* Search */}
-                        <div className="px-6 flex justify-end items-center">
+                        <div className="px-6 flex justify-between items-center">
+                             <div className="text-sm text-muted-foreground">
+                                        Showing {((currentPage - 1) * pageSize) + 1} to {Math.min(currentPage * pageSize, filteredAndSortedSpecialties.length)} of {filteredAndSortedSpecialties.length} specialties
+                                    </div>
                             <div className="relative w-full max-w-md">
                                 <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                                 <Input
@@ -238,9 +242,9 @@ export default function Index({ specialties }) {
                                                         )}
                                                     </TableCell>
                                                     <TableCell>
-                                                        {specialty.banner_img ? (
+                                                        {specialty.thumbnail_img ? (
                                                             <img
-                                                                src={`/uploads/specialty/${specialty.banner_img}`}
+                                                                src={`/uploads/specialty/${specialty.thumbnail_img}`}
                                                                 alt={specialty.title}
                                                                 className="h-16 w-24 rounded-lg object-cover shadow-sm border border-gray-200"
                                                             />

@@ -2,35 +2,21 @@ import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { Head, Link, useForm } from '@inertiajs/react';
 import { Button } from '@/Components/ui/button';
 import Input from '@/Components/Input';
-import Dropdown from '@/Components/Dropdown';
-import { useState, useEffect } from 'react';
-import { LeftOutlined } from '@ant-design/icons';
-import PrimaryButton from '@/Components/PrimaryButton';
 import InputError from '@/Components/InputError';
 import InputLabel from '@/Components/InputLabel';
-import { Select } from 'antd';
+import PrimaryButton from '@/Components/PrimaryButton';
+import { useState, useEffect } from 'react';
+import { LeftOutlined } from '@ant-design/icons';
+import { Select, Upload } from 'antd';
+import { Card, CardContent, CardHeader, CardTitle } from '@/Components/ui/card';
+import UploadCard from '@/Components/UploadCard';
 
 export default function SpecialtyForm({ specialty, parentSpecialties }) {
-
-    const [processing, setProcessing] = useState(false);
-    const [errors, setErrors] = useState({});
-    const [imagePreviews, setImagePreviews] = useState({
-        web_banner: null,
-        app_banner: null,
-        icon_banner: null,
-        banner_img: null
-    });
-    // Add image validation errors state
-    const [imageValidationErrors, setImageValidationErrors] = useState({
-        web_banner: '',
-        app_banner: '',
-        icon_banner: '',
-        banner_img: ''
-    });
-
     const isEditing = !!specialty;
+    console.log(specialty);
 
-    const { data, setData, post, put, reset } = useForm({
+    const { data, setData, post, put, errors, processing } = useForm({
+        no: specialty?.no || '',
         title: specialty?.title || '',
         spec_desc: specialty?.spec_desc || '',
         meta_title: specialty?.meta_title || '',
@@ -49,80 +35,55 @@ export default function SpecialtyForm({ specialty, parentSpecialties }) {
         app_banner: null,
         icon_banner: null,
         banner_img: null,
-        web_banner_old: specialty?.thumbnail_img || '',
-        app_banner_old: specialty?.mobileThumb || '',
-        icon_banner_old: specialty?.featured_img || '',
-        banner_img_old: specialty?.banner_img || '',
+        web_banner_name: specialty?.thumbnail_img || '',
+        app_banner_name: specialty?.mobileThumb || '',
+        icon_banner_name: specialty?.featured_img || '',
+        banner_img_name: specialty?.banner_img || '',
+    });
+
+    // State for image previews
+    const [imagePreviews, setImagePreviews] = useState({
+        web_banner: specialty?.thumbnail_img ? `/uploads/specialty/${specialty.thumbnail_img}` : null,
+        app_banner: specialty?.mobileThumb ? `/uploads/specialty/${specialty.mobileThumb}` : null,
+        icon_banner: specialty?.featured_img ? `/uploads/specialty/${specialty.featured_img}` : null,
+        banner_img: specialty?.banner_img ? `/uploads/specialty/${specialty.banner_img}` : null
+    });
+
+    // State for image validation errors
+    const [imageValidationErrors, setImageValidationErrors] = useState({
+        web_banner: '',
+        app_banner: '',
+        icon_banner: '',
+        banner_img: ''
     });
 
     useEffect(() => {
         if (specialty) {
             // Set up image previews for existing images
             const previews = {};
-            if (specialty.thumbnail_img) previews.web_banner = `/storage/${specialty.thumbnail_img}`;
-            if (specialty.mobileThumb) previews.app_banner = `/storage/${specialty.mobileThumb}`;
-            if (specialty.featured_img) previews.icon_banner = `/storage/${specialty.featured_img}`;
-            if (specialty.banner_img) previews.banner_img = `/storage/${specialty.banner_img}`;
+            if (specialty.thumbnail_img) previews.web_banner = `/uploads/specialty/${specialty.thumbnail_img}`;
+            if (specialty.mobileThumb) previews.app_banner = `/uploads/specialty/${specialty.mobileThumb}`;
+            if (specialty.featured_img) previews.icon_banner = `/uploads/specialty/${specialty.featured_img}`;
+            if (specialty.banner_img) previews.banner_img = `/uploads/specialty/${specialty.banner_img}`;
             setImagePreviews(previews);
         }
     }, [specialty]);
 
-    // Function to validate image dimensions and size
-    const validateImage = (file, type) => {
+    // Function to validate image dimensions
+    const validateImageDimensions = (file, expectedWidth, expectedHeight) => {
         return new Promise((resolve, reject) => {
-            // Check file size (max 1MB)
-            if (file.size > 1024 * 1024) {
-                reject(`File size must be less than 1MB. Current size: ${(file.size / 1024 / 1024).toFixed(2)}MB`);
-                return;
-            }
-
-            // Check file type
-            const validTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp'];
-            if (!validTypes.includes(file.type)) {
-                reject('Only JPG, JPEG, PNG, GIF, and WEBP files are allowed');
-                return;
-            }
-
-            // Create image to check dimensions
             const img = new Image();
             img.onload = () => {
                 const { width, height } = img;
-                let expectedWidth, expectedHeight;
-
-                // Define expected dimensions based on image type
-                switch (type) {
-                    case 'web_banner':
-                        expectedWidth = 360;
-                        expectedHeight = 260;
-                        break;
-                    case 'app_banner':
-                        expectedWidth = 451;
-                        expectedHeight = 260;
-                        break;
-                    case 'icon_banner':
-                        expectedWidth = 350;
-                        expectedHeight = 490;
-                        break;
-                    case 'banner_img':
-                        expectedWidth = 451;
-                        expectedHeight = 260;
-                        break;
-                    default:
-                        resolve(); // No validation for unknown types
-                        return;
-                }
-
                 if (width !== expectedWidth || height !== expectedHeight) {
                     reject(`Image dimensions must be exactly ${expectedWidth}x${expectedHeight}px. Current dimensions: ${width}x${height}px`);
                 } else {
                     resolve();
                 }
             };
-
             img.onerror = () => {
                 reject('Invalid image file');
             };
-
             img.src = URL.createObjectURL(file);
         });
     };
@@ -132,19 +93,10 @@ export default function SpecialtyForm({ specialty, parentSpecialties }) {
 
         // Validate title is not empty or only whitespace
         if (!data.title || data.title.trim() === '') {
-            setErrors({ title: 'Specialty name is required and cannot be empty.' });
+            // Set error directly in the errors object
+            errors.title = 'Specialty name is required and cannot be empty.';
             return;
         }
-
-        // Check for image validation errors
-        const hasImageErrors = Object.values(imageValidationErrors).some(error => error !== '');
-        if (hasImageErrors) {
-            setErrors({ ...errors, image: 'Please fix image validation errors before submitting' });
-            return;
-        }
-
-        setProcessing(true);
-        setErrors({});
 
         // Prepare the data for submission
         const submitData = new FormData();
@@ -166,96 +118,29 @@ export default function SpecialtyForm({ specialty, parentSpecialties }) {
         });
 
         // Add file uploads if present
-        if (data.web_banner) submitData.append('web_banner', data.web_banner);
-        if (data.app_banner) submitData.append('app_banner', data.app_banner);
-        if (data.icon_banner) submitData.append('icon_banner', data.icon_banner);
-        if (data.banner_img) submitData.append('banner_img', data.banner_img);
-
-        // Add old image values for reference
-        submitData.append('web_banner_old', data.web_banner_old || '');
-        submitData.append('app_banner_old', data.app_banner_old || '');
-        submitData.append('icon_banner_old', data.icon_banner_old || '');
-        submitData.append('banner_img_old', data.banner_img_old || '');
+        if (data.web_banner instanceof File) submitData.append('web_banner', data.web_banner);
+        if (data.app_banner instanceof File) submitData.append('app_banner', data.app_banner);
+        if (data.icon_banner instanceof File) submitData.append('icon_banner', data.icon_banner);
+        if (data.banner_img instanceof File) submitData.append('banner_img', data.banner_img);
 
         const url = isEditing
-            ? route('specialties.update', specialty.no)
+            ? route('specialties.updates', specialty.no)
             : route('specialties.store');
 
         if (isEditing) {
-            submitData.append('_method', 'PUT');
-            put(url, submitData, {
-                onSuccess: () => {
-                    setProcessing(false);
-                    // Redirect to index page
-                    window.location.href = route('specialties.index');
+            post(url, {
+                data: submitData,
+                headers: {
+                    'Content-Type': 'multipart/form-data',
                 },
-                onError: (errors) => {
-                    setProcessing(false);
-                    setErrors(errors);
-                }
             });
         } else {
-            post(url, submitData, {
-                onSuccess: () => {
-                    setProcessing(false);
-                    reset();
-                    // Reset image previews
-                    setImagePreviews({
-                        web_banner: null,
-                        app_banner: null,
-                        icon_banner: null,
-                        banner_img: null
-                    });
-                    // Reset image validation errors
-                    setImageValidationErrors({
-                        web_banner: '',
-                        app_banner: '',
-                        icon_banner: '',
-                        banner_img: ''
-                    });
+            post(url, {
+                data: submitData,
+                headers: {
+                    'Content-Type': 'multipart/form-data',
                 },
-                onError: (errors) => {
-                    setProcessing(false);
-                    setErrors(errors);
-                }
             });
-        }
-    };
-
-    const handleImageChange = (e, fieldName) => {
-        const file = e.target.files[0];
-        if (file) {
-            // Validate image before setting it
-            validateImage(file, fieldName)
-                .then(() => {
-                    // Clear any previous validation error for this field
-                    setImageValidationErrors(prev => ({
-                        ...prev,
-                        [fieldName]: ''
-                    }));
-
-                    setData(fieldName, file);
-
-                    // Create preview
-                    const reader = new FileReader();
-                    reader.onload = (e) => {
-                        setImagePreviews(prev => ({
-                            ...prev,
-                            [fieldName]: e.target.result
-                        }));
-                    };
-                    reader.readAsDataURL(file);
-                })
-                .catch(error => {
-                    // Set validation error
-                    setImageValidationErrors(prev => ({
-                        ...prev,
-                        [fieldName]: error
-                    }));
-
-                    // Clear the file input
-                    e.target.value = '';
-                });
         }
     };
 
@@ -267,16 +152,6 @@ export default function SpecialtyForm({ specialty, parentSpecialties }) {
         }
     };
 
-    // Format parent specialties for dropdown
-    const formatParentSpecialties = () => {
-        return parentSpecialties.map(spec => ({
-            value: spec.value,
-            label: spec.label
-        }));
-    };
-
-
-
     return (
         <AuthenticatedLayout>
             <Head title={isEditing ? "Edit Speciality" : "Create Speciality"} />
@@ -286,7 +161,6 @@ export default function SpecialtyForm({ specialty, parentSpecialties }) {
                     <div className="bg-white shadow-sm sm:rounded-lg">
                         <div className="px-6 py-6">
                             <div className="mb-6 flex justify-between items-center">
-
                                 <h2 className="mt-2 text-2xl font-bold text-gray-900 uppercase">
                                     {isEditing ? "Edit Specialty" : "Create New Specialty"}
                                 </h2>
@@ -297,291 +171,593 @@ export default function SpecialtyForm({ specialty, parentSpecialties }) {
                                     <LeftOutlined className="mr-1" />
                                     Back to Specialties
                                 </Link>
-
                             </div>
 
                             <div className="rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
                                 <form onSubmit={handleSubmit} className="space-y-6">
-                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                        <div>
-                                            <InputLabel for="title" value="Specialty Name" className="text-sm font-medium text-gray-700" />
-                                            <Input
-                                                id="title"
-                                                type="text"
-                                                placeholder="Enter specialty name"
-                                                value={data.title}
-                                                onChange={(e) => {
-                                                    setData('title', e.target.value);
-                                                    // Auto-generate custom URL when title changes (only for new specialties)
-                                                    if (!isEditing) {
-                                                        generateCustomUrl(e.target.value);
-                                                    }
-                                                }}
-                                                className="w-full py-1.5 mt-1 text-sm"
-                                                required
-                                            />
-                                            {errors.title && <InputError message={errors.title} className="mt-2" />}
-                                        </div>
+                                    <Card>
+                                        <CardContent className="space-y-6">
+                                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-6">
+                                                <div>
+                                                    <InputLabel for="title" value="Specialty Name" className="text-sm font-medium text-gray-700" />
+                                                    <Input
+                                                        id="title"
+                                                        type="text"
+                                                        placeholder="Enter specialty name"
+                                                        value={data.title}
+                                                        onChange={(e) => {
+                                                            setData('title', e.target.value);
+                                                            // Auto-generate custom URL when title changes (only for new specialties)
+                                                            if (!isEditing) {
+                                                                generateCustomUrl(e.target.value);
+                                                            }
+                                                        }}
+                                                        className="w-full py-1.5 mt-1 text-sm"
+                                                        required
+                                                    />
+                                                    {errors.title && <InputError message={errors.title} className="mt-2" />}
+                                                </div>
 
-                                        <div>
-                                            <InputLabel for="custom_url" value="Custom URL" className="text-sm font-medium text-gray-700" />
-                                            <Input
-                                                id="custom_url"
-                                                type="text"
-                                                placeholder="Enter custom URL"
-                                                value={data.custom_url}
-                                                onChange={(e) => setData('custom_url', e.target.value)}
-                                                className="w-full py-1.5 mt-1 text-sm"
-                                            />
-                                        </div>
-                                    </div>
+                                                <div>
+                                                    <InputLabel for="custom_url" value="Custom URL" className="text-sm font-medium text-gray-700" />
+                                                    <Input
+                                                        id="custom_url"
+                                                        type="text"
+                                                        placeholder="Enter custom URL"
+                                                        value={data.custom_url}
+                                                        onChange={(e) => setData('custom_url', e.target.value)}
+                                                        className="w-full py-1.5 mt-1 text-sm"
+                                                    />
+                                                </div>
+                                            </div>
 
-                                    <div>
-                                        <InputLabel for="spec_desc" value="Description" className="text-sm font-medium text-gray-700" />
-                                        <textarea
-                                            id="spec_desc"
-                                            placeholder="Enter description"
-                                            value={data.spec_desc}
-                                            onChange={(e) => setData('spec_desc', e.target.value)}
-                                            className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-[#00895f] focus:ring-[#00895f] sm:text-sm"
-                                            rows="4"
-                                        />
-                                    </div>
+                                            <div>
+                                                <InputLabel for="spec_desc" value="Description" className="text-sm font-medium text-gray-700" />
+                                                <textarea
+                                                    id="spec_desc"
+                                                    placeholder="Enter description"
+                                                    value={data.spec_desc}
+                                                    onChange={(e) => setData('spec_desc', e.target.value)}
+                                                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-[#00895f] focus:ring-[#00895f] sm:text-sm"
+                                                    rows="4"
+                                                />
+                                            </div>
 
-                                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                                        <div>
-                                            <InputLabel for="speciality_type" value="Specialty Type" className="text-sm font-medium text-gray-700" />
+                                            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                                                <div>
+                                                    <InputLabel for="speciality_type" value="Specialty Type" className="text-sm font-medium text-gray-700" />
+                                                    <Select
+                                                        options={[
+                                                            { value: 'speciality', label: 'Speciality' },
+                                                            { value: 'preference', label: 'Preference' },
+                                                            { value: 'sponsored', label: 'Sponsored' }, 
+                                                            { value: 'follow', label: 'Follow' }
+                                                        ]}
+                                                        value={data.speciality_type}
+                                                        onChange={(value) => setData('speciality_type', value)}
+                                                        placeholder="Select specialty type"
+                                                        showSearch
+                                                        filterOption={(input, option) =>
+                                                            option.label.toLowerCase().indexOf(input.toLowerCase()) >= 0
+                                                        }
+                                                        className="mt-1 w-full h-[36px]"
+                                                    />
+                                                </div>
+                                                <div>
+                                                    <InputLabel for="parentID" value="Parent Specialty 1" className="text-sm font-medium text-gray-700" />
+                                                    <Select
+                                                        options={parentSpecialties}
+                                                        value={data.parentID}
+                                                        onChange={(value) => setData('parentID', value)}
+                                                        placeholder="Select parent specialty"
+                                                        showSearch
+                                                        filterOption={(input, option) =>
+                                                            option.label.toLowerCase().indexOf(input.toLowerCase()) >= 0
+                                                        }
+                                                        className="mt-1 w-full h-[36px]"
+                                                    />
+                                                </div>
 
-                                            <Select
-                                                options={[
-                                                    { value: 'speciality', label: 'Speciality' },
-                                                    { value: 'preference', label: 'Preference' },
-                                                    { value: 'sponsored', label: 'Sponsored' }, { value: 'follow', label: 'Follow' }
-                                                ]}
+                                                <div>
+                                                    <InputLabel for="parentID2" value="Parent Specialty 2" className="text-sm font-medium text-gray-700" />
+                                                    <Select
+                                                        options={parentSpecialties}
+                                                        value={data.parentID2}
+                                                        onChange={(value) => setData('parentID2', value)}
+                                                        placeholder="Select parent specialty"
+                                                        showSearch
+                                                        filterOption={(input, option) =>
+                                                            option.label.toLowerCase().indexOf(input.toLowerCase()) >= 0
+                                                        }
+                                                        className="mt-1 w-full h-[36px]"
+                                                    />
+                                                </div>
 
-                                                value={data.speciality_type}
-                                                onChange={(value) => setData('speciality_type', value)}
-                                                placeholder="Select specialty type"
-                                                searchable
-                                                clearable
-                                                className="mt-1 w-full h-[36px]"
-                                            />
+                                                <div>
+                                                    <InputLabel for="parentID3" value="Parent Specialty 3" className="text-sm font-medium text-gray-700" />
+                                                    <Select
+                                                        options={parentSpecialties}
+                                                        value={data.parentID3}
+                                                        onChange={(value) => setData('parentID3', value)}
+                                                        placeholder="Select parent specialty"
+                                                        showSearch
+                                                        filterOption={(input, option) =>
+                                                            option.label.toLowerCase().indexOf(input.toLowerCase()) >= 0
+                                                        }
+                                                        className="mt-1 w-full h-[36px]"
+                                                    />
+                                                </div>
 
-                                        </div>
-                                        <div>
-                                            <InputLabel for="parentID" value="Parent Specialty 1" className="text-sm font-medium text-gray-700" />
-                                            <Select
-                                                options={parentSpecialties}
-                                                value={data.parentID}
-                                                onChange={(value) => setData('parentID', value)}
-                                                placeholder="Select parent specialty"
-                                                searchable
-                                                clearable
-                                                className="mt-1 w-full h-[36px]"
+                                                <div>
+                                                    <InputLabel for="parentID4" value="Parent Specialty 4" className="text-sm font-medium text-gray-700" />
+                                                    <Select
+                                                        options={parentSpecialties}
+                                                        value={data.parentID4}
+                                                        onChange={(value) => setData('parentID4', value)}
+                                                        placeholder="Select parent specialty"
+                                                        showSearch
+                                                        filterOption={(input, option) =>
+                                                            option.label.toLowerCase().indexOf(input.toLowerCase()) >= 0
+                                                        }
+                                                        className="mt-1 w-full h-[36px]"
+                                                    />
+                                                </div>
 
-                                            />
-                                        </div>
-
-                                        <div>
-                                            <InputLabel for="parentID2" value="Parent Specialty 2" className="text-sm font-medium text-gray-700" />
-                                            <Select
-                                                options={formatParentSpecialties()}
-                                                value={data.parentID2}
-                                                onChange={(value) => setData('parentID2', value)}
-                                                placeholder="Select parent specialty"
-                                                searchable
-                                                clearable
-                                                className="mt-1 w-full h-[36px]"
-                                            />
-                                        </div>
-
-                                        <div>
-                                            <InputLabel for="parentID3" value="Parent Specialty 3" className="text-sm font-medium text-gray-700" />
-                                            <Select
-                                                options={formatParentSpecialties()}
-                                                value={data.parentID3}
-                                                onChange={(value) => setData('parentID3', value)}
-                                                placeholder="Select parent specialty"
-                                                searchable
-                                                clearable
-                                                className="mt-1 w-full h-[36px]"
-                                            />
-                                        </div>
-
-                                        <div>
-                                            <InputLabel for="parentID4" value="Parent Specialty 4" className="text-sm font-medium text-gray-700" />
-                                            <Select
-                                                options={parentSpecialties}
-                                                value={data.parentID4}
-                                                onChange={(value) => setData('parentID4', value)}
-                                                placeholder="Select parent specialty"
-                                                searchable
-                                                clearable
-                                                className="mt-1 w-full h-[36px]"
-                                            />
-                                        </div>
-
-                                        <div>
-                                            <InputLabel for="parentID5" value="Parent Specialty 5" className="text-sm font-medium text-gray-700" />
-                                            <Select
-                                                options={formatParentSpecialties()}
-                                                value={data.parentID5}
-                                                onChange={(value) => setData('parentID5', value)}
-                                                placeholder="Select parent specialty"
-                                                searchable
-                                                clearable
-                                                className="mt-1 w-full h-[36px]"
-                                            />
-                                        </div>
-
-
-
-                                    </div>
-
-
+                                                <div>
+                                                    <InputLabel for="parentID5" value="Parent Specialty 5" className="text-sm font-medium text-gray-700" />
+                                                    <Select
+                                                        options={parentSpecialties}
+                                                        value={data.parentID5}
+                                                        onChange={(value) => setData('parentID5', value)}
+                                                        placeholder="Select parent specialty"
+                                                        showSearch
+                                                        filterOption={(input, option) =>
+                                                            option.label.toLowerCase().indexOf(input.toLowerCase()) >= 0
+                                                        }
+                                                        className="mt-1 w-full h-[36px]"
+                                                    />
+                                                </div>
+                                            </div>
+                                        </CardContent>
+                                    </Card>
 
                                     {/* Image Upload Sections */}
-                                    <div className="border-t border-gray-200 pt-6">
-                                        <h3 className="text-lg font-medium text-gray-900">Images</h3>
-                                        <p className="mt-1 text-sm text-gray-500">
-                                            Upload images for this specialty (optional)
-                                        </p>
-                                    </div>
+                                    <Card>
+                                        <CardHeader>
+                                            <CardTitle>Images</CardTitle>
+                                            <p className="text-sm text-gray-500">
+                                                Upload images for this specialty. Supported formats: JPG, JPEG, PNG, WEBP (max 1MB each)
+                                            </p>
+                                        </CardHeader>
+                                        <CardContent className="space-y-8">
+                                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                                <div>
+                                                    <InputLabel value="Web Banner (360x260px)" className="text-sm font-medium text-gray-700" />
+                                                    <Upload
+                                                        name="web_banner"
+                                                        beforeUpload={(file) => {
+                                                            // Clear previous validation error
+                                                            setImageValidationErrors(prev => ({
+                                                                ...prev,
+                                                                web_banner: ''
+                                                            }));
 
-                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                        <div>
-                                            <InputLabel for="web_banner" value="Web Banner (360x260px)" className="text-sm font-medium text-gray-700" />
-                                            {imagePreviews.web_banner && (
-                                                <div className="mt-2 mb-2">
-                                                    <img
-                                                        src={imagePreviews.web_banner}
-                                                        alt="Web Banner Preview"
-                                                        className="h-32 w-full object-cover rounded-md"
-                                                    />
-                                                </div>
-                                            )}
-                                            <input
-                                                id="web_banner"
-                                                type="file"
-                                                accept="image/*"
-                                                onChange={(e) => handleImageChange(e, 'web_banner')}
-                                                className="mt-1 block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-[#00895f] file:text-white hover:file:bg-[#007a52]"
-                                            />
-                                            {imageValidationErrors.web_banner && <InputError message={imageValidationErrors.web_banner} className="mt-2" />}
-                                        </div>
+                                                            // Validate file type
+                                                            const isValidType = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp'].includes(file.type);
+                                                            if (!isValidType) {
+                                                                const errorMessage = 'Only JPG, JPEG, PNG, or WEBP files are allowed.';
+                                                                setImageValidationErrors(prev => ({
+                                                                    ...prev,
+                                                                    web_banner: errorMessage
+                                                                }));
+                                                                return Upload.LIST_IGNORE;
+                                                            }
 
-                                        <div>
-                                            <InputLabel for="app_banner" value="App Banner (451x260px)" className="text-sm font-medium text-gray-700" />
-                                            {imagePreviews.app_banner && (
-                                                <div className="mt-2 mb-2">
-                                                    <img
-                                                        src={imagePreviews.app_banner}
-                                                        alt="App Banner Preview"
-                                                        className="h-32 w-full object-cover rounded-md"
-                                                    />
-                                                </div>
-                                            )}
-                                            <input
-                                                id="app_banner"
-                                                type="file"
-                                                accept="image/*"
-                                                onChange={(e) => handleImageChange(e, 'app_banner')}
-                                                className="mt-1 block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-[#00895f] file:text-white hover:file:bg-[#007a52]"
-                                            />
-                                            {imageValidationErrors.app_banner && <InputError message={imageValidationErrors.app_banner} className="mt-2" />}
-                                        </div>
-                                    </div>
+                                                            // Validate file size (1MB max)
+                                                            const isLt1M = file.size / 1024 / 1024 < 1;
+                                                            if (!isLt1M) {
+                                                                const errorMessage = 'File size must be less than 1MB.';
+                                                                setImageValidationErrors(prev => ({
+                                                                    ...prev,
+                                                                    web_banner: errorMessage
+                                                                }));
+                                                                return Upload.LIST_IGNORE;
+                                                            }
 
-                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                        <div>
-                                            <InputLabel for="icon_banner" value="Icon Banner (350x490px)" className="text-sm font-medium text-gray-700" />
-                                            {imagePreviews.icon_banner && (
-                                                <div className="mt-2 mb-2">
-                                                    <img
-                                                        src={imagePreviews.icon_banner}
-                                                        alt="Icon Banner Preview"
-                                                        className="h-32 w-full object-cover rounded-md"
-                                                    />
-                                                </div>
-                                            )}
-                                            <input
-                                                id="icon_banner"
-                                                type="file"
-                                                accept="image/*"
-                                                onChange={(e) => handleImageChange(e, 'icon_banner')}
-                                                className="mt-1 block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-[#00895f] file:text-white hover:file:bg-[#007a52]"
-                                            />
-                                            {imageValidationErrors.icon_banner && <InputError message={imageValidationErrors.icon_banner} className="mt-2" />}
-                                        </div>
+                                                            // Validate dimensions (360x260)
+                                                            validateImageDimensions(file, 360, 260)
+                                                                .then(() => {
+                                                                    // Update form data
+                                                                    setData('web_banner', file);
+                                                                    setData('web_banner_name', file.name);
 
-                                        <div>
-                                            <InputLabel for="banner_img" value="App Banner Image (451x260px)" className="text-sm font-medium text-gray-700" />
-                                            {imagePreviews.banner_img && (
-                                                <div className="mt-2 mb-2">
-                                                    <img
-                                                        src={imagePreviews.banner_img}
-                                                        alt="Banner Image Preview"
-                                                        className="h-32 w-full object-cover rounded-md"
-                                                    />
+                                                                    // Create preview
+                                                                    const reader = new FileReader();
+                                                                    reader.onload = (event) => {
+                                                                        setImagePreviews(prev => ({
+                                                                            ...prev,
+                                                                            web_banner: event.target.result
+                                                                        }));
+                                                                    };
+                                                                    reader.readAsDataURL(file);
+                                                                })
+                                                                .catch(error => {
+                                                                    setImageValidationErrors(prev => ({
+                                                                        ...prev,
+                                                                        web_banner: error
+                                                                    }));
+                                                                    return Upload.LIST_IGNORE;
+                                                                });
+
+                                                            return false; // Prevent automatic upload
+                                                        }}
+                                                        onRemove={() => {
+                                                            setData('web_banner', null);
+                                                            setData('web_banner_name', '');
+                                                            setImagePreviews(prev => ({
+                                                                ...prev,
+                                                                web_banner: null
+                                                            }));
+                                                            // Clear validation error
+                                                            setImageValidationErrors(prev => ({
+                                                                ...prev,
+                                                                web_banner: ''
+                                                            }));
+                                                        }}
+                                                        fileList={imagePreviews.web_banner ? [{
+                                                            uid: '-1',
+                                                            name: data.web_banner_name || specialty?.thumbnail_img,
+                                                            status: 'done',
+                                                            url: imagePreviews.web_banner,
+                                                        }] : []}
+                                                        listType="picture"
+                                                        maxCount={1}
+                                                        className="mt-2"
+                                                    >
+                                                        {!imagePreviews.web_banner ? (
+                                                            <UploadCard 
+                                                                title="Upload Web Banner" 
+                                                                description="Supported formats: JPG, JPEG, PNG, WEBP (max 1MB each) | Dimensions: 360x260px" 
+                                                            />
+                                                        ) : null}
+                                                    </Upload>
+                                                    {imageValidationErrors.web_banner && <InputError message={imageValidationErrors.web_banner} className="mt-2" />}
+
                                                 </div>
-                                            )}
-                                            <input
-                                                id="banner_img"
-                                                type="file"
-                                                accept="image/*"
-                                                onChange={(e) => handleImageChange(e, 'banner_img')}
-                                                className="mt-1 block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-[#00895f] file:text-white hover:file:bg-[#007a52]"
-                                            />
-                                            {imageValidationErrors.banner_img && <InputError message={imageValidationErrors.banner_img} className="mt-2" />}
-                                        </div>
-                                    </div>
+
+                                                <div>
+                                                    <InputLabel value="App Banner (451x260px)" className="text-sm font-medium text-gray-700" />
+                                                    <Upload
+                                                        name="app_banner"
+                                                        beforeUpload={(file) => {
+                                                            // Clear previous validation error
+                                                            setImageValidationErrors(prev => ({
+                                                                ...prev,
+                                                                app_banner: ''
+                                                            }));
+
+                                                            // Validate file type
+                                                            const isValidType = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp'].includes(file.type);
+                                                            if (!isValidType) {
+                                                                const errorMessage = 'Only JPG, JPEG, PNG, or WEBP files are allowed.';
+                                                                setImageValidationErrors(prev => ({
+                                                                    ...prev,
+                                                                    app_banner: errorMessage
+                                                                }));
+                                                                return Upload.LIST_IGNORE;
+                                                            }
+
+                                                            // Validate file size (1MB max)
+                                                            const isLt1M = file.size / 1024 / 1024 < 1;
+                                                            if (!isLt1M) {
+                                                                const errorMessage = 'File size must be less than 1MB.';
+                                                                setImageValidationErrors(prev => ({
+                                                                    ...prev,
+                                                                    app_banner: errorMessage
+                                                                }));
+                                                                return Upload.LIST_IGNORE;
+                                                            }
+
+                                                            // Validate dimensions (451x260)
+                                                            validateImageDimensions(file, 451, 260)
+                                                                .then(() => {
+                                                                    // Update form data
+                                                                    setData('app_banner', file);
+                                                                    setData('app_banner_name', file.name);
+
+                                                                    // Create preview
+                                                                    const reader = new FileReader();
+                                                                    reader.onload = (event) => {
+                                                                        setImagePreviews(prev => ({
+                                                                            ...prev,
+                                                                            app_banner: event.target.result
+                                                                        }));
+                                                                    };
+                                                                    reader.readAsDataURL(file);
+                                                                })
+                                                                .catch(error => {
+                                                                    setImageValidationErrors(prev => ({
+                                                                        ...prev,
+                                                                        app_banner: error
+                                                                    }));
+                                                                    return Upload.LIST_IGNORE;
+                                                                });
+
+                                                            return false; // Prevent automatic upload
+                                                        }}
+                                                        onRemove={() => {
+                                                            setData('app_banner', null);
+                                                            setData('app_banner_name', '');
+                                                            setImagePreviews(prev => ({
+                                                                ...prev,
+                                                                app_banner: null
+                                                            }));
+                                                            // Clear validation error
+                                                            setImageValidationErrors(prev => ({
+                                                                ...prev,
+                                                                app_banner: ''
+                                                            }));
+                                                        }}
+                                                        fileList={imagePreviews.app_banner ? [{
+                                                            uid: '-1',
+                                                            name: data.app_banner_name || specialty?.mobileThumb,
+                                                            status: 'done',
+                                                            url: imagePreviews.app_banner,
+                                                        }] : []}
+                                                        listType="picture"
+                                                        maxCount={1}
+                                                        className="mt-2"
+                                                    >
+                                                        {!imagePreviews.app_banner ? (
+                                                            <UploadCard 
+                                                                title="Upload App Banner" 
+                                                                description="Supported formats: JPG, JPEG, PNG, WEBP (max 1MB each) | Dimensions: 451x260px" 
+                                                            />
+                                                        ) : null}
+                                                    </Upload>
+                                                    {imageValidationErrors.app_banner && <InputError message={imageValidationErrors.app_banner} className="mt-2" />}
+
+                                                </div>
+                                            </div>
+
+                                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                                <div>
+                                                    <InputLabel value="Icon Banner (350x490px)" className="text-sm font-medium text-gray-700" />
+                                                    <Upload
+                                                        name="icon_banner"
+                                                        beforeUpload={(file) => {
+                                                            // Clear previous validation error
+                                                            setImageValidationErrors(prev => ({
+                                                                ...prev,
+                                                                icon_banner: ''
+                                                            }));
+
+                                                            // Validate file type
+                                                            const isValidType = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp'].includes(file.type);
+                                                            if (!isValidType) {
+                                                                const errorMessage = 'Only JPG, JPEG, PNG, or WEBP files are allowed.';
+                                                                setImageValidationErrors(prev => ({
+                                                                    ...prev,
+                                                                    icon_banner: errorMessage
+                                                                }));
+                                                                return Upload.LIST_IGNORE;
+                                                            }
+
+                                                            // Validate file size (1MB max)
+                                                            const isLt1M = file.size / 1024 / 1024 < 1;
+                                                            if (!isLt1M) {
+                                                                const errorMessage = 'File size must be less than 1MB.';
+                                                                setImageValidationErrors(prev => ({
+                                                                    ...prev,
+                                                                    icon_banner: errorMessage
+                                                                }));
+                                                                return Upload.LIST_IGNORE;
+                                                            }
+
+                                                            // Validate dimensions (350x490)
+                                                            validateImageDimensions(file, 350, 490)
+                                                                .then(() => {
+                                                                    // Update form data
+                                                                    setData('icon_banner', file);
+                                                                    setData('icon_banner_name', file.name);
+
+                                                                    // Create preview
+                                                                    const reader = new FileReader();
+                                                                    reader.onload = (event) => {
+                                                                        setImagePreviews(prev => ({
+                                                                            ...prev,
+                                                                            icon_banner: event.target.result
+                                                                        }));
+                                                                    };
+                                                                    reader.readAsDataURL(file);
+                                                                })
+                                                                .catch(error => {
+                                                                    setImageValidationErrors(prev => ({
+                                                                        ...prev,
+                                                                        icon_banner: error
+                                                                    }));
+                                                                    return Upload.LIST_IGNORE;
+                                                                });
+
+                                                            return false; // Prevent automatic upload
+                                                        }}
+                                                        onRemove={() => {
+                                                            setData('icon_banner', null);
+                                                            setData('icon_banner_name', '');
+                                                            setImagePreviews(prev => ({
+                                                                ...prev,
+                                                                icon_banner: null
+                                                            }));
+                                                            // Clear validation error
+                                                            setImageValidationErrors(prev => ({
+                                                                ...prev,
+                                                                icon_banner: ''
+                                                            }));
+                                                        }}
+                                                        fileList={imagePreviews.icon_banner ? [{
+                                                            uid: '-1',
+                                                            name: data.icon_banner_name || specialty?.featured_img,
+                                                            status: 'done',
+                                                            url: imagePreviews.icon_banner,
+                                                        }] : []}
+                                                        listType="picture"
+                                                        maxCount={1}
+                                                        className="mt-2"
+                                                    >
+                                                        {!imagePreviews.icon_banner ? (
+                                                            <UploadCard 
+                                                                title="Upload Icon Banner" 
+                                                                description="Supported formats: JPG, JPEG, PNG, WEBP (max 1MB each) | Dimensions: 350x490px" 
+                                                            />
+                                                        ) : null}
+                                                    </Upload>
+                                                    {imageValidationErrors.icon_banner && <InputError message={imageValidationErrors.icon_banner} className="mt-2" />}
+
+                                                </div>
+
+                                                <div>
+                                                    <InputLabel value="Banner Image (451x260px)" className="text-sm font-medium text-gray-700" />
+                                                    <Upload
+                                                        name="banner_img"
+                                                        beforeUpload={(file) => {
+                                                            // Clear previous validation error
+                                                            setImageValidationErrors(prev => ({
+                                                                ...prev,
+                                                                banner_img: ''
+                                                            }));
+
+                                                            // Validate file type
+                                                            const isValidType = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp'].includes(file.type);
+                                                            if (!isValidType) {
+                                                                const errorMessage = 'Only JPG, JPEG, PNG, or WEBP files are allowed.';
+                                                                setImageValidationErrors(prev => ({
+                                                                    ...prev,
+                                                                    banner_img: errorMessage
+                                                                }));
+                                                                return Upload.LIST_IGNORE;
+                                                            }
+
+                                                            // Validate file size (1MB max)
+                                                            const isLt1M = file.size / 1024 / 1024 < 1;
+                                                            if (!isLt1M) {
+                                                                const errorMessage = 'File size must be less than 1MB.';
+                                                                setImageValidationErrors(prev => ({
+                                                                    ...prev,
+                                                                    banner_img: errorMessage
+                                                                }));
+                                                                return Upload.LIST_IGNORE;
+                                                            }
+
+                                                            // Validate dimensions (451x260)
+                                                            validateImageDimensions(file, 451, 260)
+                                                                .then(() => {
+                                                                    // Update form data
+                                                                    setData('banner_img', file);
+                                                                    setData('banner_img_name', file.name);
+
+                                                                    // Create preview
+                                                                    const reader = new FileReader();
+                                                                    reader.onload = (event) => {
+                                                                        setImagePreviews(prev => ({
+                                                                            ...prev,
+                                                                            banner_img: event.target.result
+                                                                        }));
+                                                                    };
+                                                                    reader.readAsDataURL(file);
+                                                                })
+                                                                .catch(error => {
+                                                                    setImageValidationErrors(prev => ({
+                                                                        ...prev,
+                                                                        banner_img: error
+                                                                    }));
+                                                                    return Upload.LIST_IGNORE;
+                                                                });
+
+                                                            return false; // Prevent automatic upload
+                                                        }}
+                                                        onRemove={() => {
+                                                            setData('banner_img', null);
+                                                            setData('banner_img_name', '');
+                                                            setImagePreviews(prev => ({
+                                                                ...prev,
+                                                                banner_img: null
+                                                            }));
+                                                            // Clear validation error
+                                                            setImageValidationErrors(prev => ({
+                                                                ...prev,
+                                                                banner_img: ''
+                                                            }));
+                                                        }}
+                                                        fileList={imagePreviews.banner_img ? [{
+                                                            uid: '-1',
+                                                            name: data.banner_img_name || specialty?.banner_img,
+                                                            status: 'done',
+                                                            url: imagePreviews.banner_img,
+                                                        }] : []}
+                                                        listType="picture"
+                                                        maxCount={1}
+                                                        className="mt-2"
+                                                    >
+                                                        {!imagePreviews.banner_img ? (
+                                                            <UploadCard 
+                                                                title="Upload Banner Image" 
+                                                                description="Supported formats: JPG, JPEG, PNG, WEBP (max 1MB each) | Dimensions: 451x260px" 
+                                                            />
+                                                        ) : null}
+                                                    </Upload>
+                                                    {imageValidationErrors.banner_img && <InputError message={imageValidationErrors.banner_img} className="mt-2" />}
+
+                                                </div>
+                                            </div>
+                                        </CardContent>
+                                    </Card>
 
                                     {/* SEO Section */}
-                                    <div className="border-t border-gray-200 pt-6">
-                                        <h3 className="text-lg font-medium text-gray-900">SEO Information</h3>
-                                        <p className="mt-1 text-sm text-gray-500">
-                                            Optimize this specialty for search engines
-                                        </p>
-                                    </div>
+                                    <Card>
+                                        <CardHeader>
+                                            <CardTitle>SEO Information</CardTitle>
+                                            <p className="text-sm text-gray-500">
+                                                Optimize this specialty for search engines
+                                            </p>
+                                        </CardHeader>
+                                        <CardContent className="space-y-6">
+                                            <div>
+                                                <InputLabel for="meta_title" value="Meta Title" className="text-sm font-medium text-gray-700" />
+                                                <Input
+                                                    id="meta_title"
+                                                    type="text"
+                                                    placeholder="Enter meta title"
+                                                    value={data.meta_title}
+                                                    onChange={(e) => setData('meta_title', e.target.value)}
+                                                    className="w-full py-1.5 mt-1 text-sm"
+                                                />
+                                            </div>
 
-                                    <div className="space-y-6">
-                                        <div>
-                                            <InputLabel for="meta_title" value="Meta Title" className="text-sm font-medium text-gray-700" />
-                                            <Input
-                                                id="meta_title"
-                                                type="text"
-                                                placeholder="Enter meta title"
-                                                value={data.meta_title}
-                                                onChange={(e) => setData('meta_title', e.target.value)}
-                                                className="w-full py-1.5 mt-1 text-sm"
-                                            />
-                                        </div>
+                                            <div>
+                                                <InputLabel for="meta_desc" value="Meta Description" className="text-sm font-medium text-gray-700" />
+                                                <textarea
+                                                    id="meta_desc"
+                                                    placeholder="Enter meta description"
+                                                    value={data.meta_desc}
+                                                    onChange={(e) => setData('meta_desc', e.target.value)}
+                                                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-[#00895f] focus:ring-[#00895f] sm:text-sm"
+                                                    rows="3"
+                                                />
+                                            </div>
 
-                                        <div>
-                                            <InputLabel for="meta_desc" value="Meta Description" className="text-sm font-medium text-gray-700" />
-                                            <textarea
-                                                id="meta_desc"
-                                                placeholder="Enter meta description"
-                                                value={data.meta_desc}
-                                                onChange={(e) => setData('meta_desc', e.target.value)}
-                                                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-[#00895f] focus:ring-[#00895f] sm:text-sm"
-                                                rows="3"
-                                            />
-                                        </div>
-
-                                        <div>
-                                            <InputLabel for="meta_key" value="Meta Keywords" className="text-sm font-medium text-gray-700" />
-                                            <Input
-                                                id="meta_key"
-                                                type="text"
-                                                placeholder="Enter meta keywords"
-                                                value={data.meta_key}
-                                                onChange={(e) => setData('meta_key', e.target.value)}
-                                                className="w-full py-1.5 mt-1 text-sm"
-                                            />
-                                        </div>
-                                    </div>
-
+                                            <div>
+                                                <InputLabel for="meta_key" value="Meta Keywords" className="text-sm font-medium text-gray-700" />
+                                                <Input
+                                                    id="meta_key"
+                                                    type="text"
+                                                    placeholder="Enter meta keywords"
+                                                    value={data.meta_key}
+                                                    onChange={(e) => setData('meta_key', e.target.value)}
+                                                    className="w-full py-1.5 mt-1 text-sm"
+                                                />
+                                            </div>
+                                        </CardContent>
+                                    </Card>
 
                                     {Object.keys(errors).length > 0 && (
                                         <div className="mb-6">
@@ -620,7 +796,6 @@ export default function SpecialtyForm({ specialty, parentSpecialties }) {
                                             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor" class="size-4">
                                                 <path stroke-linecap="round" stroke-linejoin="round" d="M17.25 8.25 21 12m0 0-3.75 3.75M21 12H3" />
                                             </svg>
-
                                         </PrimaryButton>
                                     </div>
                                 </form>

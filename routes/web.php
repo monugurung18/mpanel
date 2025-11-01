@@ -60,6 +60,7 @@ Route::middleware('auth')->group(function () {
     
     // Specialty Management Routes
     Route::resource('specialties', SpecialtyController::class);
+    Route::post('/update-specialty/{id}', [SpecialtyController::class, 'updateSpecialty'])->name('specialties.updates');
 });
 
 require __DIR__.'/auth.php';
