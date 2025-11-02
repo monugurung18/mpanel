@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\EpisodeController;
 use App\Http\Controllers\SeminarController;
 use App\Http\Controllers\PostController;
@@ -8,6 +9,8 @@ use App\Http\Controllers\MarketingCampaignController;
 use App\Http\Controllers\CommonController;
 use App\Http\Controllers\TagController;
 use App\Http\Controllers\SpecialtyController; // Added SpecialtyController
+use App\Http\Controllers\ConferenceController; // Added ConferenceController
+use App\Http\Controllers\SurveyController; // Added SurveyController
 use Illuminate\Foundation\Application;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
@@ -21,9 +24,9 @@ Route::get('/', function () {
     ]);
 });
 
-Route::get('/dashboard', function () {
-    return Inertia::render('Dashboard');
-})->middleware(['auth', 'verified'])->name('dashboard');
+Route::get('/dashboard', [DashboardController::class, 'index'])
+    ->middleware(['auth', 'verified'])
+    ->name('dashboard');
 
 Route::middleware('auth')->group(function () {
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
@@ -61,6 +64,12 @@ Route::middleware('auth')->group(function () {
     // Specialty Management Routes
     Route::resource('specialties', SpecialtyController::class);
     Route::post('/update-specialty/{id}', [SpecialtyController::class, 'updateSpecialty'])->name('specialties.updates');
+    
+    // Conference Management Routes
+    Route::resource('conferences', ConferenceController::class);
+    
+    // Survey Management Routes
+    Route::resource('surveys', SurveyController::class);
 });
 
 require __DIR__.'/auth.php';

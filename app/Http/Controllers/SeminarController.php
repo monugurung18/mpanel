@@ -4,8 +4,10 @@ namespace App\Http\Controllers;
 
 use App\Models\Seminar;
 use App\Models\SponsorPage;
+use App\Models\FrontendUser;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Inertia\Inertia;
@@ -149,6 +151,80 @@ class SeminarController extends Controller
         if ($request->hasFile('s_image2')) {
             $validated['s_image2'] = $this->handleImageUpload($request->file('s_image2'), 'app_square');
         }
+        
+        // Handle ads banner upload (multiple files) for new seminars
+        if ($request->hasFile('ads_banner')) {
+            $adsBannerUrls = [];
+            
+            // Handle new file uploads
+            $adsBannerFiles = $request->file('ads_banner');
+            if (!is_array($adsBannerFiles)) {
+                $adsBannerFiles = [$adsBannerFiles];
+            }
+            
+            foreach ($adsBannerFiles as $file) {
+                if ($file && $file->isValid()) {
+                    // Generate filename
+                    $fileName = time() . '-ads-banner-' . str_replace(' ', '-', $file->getClientOriginalName());
+                    $fileExt = strtolower($file->getClientOriginalExtension());
+                    
+                    // Define destination path
+                    $destinationPath = public_path('../../uploads/webcast-banners');
+                    
+                    // Create directory if it doesn't exist
+                    if (!File::exists($destinationPath)) {
+                        File::makeDirectory($destinationPath, 0755, true);
+                    }
+                    
+                    // Move uploaded file
+                    $file->move($destinationPath, $fileName);
+                    
+                    // Convert to WebP if needed
+                    $webpFileName = pathinfo($fileName, PATHINFO_FILENAME) . '.webp';
+                    $webpPath = $destinationPath . '/' . $webpFileName;
+                    
+                    if (in_array($fileExt, ['jpeg', 'jpg', 'png'])) {
+                        try {
+                            $img = null;
+                            if ($fileExt === 'jpeg' || $fileExt === 'jpg') {
+                                $img = imagecreatefromjpeg($destinationPath . '/' . $fileName);
+                            } elseif ($fileExt === 'png') {
+                                $img = imagecreatefrompng($destinationPath . '/' . $fileName);
+                            }
+                            
+                            if ($img !== false && $img !== null) {
+                                imagepalettetotruecolor($img);
+                                imagealphablending($img, true);
+                                imagesavealpha($img, true);
+                                imagewebp($img, $webpPath, 100);
+                                imagedestroy($img);
+                                
+                                // Add WebP URL to the list
+                                $adsBannerUrls[] = 'https://www.medtalks.in/uploads/webcast-banners/' . $webpFileName;
+                            } else {
+                                // If conversion fails, use original file
+                                $adsBannerUrls[] = 'https://www.medtalks.in/uploads/webcast-banners/' . $fileName;
+                            }
+                        } catch (\Exception $e) {
+                            \Log::error('Image conversion failed: ' . $e->getMessage());
+                            // If conversion fails, use original file
+                            $adsBannerUrls[] = 'https://www.medtalks.in/uploads/webcast-banners/' . $fileName;
+                        }
+                    } else {
+                        // For non-image files, use original file
+                        $adsBannerUrls[] = 'https://www.medtalks.in/uploads/webcast-banners/' . $fileName;
+                    }
+                }
+            }
+            
+            // Update the html_json with ads_banner data
+            $htmlJsonData = [];
+            if (isset($validated['html_json'])) {
+                $htmlJsonData = json_decode($validated['html_json'], true);
+            }
+            $htmlJsonData['ads_banner'] = implode(',', $adsBannerUrls);
+            $validated['html_json'] = json_encode($htmlJsonData);
+        }
 
         Seminar::create($validated);
 
@@ -227,15 +303,119 @@ class SeminarController extends Controller
                 'left_text' => isset($htmlJsonData['left_text']['text']) ? $htmlJsonData['left_text']['text'] : '',
                 'theme_color' => isset($htmlJsonData['theme_color']) ? $htmlJsonData['theme_color'] : '#5d9cec',
                 'allowed_by' => isset($htmlJsonData['allowed_by']) ? $htmlJsonData['allowed_by'] : 'email',
-                'moderators' => isset($htmlJsonData['moderators']) ? $htmlJsonData['moderators'] : [],
-                'panelists' => isset($htmlJsonData['panelists']) ? $htmlJsonData['panelists'] : [],
-                'speakers' => isset($htmlJsonData['speakers']) ? $htmlJsonData['speakers'] : [],
-                'chief_guests' => isset($htmlJsonData['chief_guests']) ? $htmlJsonData['chief_guests'] : [],
+                // Process participants data in the required JSON structure format
+                'moderators' => $this->processParticipantsData($htmlJsonData, 'moderators'),
+                'panelists' => $this->processParticipantsData($htmlJsonData, 'panelists'),
+                'speakers' => $this->processParticipantsData($htmlJsonData, 'speakers'),
+                'chief_guests' => $this->processParticipantsData($htmlJsonData, 'chief_guests'),
+                'invite_banner' => isset($htmlJsonData['invite_banner']) && is_array($htmlJsonData['invite_banner']) ? ($htmlJsonData['invite_banner']['url'] ?? '') : (is_string($htmlJsonData['invite_banner']) ? $htmlJsonData['invite_banner'] : ''),
+                'timezone_banner' => isset($htmlJsonData['timezone_banner']) && is_array($htmlJsonData['timezone_banner']) ? ($htmlJsonData['timezone_banner']['url'] ?? '') : (is_string($htmlJsonData['timezone_banner']) ? $htmlJsonData['timezone_banner'] : ''),
+                'responsive_invite_banner' => isset($htmlJsonData['responsive_invite_banner']) && is_array($htmlJsonData['responsive_invite_banner']) ? ($htmlJsonData['responsive_invite_banner']['url'] ?? '') : (is_string($htmlJsonData['responsive_invite_banner']) ? $htmlJsonData['responsive_invite_banner'] : ''),
+                'responsive_timezone_banner' => isset($htmlJsonData['responsive_timezone_banner']) && is_array($htmlJsonData['responsive_timezone_banner']) ? ($htmlJsonData['responsive_timezone_banner']['url'] ?? '') : (is_string($htmlJsonData['responsive_timezone_banner']) ? $htmlJsonData['responsive_timezone_banner'] : ''),
+                'certificate' => isset($htmlJsonData['certificate']) && is_array($htmlJsonData['certificate']) ? ($htmlJsonData['certificate']['url'] ?? '') : (is_string($htmlJsonData['certificate']) ? $htmlJsonData['certificate'] : ''),
+                'video_banner' => isset($htmlJsonData['video_banner']) && is_array($htmlJsonData['video_banner']) ? ($htmlJsonData['video_banner']['url'] ?? '') : (is_string($htmlJsonData['video_banner']) ? $htmlJsonData['video_banner'] : ''),
+                'strip_banner' => isset($htmlJsonData['strip_banner']) && is_array($htmlJsonData['strip_banner']) ? ($htmlJsonData['strip_banner']['url'] ?? '') : (is_string($htmlJsonData['strip_banner']) ? $htmlJsonData['strip_banner'] : ''), 
+                'ads_banner' => isset($htmlJsonData['ads_banner']) ? $htmlJsonData['ads_banner'] : '', 
+
             ],
             'sponsorPages' => $this->getSponsorPages(),
             'specialities' => $this->getSpecialities(),
             'educationPartners' => $this->getEducationPartners(),
         ]);
+    }
+
+    /**
+     * Process participants data in the required JSON structure format
+     */
+    private function processParticipantsData($htmlJsonData, $participantType)
+    {
+        // Check if the participant data exists in the expected structure
+        if (isset($htmlJsonData[$participantType]) && is_array($htmlJsonData[$participantType])) {
+            // If it's in the new structure with a list key, return that
+            if (isset($htmlJsonData[$participantType][$participantType . '_list']) && 
+                is_array($htmlJsonData[$participantType][$participantType . '_list'])) {
+                return $htmlJsonData[$participantType][$participantType . '_list'];
+            }
+            // If it's an array directly, return it
+            elseif (is_array($htmlJsonData[$participantType])) {
+                return $htmlJsonData[$participantType];
+            }
+        }
+        
+        // Return empty array as default
+        return [];
+    }
+
+    /**
+     * Convert participants data to the required JSON structure format for saving
+     */
+    private function convertParticipantsToStructure($participants)
+    {
+        if (!is_array($participants)) {
+            return [];
+        }
+        
+        // If already in the correct structure, return as is
+        if (isset($participants[0]) && is_array($participants[0]) && 
+            isset($participants[0]['user_id']) && isset($participants[0]['user_name'])) {
+            return $participants;
+        }
+        
+        // If it's just an array of IDs, convert to the required structure
+        return array_map(function($participant) {
+            if (is_string($participant) || is_numeric($participant)) {
+                return [
+                    'user_id' => (string)$participant,
+                    'user_name' => 'Speaker ' . $participant,
+                    'user_img' => '',
+                    'elevatorPitch' => ''
+                ];
+            } elseif (is_array($participant)) {
+                return [
+                    'user_id' => $participant['user_id'] ?? '',
+                    'user_name' => $participant['user_name'] ?? 'Unknown Speaker',
+                    'user_img' => $participant['user_img'] ?? '',
+                    'elevatorPitch' => $participant['elevatorPitch'] ?? ''
+                ];
+            }
+            return [
+                'user_id' => '',
+                'user_name' => 'Unknown Speaker',
+                'user_img' => '',
+                'elevatorPitch' => ''
+            ];
+        }, $participants);
+    }
+
+    /**
+     * Get participant data from FrontendUser model
+     */
+    private function getParticipantData($userIds)
+    {
+        if (empty($userIds)) {
+            return [];
+        }
+        
+        // Convert to array if it's a string
+        if (!is_array($userIds)) {
+            $userIds = explode(',', $userIds);
+        }
+        
+        // Get participant data from FrontendUser model
+        $participants = FrontendUser::whereIn('user_id', $userIds)
+            ->select('user_id', 'user_FullName', 'title', 'user_img', 'elivatorPitch')
+            ->get()
+            ->map(function ($user) {
+                return [
+                    'user_id' => $user->user_id,
+                    'user_name' => trim($user->title . ' ' . $user->user_FullName),
+                    'user_img' => $user->user_img ? 'https://www.medtalks.in/user_pic_150/' . $user->user_img : '',
+                    'elevatorPitch' => $user->elivatorPitch ?? ''
+                ];
+            })
+            ->toArray();
+            
+        return $participants;
     }
 
     /**
@@ -290,6 +470,13 @@ class SeminarController extends Controller
             'image' => 'nullable|image|mimes:jpeg,jpg,png,gif,webp|max:1024|dimensions:width=700,height=393',
             's_image1' => 'nullable|image|mimes:jpeg,jpg,png,gif,webp|max:1024|dimensions:width=640,height=360',
             's_image2' => 'nullable|image|mimes:jpeg,jpg,png,gif,webp|max:1024|dimensions:width=400,height=400',
+            'ads_banner' => 'nullable|array',
+            'ads_banner.*' => 'nullable|image|mimes:jpeg,jpg,png,gif,webp|max:1024',
+            // Participants
+            'moderators' => 'nullable|array',
+            'panelists' => 'nullable|array',
+            'speakers' => 'nullable|array',
+            'chief_guests' => 'nullable|array',
         ], [
             'image.dimensions' => 'Featured image dimensions must be exactly 700 x 393 pixels.',
             's_image1.dimensions' => 'App banner dimensions must be exactly 640 x 360 pixels.',
@@ -313,6 +500,9 @@ class SeminarController extends Controller
             $validated['education_partners'] = json_encode($validated['education_partners']);
         }
 
+        // Get the seminar being updated
+        $seminar = Seminar::find($request->seminar_id);
+        
         // Handle featured image upload
         if ($request->hasFile('image')) {
             if ($seminar->video_image) {
@@ -337,7 +527,134 @@ class SeminarController extends Controller
             $validated['s_image2'] = $this->handleImageUpload($request->file('s_image2'), 'app_square');
         }
         
-        $seminar = Seminar::find($request->seminar_id);
+        // Initialize htmlJsonData from the seminar's html_json field
+        $htmlJsonData = [];
+        if ($seminar->html_json) {
+            $htmlJsonData = json_decode($seminar->html_json, true) ?: [];
+        }
+        
+        // Handle ads banner upload (multiple files)
+        if ($request->hasFile('ads_banner')) {
+            $adsBannerUrls = [];
+            
+            // Handle existing ads_banner URLs from the database
+            $existingAdsBanner = isset($htmlJsonData['ads_banner']) ? $htmlJsonData['ads_banner'] : '';
+            if (!empty($existingAdsBanner)) {
+                $adsBannerUrls = explode(',', $existingAdsBanner);
+            }
+            
+            // Handle new file uploads
+            $adsBannerFiles = $request->file('ads_banner');
+            if (!is_array($adsBannerFiles)) {
+                $adsBannerFiles = [$adsBannerFiles];
+            }
+            
+            foreach ($adsBannerFiles as $file) {
+                if ($file && $file->isValid()) {
+                    // Generate filename
+                    $fileName = time() . '-ads-banner-' . str_replace(' ', '-', $file->getClientOriginalName());
+                    $fileExt = strtolower($file->getClientOriginalExtension());
+                    
+                    // Define destination path
+                    $destinationPath = public_path('../../uploads/webcast-banners');
+                    
+                    // Create directory if it doesn't exist
+                    if (!File::exists($destinationPath)) {
+                        File::makeDirectory($destinationPath, 0755, true);
+                    }
+                    
+                    // Move uploaded file
+                    $file->move($destinationPath, $fileName);
+                    
+                    // Convert to WebP if needed
+                    $webpFileName = pathinfo($fileName, PATHINFO_FILENAME) . '.webp';
+                    $webpPath = $destinationPath . '/' . $webpFileName;
+                    
+                    if (in_array($fileExt, ['jpeg', 'jpg', 'png'])) {
+                        try {
+                            $img = null;
+                            if ($fileExt === 'jpeg' || $fileExt === 'jpg') {
+                                $img = imagecreatefromjpeg($destinationPath . '/' . $fileName);
+                            } elseif ($fileExt === 'png') {
+                                $img = imagecreatefrompng($destinationPath . '/' . $fileName);
+                            }
+                            
+                            if ($img !== false && $img !== null) {
+                                imagepalettetotruecolor($img);
+                                imagealphablending($img, true);
+                                imagesavealpha($img, true);
+                                imagewebp($img, $webpPath, 100);
+                                imagedestroy($img);
+                                
+                                // Add WebP URL to the list
+                                $adsBannerUrls[] = 'https://www.medtalks.in/uploads/webcast-banners/' . $webpFileName;
+                            } else {
+                                // If conversion fails, use original file
+                                $adsBannerUrls[] = 'https://www.medtalks.in/uploads/webcast-banners/' . $fileName;
+                            }
+                        } catch (\Exception $e) {
+                            \Log::error('Image conversion failed: ' . $e->getMessage());
+                            // If conversion fails, use original file
+                            $adsBannerUrls[] = 'https://www.medtalks.in/uploads/webcast-banners/' . $fileName;
+                        }
+                    } else {
+                        // For non-image files, use original file
+                        $adsBannerUrls[] = 'https://www.medtalks.in/uploads/webcast-banners/' . $fileName;
+                    }
+                }
+            }
+            
+            // Update the ads_banner field in html_json
+            $htmlJsonData['ads_banner'] = implode(',', $adsBannerUrls);
+        } 
+        
+        // Process participants data to ensure proper structure
+        if (isset($request->moderators) && is_array($request->moderators)) {
+            $moderatorIds = array_filter($request->moderators, function($id) {
+                return !empty($id);
+            });
+            if (!empty($moderatorIds)) {
+                $htmlJsonData['moderators'] = [
+                    'moderators_list' => $this->getParticipantData($moderatorIds)
+                ];
+            }
+        }
+        
+        if (isset($request->panelists) && is_array($request->panelists)) {
+            $panelistIds = array_filter($request->panelists, function($id) {
+                return !empty($id);
+            });
+            if (!empty($panelistIds)) {
+                $htmlJsonData['panelists'] = [
+                    'panelists_list' => $this->getParticipantData($panelistIds)
+                ];
+            }
+        }
+        
+        if (isset($request->speakers) && is_array($request->speakers)) {
+            $speakerIds = array_filter($request->speakers, function($id) {
+                return !empty($id);
+            });
+            if (!empty($speakerIds)) {
+                $htmlJsonData['speakers'] = [
+                    'speakers_list' => $this->getParticipantData($speakerIds)
+                ];
+            }
+        }
+        
+        if (isset($request->chief_guests) && is_array($request->chief_guests)) {
+            $chiefGuestIds = array_filter($request->chief_guests, function($id) {
+                return !empty($id);
+            });
+            if (!empty($chiefGuestIds)) {
+                $htmlJsonData['chief_guests'] = [
+                    'chief_guests_list' => $this->getParticipantData($chiefGuestIds)
+                ];
+            }
+        }
+        
+        // Update html_json with the modified data
+        $validated['html_json'] = json_encode($htmlJsonData);
         
         // Use the seminar instance from route model binding directly
         $seminar->update($validated);
@@ -483,7 +800,7 @@ class SeminarController extends Controller
             ->where('userType', 'instructor')
             ->where('userStatus', 'active')
             ->select(
-                'user_no as value',
+                'user_id as value',
                 DB::raw('CONCAT(COALESCE(title, ""), " ", user_FullName) as label'),
                 'specialities as specialty',
                 'user_email',

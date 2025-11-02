@@ -131,6 +131,14 @@ class Post extends Model
     }
 
     /**
+     * Get comments for this post
+     */
+    public function comments()
+    {
+        return $this->hasMany(Comment::class, 'postID', 'articleID');
+    }
+
+    /**
      * Get status badge color
      */
     public function getStatusColorAttribute()

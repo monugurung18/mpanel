@@ -138,6 +138,16 @@ export default function AuthenticatedLayout({ children }) {
                                                 </div>
                                                 <i className="fa fa-arrow-right text-gray-400 group-hover:text-[#00895f] group-hover:translate-x-1 transition-all duration-200"></i>
                                             </Link>
+                                            <Link
+                                                href={route('conferences.index')}
+                                                className="group flex items-center px-5 py-4 text-sm transition-all duration-200 hover:bg-gradient-to-r hover:from-blue-50 hover:to-cyan-50 relative overflow-hidden"
+                                            >
+                                                <div className="flex-1">
+                                                    <div className="font-semibold text-gray-900 group-hover:text-[#00895f] transition-colors duration-200">Conferences</div>
+                                                    <div className="text-xs text-gray-500 group-hover:text-gray-600">Manage conferences and events</div>
+                                                </div>
+                                                <i className="fa fa-arrow-right text-gray-400 group-hover:text-[#00895f] group-hover:translate-x-1 transition-all duration-200"></i>
+                                            </Link>
                                         </div>
                                     </div>
                                 </div>
