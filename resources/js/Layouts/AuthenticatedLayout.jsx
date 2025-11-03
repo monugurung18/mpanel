@@ -13,20 +13,132 @@ export default function AuthenticatedLayout({ children }) {
     const [openSubmenu, setOpenSubmenu] = useState(null);
     const [openDesktopDropdown, setOpenDesktopDropdown] = useState(null);
 
+    // Regular menu items
+    const regularMenuItems = [
+        {
+            id: 'dashboard',
+            title: 'Dashboard',
+            href: route('dashboard'),
+            active: route().current('dashboard'),
+            icon: ''
+        }
+    ];
 
+    // Dropdown menu items
+    const dropdownMenuItems = [
+        {
+            id: 'content',
+            title: 'Content',
+            icon: '',
+            active: route().current('episodes.*'),
+            children: [
+                {
+                    id: 'episodes',
+                    title: 'Manage Episodes',
+                    href: route('episodes.index'),
+                    description: ''
+                },
+                {
+                    id: 'seminars',
+                    title: 'Manage Seminar',
+                    href: route('seminars.index'),
+                    description: ''
+                },
+                {
+                    id: 'posts',
+                    title: 'Manage Posts',
+                    href: route('posts.index'),
+                    description: ''
+                },
+                {
+                    id: 'tags',
+                    title: 'Manage Tags',
+                    href: route('tags.index'),
+                    description: ''
+                },
+                {
+                    id: 'specialties',
+                    title: 'Manage Specialties',
+                    href: route('specialties.index'),
+                    description: ''
+                },
+                {
+                    id: 'conferences',
+                    title: 'Manage Conferences',
+                    href: route('conferences.index'),
+                    description: ''
+                }
+            ]
+        },
+        {
+            id: 'business',
+            title: 'Business',
+            icon: '',
+            active: route().current('business.*'),
+            children: [
+                {
+                    id: 'business-pages',
+                    title: 'Business Pages',
+                    href: route('business-pages.index'),
+                    description: ''
+                },
+                {
+                    id: 'marketing-campaigns',
+                    title: 'Marketing Campaigns',
+                    href: route('marketing-campaign.index'),
+                    description: ''
+                }
+            ]
+        }
+        ,
+        {
+            id: 'analytics',
+            title: 'Analytics',
+            icon: '',
+            active: route().current('analytics.*'),
+            children: [
+                {
+                    id: 'page-views',
+                    title: 'Page Views',
+                    href: route('page-views.index'),
+                    description: ''
+                },
+            ]
+        },
+        {
+            id: 'users',
+            title: 'Users',
+            icon: '',
+            active: route().current('users.*'),
+            children: [
+                {
+                    id: 'manage-users',
+                    title: 'Manage Instructors',
+                    href: route('users.index'),
+                    description: 'Manage instructor profiles'
+                },
+                {
+                    id: 'certificate-verification',
+                    title: 'Certificate Verification',
+                    href: route('certificate-verification.index'),
+                    description: 'Verify user medical certificates'
+                }
+            ]
+        }
+    ];
 
     const toggleSubmenu = (itemId) => {
         setOpenSubmenu(openSubmenu === itemId ? null : itemId);
     };
 
     return (
-        <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-emerald-50/30">           
+        <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-emerald-50/30">
 
             {/* Enhanced Navigation Bar with Glass Effect */}
             <nav className="border-b border-gray-200 bg-white/95 backdrop-blur-md shadow-sm sticky top-0 z-40">
                 <div className="mx-auto max-w-7xl">
                     <div className="py-2 flex items-center justify-between px-6">
-                         {/* Enhanced Logo with Glow Effect */}
+                        {/* Enhanced Logo with Glow Effect */}
                         <div className="flex items-center">
                             <Link
                                 href={route('dashboard')}
@@ -40,169 +152,79 @@ export default function AuthenticatedLayout({ children }) {
                                     />
                                     <div className="absolute inset-0 bg-[#00895f]/20 rounded-lg blur-lg opacity-0 group-hover:opacity-100 transition-opacity duration-300 -z-10"></div>
                                 </div>
-                               
+
                             </Link>
                         </div>
                         {/* Desktop Navigation */}
                         <div className="hidden md:flex md:space-x-2">
-                            {/* Dashboard */}
-                            <NavLink
-                                href={route('dashboard')}
-                                active={route().current('dashboard')}
-                                className="group relative flex items-center"
-                            >
-                                <div className={`flex items-center space-x-2 px-4 py-4 text-base transition-all duration-200 text-sm ${route().current('dashboard')
+                            {/* Regular Menu Items */}
+                            {regularMenuItems.map((item) => (
+                                <NavLink
+                                    key={item.id}
+                                    href={item.href}
+                                    active={item.active}
+                                    className="group relative flex items-center"
+                                >
+                                    <div className={`flex items-center space-x-2 px-4 py-4 text-base transition-all duration-200 text-sm ${item.active
                                         ? 'text-[#00895f] font-medium'
                                         : 'text-gray-700 hover:text-[#00895f] font-normal'
-                                    }`}>
-                                    <span>Dashboard</span>
-                                </div>
-                            </NavLink>
+                                        }`}>
+                                    
+                                        <span>{item.title}</span>
+                                    </div>
+                                </NavLink>
+                            ))}
 
-                            {/* Content Menu - Dropdown with Seminar, Episodes, FAQ */}
-                            <div
-                                className="group relative"
-                                onMouseEnter={() => setOpenDesktopDropdown('content')}
-                                onMouseLeave={() => setOpenDesktopDropdown(null)}
-                            >
-                                <button className={`flex items-center space-x-2 px-4 py-4 text-base transition-all duration-200 h-full text-sm ${route().current('episodes.*')
+                            {/* Dropdown Menu Items */}
+                            {dropdownMenuItems.map((dropdown) => (
+                                <div
+                                    key={dropdown.id}
+                                    className="group relative"
+                                    onMouseEnter={() => setOpenDesktopDropdown(dropdown.id)}
+                                    onMouseLeave={() => setOpenDesktopDropdown(null)}
+                                >
+                                    <button className={`flex items-center space-x-2 px-4 py-4 text-base transition-all duration-200 h-full text-sm ${dropdown.active
                                         ? 'text-[#00895f] font-medium'
                                         : 'text-gray-700 hover:text-[#00895f] font-normal'
-                                    }`}>
-                                  
-                                    <span>Content</span>
-                                    <i className={`fa fa-angle-down text-xs transition-transform duration-200 ${openDesktopDropdown === 'content' ? 'rotate-180' : ''
-                                        }`}></i>
-                                </button>
+                                        }`}>
 
-                                {/* Enhanced Content Dropdown Menu */}
-                                <div className={`absolute left-0 z-50 mt-2 w-72 origin-top-left transition-all duration-300 ${openDesktopDropdown === 'content'
+                                        {dropdown.icon && <i className={dropdown.icon}></i>}
+                                        <span>{dropdown.title}</span>
+                                        <i className={`fa fa-angle-down text-xs transition-transform duration-200 ${openDesktopDropdown === dropdown.id ? 'rotate-180' : ''
+                                            }`}></i>
+                                    </button>
+
+                                    {/* Enhanced Dropdown Menu */}
+                                    <div className={`absolute left-0 z-50 mt-2 w-72 origin-top-left transition-all duration-300 ${openDesktopDropdown === dropdown.id
                                         ? 'opacity-100 translate-y-0 visible scale-100'
                                         : 'opacity-0 -translate-y-4 invisible scale-95'
-                                    }`}>
-                                    <div className="overflow-hidden rounded-xl bg-white/95 backdrop-blur-md shadow-2xl ring-1 ring-gray-200 border border-gray-100">
-                                      
-                                        <div className="py-1">
-                                            <Link
-                                                href={route('episodes.index')}
-                                                className="group flex items-center px-5 py-4 text-sm transition-all duration-200 hover:bg-gradient-to-r hover:from-emerald-50 hover:to-teal-50 border-b border-gray-100 relative overflow-hidden"
-                                            >
-                                                
-                                                <div className="flex-1">
-                                                    <div className="font-semibold text-gray-900 group-hover:text-[#00895f] transition-colors duration-200">Episodes</div>
-                                                    <div className="text-xs text-gray-500 group-hover:text-gray-600">Manage video episodes and content</div>
-                                                </div>
-                                                <i className="fa fa-arrow-right text-gray-400 group-hover:text-[#00895f] group-hover:translate-x-1 transition-all duration-200"></i>
-                                            </Link>
-                                            <Link
-                                                href={route('seminars.index')}
-                                                className="group flex items-center px-5 py-4 text-sm transition-all duration-200 hover:bg-gradient-to-r hover:from-purple-50 hover:to-indigo-50 relative overflow-hidden"
-                                            >
+                                        }`}>
+                                        <div className="overflow-hidden rounded-xl bg-white/95 backdrop-blur-md shadow-2xl ring-1 ring-gray-200 border border-gray-100">
 
-                                                <div className="flex-1">
-                                                    <div className="font-semibold text-gray-900 group-hover:text-[#00895f] transition-colors duration-200">Seminar</div>
-                                                    <div className="text-xs text-gray-500 group-hover:text-gray-600">Educational seminars and workshops</div>
-                                                </div>
-                                                <i className="fa fa-arrow-right text-gray-400 group-hover:text-[#00895f] group-hover:translate-x-1 transition-all duration-200"></i>
-                                            </Link>
-                                            <Link
-                                                href={route('posts.index')}
-                                                className="group flex items-center px-5 py-4 text-sm transition-all duration-200 hover:bg-gradient-to-r hover:from-orange-50 hover:to-amber-50 border-b border-gray-100 relative overflow-hidden"
-                                            >
+                                            <div className="py-1">
+                                                {dropdown.children.map((child, index) => (
+                                                    <Link
+                                                        key={child.id}
+                                                        href={child.href}
+                                                        className={`group flex items-center px-5 py-4 text-sm transition-all duration-200 hover:bg-gradient-to-r ${index % 3 === 0 ? 'hover:from-emerald-50 hover:to-teal-50' : index % 3 === 1 ? 'hover:from-purple-50 hover:to-indigo-50' : index % 3 === 2 ? 'hover:from-orange-50 hover:to-amber-50' : 'hover:from-blue-50 hover:to-cyan-50'} ${index !== dropdown.children.length - 1 ? 'border-b border-gray-100' : ''} relative overflow-hidden`}
+                                                    >
 
-                                                <div className="flex-1">
-                                                    <div className="font-semibold text-gray-900 group-hover:text-[#00895f] transition-colors duration-200">Posts</div>
-                                                    <div className="text-xs text-gray-500 group-hover:text-gray-600">Manage articles, FAQs and blog posts</div>
-                                                </div>
-                                                <i className="fa fa-arrow-right text-gray-400 group-hover:text-[#00895f] group-hover:translate-x-1 transition-all duration-200"></i>
-                                            </Link>
-                                            <Link
-                                                href={route('tags.index')}
-                                                className="group flex items-center px-5 py-4 text-sm transition-all duration-200 hover:bg-gradient-to-r hover:from-blue-50 hover:to-cyan-50 relative overflow-hidden"
-                                            >
+                                                        <div className="flex-1">
+                                                            <div className="font-medium text-gray-900  hover:text-[#00895f] transition-colors duration-200">{child.title}</div>
 
-                                                <div className="flex-1">
-                                                    <div className="font-semibold text-gray-900 group-hover:text-[#00895f] transition-colors duration-200">Tags</div>
-                                                    <div className="text-xs text-gray-500 group-hover:text-gray-600">Manage content tags</div>
-                                                </div>
-                                                <i className="fa fa-arrow-right text-gray-400 group-hover:text-[#00895f] group-hover:translate-x-1 transition-all duration-200"></i>
-                                            </Link>
-                                            <Link
-                                                href={route('specialties.index')}
-                                                className="group flex items-center px-5 py-4 text-sm transition-all duration-200 hover:bg-gradient-to-r hover:from-blue-50 hover:to-cyan-50 relative overflow-hidden"
-                                            >
+                                                        </div>
+                                                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="size-4">
+  <path strokeLinecap="round" strokeLinejoin="round" d="m8.25 4.5 7.5 7.5-7.5 7.5" />
+</svg>
 
-                                                <div className="flex-1">
-                                                    <div className="font-semibold text-gray-900 group-hover:text-[#00895f] transition-colors duration-200">Specialties</div>
-                                                    <div className="text-xs text-gray-500 group-hover:text-gray-600">Manage content specialties</div>
-                                                </div>
-                                                <i className="fa fa-arrow-right text-gray-400 group-hover:text-[#00895f] group-hover:translate-x-1 transition-all duration-200"></i>
-                                            </Link>
-                                            <Link
-                                                href={route('conferences.index')}
-                                                className="group flex items-center px-5 py-4 text-sm transition-all duration-200 hover:bg-gradient-to-r hover:from-blue-50 hover:to-cyan-50 relative overflow-hidden"
-                                            >
-                                                <div className="flex-1">
-                                                    <div className="font-semibold text-gray-900 group-hover:text-[#00895f] transition-colors duration-200">Conferences</div>
-                                                    <div className="text-xs text-gray-500 group-hover:text-gray-600">Manage conferences and events</div>
-                                                </div>
-                                                <i className="fa fa-arrow-right text-gray-400 group-hover:text-[#00895f] group-hover:translate-x-1 transition-all duration-200"></i>
-                                            </Link>
+
+                                                    </Link>
+                                                ))}
+                                            </div>
                                         </div>
                                     </div>
                                 </div>
-                            </div>
-                            {/* Business Menu - Dropdown with Business, Business, Business */}
-                            <div
-                                className="group relative"
-                                onMouseEnter={() => setOpenDesktopDropdown('business')}
-                                onMouseLeave={() => setOpenDesktopDropdown(null)}
-                            >
-                                <button className={`flex items-center space-x-2 px-4 py-4 text-base transition-all duration-200 h-full text-sm ${route().current('episodes.*')
-                                        ? 'text-[#00895f] font-medium'
-                                        : 'text-gray-700 hover:text-[#00895f] font-normal'
-                                    }`}>
-                                  
-                                    <span>Business</span>
-                                    <i className={`fa fa-angle-down text-xs transition-transform duration-200 ${openDesktopDropdown === 'business' ? 'rotate-180' : ''
-                                        }`}></i>
-                                </button>
-
-                                {/* Enhanced Content Dropdown Menu */}
-                                <div className={`absolute left-0 z-50 mt-2 w-72 origin-top-left transition-all duration-300 ${openDesktopDropdown === 'business'
-                                        ? 'opacity-100 translate-y-0 visible scale-100'
-                                        : 'opacity-0 -translate-y-4 invisible scale-95'
-                                    }`}>
-                                    <div className="overflow-hidden rounded-xl bg-white/95 backdrop-blur-md shadow-2xl ring-1 ring-gray-200 border border-gray-100">
-                                      
-                                        <div className="py-1">
-                                            <Link
-                                                href={route('episodes.index')}
-                                                className="group flex items-center px-5 py-4 text-sm transition-all duration-200 hover:bg-gradient-to-r hover:from-emerald-50 hover:to-teal-50 border-b border-gray-100 relative overflow-hidden"
-                                            >
-                                                
-                                                <div className="flex-1">
-                                                    <div className="font-semibold text-gray-900 group-hover:text-[#00895f] transition-colors duration-200">Business Pages</div>
-                                                    <div className="text-xs text-gray-500 group-hover:text-gray-600">Manage business pages</div>
-                                                </div>
-                                                <i className="fa fa-arrow-right text-gray-400 group-hover:text-[#00895f] group-hover:translate-x-1 transition-all duration-200"></i>
-                                            </Link>
-                                            <Link
-                                                href={route('marketing-campaign.index')}
-                                                className="group flex items-center px-5 py-4 text-sm transition-all duration-200 hover:bg-gradient-to-r hover:from-purple-50 hover:to-indigo-50 border-b border-gray-100 relative overflow-hidden"
-                                            >
-
-                                                <div className="flex-1">
-                                                    <div className="font-semibold text-gray-900 group-hover:text-[#00895f] transition-colors duration-200">Marketing Campaigns</div>
-                                                    <div className="text-xs text-gray-500 group-hover:text-gray-600">Manage marketing campaigns</div>
-                                                </div>
-                                                <i className="fa fa-arrow-right text-gray-400 group-hover:text-[#00895f] group-hover:translate-x-1 transition-all duration-200"></i>
-                                            </Link>
-                                            
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
+                            ))}
 
                             {/* Dynamic Menu Items with Enhanced Dropdowns */}
                             {menuItems && menuItems.map((item) => (
@@ -214,8 +236,8 @@ export default function AuthenticatedLayout({ children }) {
                                         onMouseLeave={() => setOpenDesktopDropdown(null)}
                                     >
                                         <button className={`flex items-center space-x-2 px-4 py-4 text-sm transition-all duration-200 ${openDesktopDropdown === item.id
-                                                ? 'text-[#00895f] font-medium'
-                                                : 'text-gray-700 hover:text-[#00895f] font-normal'
+                                            ? 'text-[#00895f] font-medium'
+                                            : 'text-gray-700 hover:text-[#00895f] font-normal'
                                             }`}>
                                             {item.icon && <i className={`${item.icon} text-base`}></i>}
                                             <span>{item.title}</span>
@@ -225,8 +247,8 @@ export default function AuthenticatedLayout({ children }) {
 
                                         {/* Enhanced Dropdown Menu */}
                                         <div className={`absolute left-0 z-50 mt-0 w-56 origin-top-left transition-all duration-200 ${openDesktopDropdown === item.id
-                                                ? 'opacity-100 translate-y-0 visible'
-                                                : 'opacity-0 -translate-y-2 invisible'
+                                            ? 'opacity-100 translate-y-0 visible'
+                                            : 'opacity-0 -translate-y-2 invisible'
                                             }`}>
                                             <div className="overflow-hidden rounded-lg bg-white shadow-xl ring-1 ring-gray-200">
                                                 <div className="bg-gradient-to-r from-emerald-50 to-teal-50 px-4 py-2 border-b border-gray-200">
@@ -292,7 +314,7 @@ export default function AuthenticatedLayout({ children }) {
                             <Dropdown>
                                 <Dropdown.Trigger>
                                     <button className="flex items-center space-x-3 rounded-xl  px-4 py-2 transition-all duration-200 hover:shadow-lg hover:bg-white group">
-                                        
+
                                         <div className="hidden text-left lg:block">
                                             <div className="text-sm font-semibold text-gray-800 group-hover:text-[#00895f] transition-colors duration-200">{user.name}</div>
                                             <div className="text-xs text-gray-500">Administrator</div>
@@ -359,70 +381,51 @@ export default function AuthenticatedLayout({ children }) {
                 {/* Enhanced Mobile Navigation with Animation */}
                 <div className={`${showingNavigationDropdown ? 'block animate-fadeIn' : 'hidden'} bg-gradient-to-b from-gray-50 to-white md:hidden border-t border-gray-200`}>
                     <div className="space-y-2 px-4 pb-4 pt-4">
-                        <ResponsiveNavLink
-                            href={route('dashboard')}
-                            active={route().current('dashboard')}
-                            className="flex items-center space-x-3 rounded-lg"
-                        >
-                            <i className="fa fa-dashboard text-base"></i>
-                            <span>Dashboard</span>
-                        </ResponsiveNavLink>
-
-                        {/* Content Menu - Mobile Dropdown */}
-                        <div className="overflow-hidden rounded-lg bg-white shadow-sm">
-                            <button
-                                onClick={() => toggleSubmenu('content')}
-                                className="flex w-full items-center justify-between px-4 py-3 text-left text-base font-medium text-gray-700 transition-colors hover:bg-emerald-50 hover:text-[#00895f]"
+                        {regularMenuItems.map((item) => (
+                            <ResponsiveNavLink
+                                key={item.id}
+                                href={item.href}
+                                active={item.active}
+                                className="flex items-center space-x-3 rounded-lg"
                             >
-                                <span className="flex items-center space-x-3">
-                                    <i className="fa fa-th-large text-base"></i>
-                                    <span>Content</span>
-                                </span>
-                                <i className={`fa fa-angle-${openSubmenu === 'content' ? 'up' : 'down'} text-sm transition-all duration-200 ${openSubmenu === 'content' ? 'text-[#00895f]' : ''
-                                    }`}></i>
-                            </button>
-                            {openSubmenu === 'content' && (
-                                <div className="border-t border-gray-200 bg-gradient-to-r from-emerald-50 to-teal-50">
-                                    <ResponsiveNavLink
-                                        href={route('episodes.index')}
-                                        className="flex items-center space-x-3 pl-12 border-b border-gray-100"
-                                    >
-                                        <div>
-                                            <div className="font-semibold text-sm text-gray-900">Episodes</div>
-                                            <div className="text-xs text-gray-600">Manage video episodes</div>
-                                        </div>
-                                    </ResponsiveNavLink>
-                                    <ResponsiveNavLink
-                                        href={route('seminars.index')}
-                                        className="flex items-center space-x-3 pl-12 border-b border-gray-100"
-                                    >
-                                        <div>
-                                            <div className="font-semibold text-sm text-gray-900">Seminar</div>
-                                            <div className="text-xs text-gray-600">Seminar management</div>
-                                        </div>
-                                    </ResponsiveNavLink>
-                                    <ResponsiveNavLink
-                                        href={route('posts.index')}
-                                        className="flex items-center space-x-3 pl-12 border-b border-gray-100"
-                                    >
-                                        <div>
-                                            <div className="font-semibold text-sm text-gray-900">Posts</div>
-                                            <div className="text-xs text-gray-600">Article management</div>
-                                        </div>
-                                    </ResponsiveNavLink>
-                                    <ResponsiveNavLink
-                                        href="#"
-                                        className="flex items-center space-x-3 pl-12"
-                                    >
-                                       
-                                        <div>
-                                            <div className="font-semibold text-sm text-gray-900">FAQ</div>
-                                            <div className="text-xs text-gray-600">Frequently asked questions</div>
-                                        </div>
-                                    </ResponsiveNavLink>
-                                </div>
-                            )}
-                        </div>
+                                {item.icon && <i className={item.icon}></i>}
+                                <span>{item.title}</span>
+                            </ResponsiveNavLink>
+                        ))}
+
+                        {/* Dropdown Menu Items - Mobile */}
+                        {dropdownMenuItems.map((dropdown) => (
+                            <div key={dropdown.id} className="overflow-hidden rounded-lg bg-white shadow-sm">
+                                <button
+                                    onClick={() => toggleSubmenu(dropdown.id)}
+                                    className="flex w-full items-center justify-between px-4 py-3 text-left text-base font-medium text-gray-700 transition-colors hover:bg-emerald-50 hover:text-[#00895f]"
+                                >
+                                    <span className="flex items-center space-x-3">
+                                        {dropdown.icon && <i className={dropdown.icon}></i>}
+                                        <span>{dropdown.title}</span>
+                                    </span>
+                                    <i className={`fa fa-angle-${openSubmenu === dropdown.id ? 'up' : 'down'} text-sm transition-all duration-200 ${openSubmenu === dropdown.id ? 'text-[#00895f]' : ''
+                                        }`}></i>
+                                </button>
+                                {openSubmenu === dropdown.id && (
+                                    <div className="border-t border-gray-200 bg-gradient-to-r from-emerald-50 to-teal-50">
+                                        {dropdown.children.map((child, index) => (
+                                            <ResponsiveNavLink
+                                                key={child.id}
+                                                href={child.href}
+                                                className={`flex items-center space-x-3 pl-12 ${index !== dropdown.children.length - 1 ? 'border-b border-gray-100' : ''
+                                                    }`}
+                                            >
+                                                <div>
+                                                    <div className="font-semibold text-sm text-gray-900">{child.title}</div>
+                                                 
+                                                </div>
+                                            </ResponsiveNavLink>
+                                        ))}
+                                    </div>
+                                )}
+                            </div>
+                        ))}
 
                         {/* Enhanced Mobile Menu Items */}
                         {menuItems && menuItems.map((item) => (

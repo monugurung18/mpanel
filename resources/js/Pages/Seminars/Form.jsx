@@ -572,7 +572,7 @@ export default function Form({ seminar, specialities }) {
                             </div>
 
                             {/* Step Wizard Navigation */}
-                            <div className="mb-6">
+                            <div className="mb-6 max-w-4xl mx-auto">
                                 <div className="flex items-center justify-between">
                                     {[1, 2, 3].map((step) => (
                                         <div key={step} className="flex flex-1 items-center">

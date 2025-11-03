@@ -42,7 +42,7 @@ export default forwardRef(function Input(
 
     const sizeClasses = {
         sm: ' py-1 text-sm',
-        md: 'py-1 text-sm',
+        md: 'py-1.5 text-sm',
         lg: 'py-2 text-sm',
     };
 

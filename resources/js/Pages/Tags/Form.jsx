@@ -9,7 +9,7 @@ import PrimaryButton from '@/Components/PrimaryButton';
 import InputError from '@/Components/InputError';
 import InputLabel from '@/Components/InputLabel';
 import { Select } from 'antd';
-
+import 'antd/dist/reset.css';
 
 export default function TagForm({ tag, specialities }) {
     const [tagError, setTagError] = useState('');
@@ -83,6 +83,12 @@ export default function TagForm({ tag, specialities }) {
         });
     };
 
+    // Format specialities for Ant Design Select
+    const formattedSpecialities = specialities.map(spec => ({
+        value: spec.value,
+        label: spec.label
+    }));
+
     return (
         <AuthenticatedLayout>
             <Head title={isEditing ? "Edit Tag" : "Create Tag"} />
@@ -147,13 +153,13 @@ export default function TagForm({ tag, specialities }) {
                                                 placeholder="Select speciality"
                                                 value={data.tagCategory1}
                                                 onChange={(value) => setData('tagCategory1', value)}
-                                                options={specialities}
-                                                icon="fa-th-large"
-                                                searchable
-                                                error={errors.tagCategory1}
-                                                className="w-full mt-1 rounded-lg h-[36px]"
+                                                options={formattedSpecialities}
+                                                showSearch
+                                                optionFilterProp="label"
+                                                allowClear
+                                                className="w-full mt-1"
                                             />
-                                            
+                                            {errors.tagCategory1 && <InputError message={errors.tagCategory1} className="mt-2" />}
                                         </div>
                                         
                                         <div>
@@ -163,12 +169,13 @@ export default function TagForm({ tag, specialities }) {
                                                 placeholder="Select speciality"
                                                 value={data.tagCategory2}
                                                 onChange={(value) => setData('tagCategory2', value)}
-                                                options={specialities}
-                                                icon="fa-th-large"
-                                                searchable
-                                                error={errors.episode_type}
-                                                className="w-full mt-1 rounded-lg h-[36px]"
-                                            />                              
+                                                options={formattedSpecialities}
+                                                showSearch
+                                                optionFilterProp="label"
+                                                allowClear
+                                                className="w-full mt-1"
+                                            />   
+                                            {errors.tagCategory2 && <InputError message={errors.tagCategory2} className="mt-2" />}                           
                                         </div>
                                         
                                         <div>
@@ -176,15 +183,15 @@ export default function TagForm({ tag, specialities }) {
                                             <Select
                                                 id="tagCategory3"
                                                 placeholder="Select speciality"
-                                                options={specialities}
                                                 value={data.tagCategory3}
                                                 onChange={(value) => setData('tagCategory3', value)}
-                                                icon="fa-th-large"
-                                                error={errors.tagCategory3}
-                                                searchable
-                                                clearable
-                                                className="w-full mt-1 rounded-lg h-[36px]"
+                                                options={formattedSpecialities}
+                                                showSearch
+                                                optionFilterProp="label"
+                                                allowClear
+                                                className="w-full mt-1"
                                             />
+                                            {errors.tagCategory3 && <InputError message={errors.tagCategory3} className="mt-2" />}
                                         </div>
                                     </div>
                                     
@@ -221,8 +228,10 @@ export default function TagForm({ tag, specialities }) {
                                             </Button>
                                         </Link>
                                         <PrimaryButton type="submit" disabled={processing}>
-                                            {isEditing ? 'Update Tag' : 'Create Tag'}
-                                            <i className="fa fa-arrow-right ml-2"></i>
+                                            Save
+                                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor" class="size-4">
+                                                <path stroke-linecap="round" stroke-linejoin="round" d="M17.25 8.25 21 12m0 0-3.75 3.75M21 12H3" />
+                                            </svg>
                                         </PrimaryButton>
                                     </div>
                                 </form>

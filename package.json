@@ -29,7 +29,10 @@
     },
     "dependencies": {
         "@ant-design/icons": "^6.1.0",
+        "@radix-ui/react-dialog": "^1.1.15",
+        "@radix-ui/react-select": "^2.2.6",
         "antd": "^5.27.6",
+        "intl-tel-input": "^25.12.4",
         "react-quill": "^2.0.0"
     }
 }
