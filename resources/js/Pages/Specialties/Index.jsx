@@ -157,7 +157,7 @@ export default function Index({ specialties }) {
                                         setSearchQuery(e.target.value);
                                         setCurrentPage(1);
                                     }}
-                                    className="pl-10 py-2"
+                                    className=" py-2"
                                 />
                             </div>
                         </div>

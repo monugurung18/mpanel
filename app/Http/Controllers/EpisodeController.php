@@ -3,36 +3,32 @@
 namespace App\Http\Controllers;
 
 use App\Models\Episode;
+use App\Models\Specialty;
 use App\Models\SponsorPage;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use Inertia\Inertia;
+use Illuminate\Support\Facades\DB;
 
 class EpisodeController extends Controller
 {
     /**
-     * Display a listing of episodes.
+     * Display a listing of the episodes.
      */
     public function index()
     {
-        $episodes = Episode::active()
+        $episodes = Episode::where('video_status', '!=', 'deleted')
             ->orderBy('date_time', 'desc')
-            ->get()
-            ->map(function ($episode) {
-                return [
-                    'id' => $episode->id,
-                    'title' => $episode->title,
-                    'desc' => $episode->desc,
-                    'date_time' => $episode->date_time, // Already a string in database
-                    'feature_image_banner' => $episode->feature_image_banner,
-                    'custom_url' => $episode->custom_url,
-                    'video_status' => $episode->video_status,
-                    'episode_type' => $episode->episode_type,
-                    'type_display' => $episode->type_display,
-                ];
-            });
+            ->paginate(10)
+            ->through(fn ($episode) => [
+                'id' => $episode->id,
+                'title' => $episode->title,
+                'episode_type' => $episode->episode_type,
+                'video_status' => $episode->video_status,
+                'date_time' => $episode->date_time,
+                'feature_image_banner' => $episode->feature_image_banner,
+            ]);
 
         return Inertia::render('Episodes/Index', [
             'episodes' => $episodes,
@@ -46,9 +42,7 @@ class EpisodeController extends Controller
     {
         return Inertia::render('Episodes/Form', [
             'episode' => null,
-            'sponsorPages' => 
-            
-            $this->getSponsorPages(),
+            'sponsorPages' => $this->getSponsorPages(),
             'specialities' => $this->getSpecialities(),
         ]);
     }
@@ -61,8 +55,8 @@ class EpisodeController extends Controller
         $validated = $request->validate([
             'title' => 'required|string|max:255',
             'custom_url' => 'required|string|unique:medtalks_tv,custom_url',
-            'desc' => 'required|string',
-            'video_url' => 'required|string',
+            'desc' => 'nullable|string',
+            'video_url' => 'nullable|string',
             'video_status' => 'required|in:live,schedule,archive,new',
             'videoSource' => 'required|in:youTube,faceBook,mp4,other',
             'date_time' => 'required|date',
@@ -81,7 +75,7 @@ class EpisodeController extends Controller
         $validated['custom_url'] = Str::lower($validated['custom_url']);
         $validated['created_by'] = auth()->user()->username ?? auth()->user()->display_name;
         $validated['created_ip'] = $request->ip();
-        $validated['episode_status'] = 'active';
+        $validated['modified_ip'] = $request->ip();
         
         // Convert arrays to comma-separated strings
         if (isset($validated['speakers_ids']) && is_array($validated['speakers_ids'])) {
@@ -144,7 +138,13 @@ class EpisodeController extends Controller
      * Update the specified episode in storage.
      */
     public function updateEpisode(Request $request, Episode $episode)
-    {
+    {        
+        // For updates, only require image validation if a new image is being uploaded
+        $imageRules = 'nullable';
+        if ($request->hasFile('image')) {
+            $imageRules = 'nullable|image|mimes:jpeg,jpg,png,gif,webp|max:1024|dimensions:width=733,height=370';
+        }
+
         $validated = $request->validate([
             'title' => 'required|string|max:255',
             'custom_url' => 'required|string',
@@ -159,12 +159,13 @@ class EpisodeController extends Controller
             'speciality_ids' => 'nullable|array',
             'question_required' => 'boolean',
             'login_required' => 'boolean',
-            'image' => 'nullable|image|mimes:jpeg,jpg,png,gif,webp|max:1024|dimensions:width=700,height=393',
+            'image' => $imageRules,
         ], [
-            'image.dimensions' => 'Image dimensions must be exactly 700 x 393 pixels.',
+            'image.dimensions' => 'Image dimensions must be exactly 733 x 370 pixels.',
             'image.max' => 'Image size must be less than 1MB.',
         ]);
 
+        $episode = Episode::findOrFail($episode->id);
         $validated['custom_url'] = Str::lower($validated['custom_url']);
         $validated['modified_by'] = auth()->user()->username ?? auth()->user()->display_name;
         $validated['modified_on'] = now()->format('Y-m-d H:i:s'); // Store as string
@@ -182,7 +183,7 @@ class EpisodeController extends Controller
             $validated['speciality_id'] = null;
         }
 
-        // Handle image upload
+        // Handle image upload only if a new image is provided
         if ($request->hasFile('image')) {
             // Delete old image if exists
             if ($episode->feature_image_banner) {
@@ -291,8 +292,7 @@ class EpisodeController extends Controller
     private function getSpecialities()
     {
         // Fetch specialities from user_specialty table
-        $specialities = DB::table('user_specialty')
-            ->where(['speciality_type'=> 'speciality','parentID'=> 0,'parentID2'=>0])
+        $specialities = Specialty::where(['speciality_type'=> 'speciality','parentID'=> 0,'parentID2'=>0])
             ->where('status', 'on')
 
             ->select('no as value', 'title as label')
@@ -315,8 +315,7 @@ class EpisodeController extends Controller
     public function getSpeakers()
     {
         // Fetch speakers from frontend_users table where userType='instructor'
-        $speakers = DB::table('frontend_users')
-            ->where('userType', 'instructor')
+        $speakers = FrontendUser::where('userType', 'instructor')
             ->where('userStatus', 'active')
             ->select(
                 'user_no as value',

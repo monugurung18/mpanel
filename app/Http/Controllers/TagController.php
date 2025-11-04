@@ -36,8 +36,7 @@ class TagController extends Controller
      */
     public function create()
     {
-        $specialities = DB::table('user_specialty')
-            ->where(['speciality_type' => 'speciality', 'parentID' => 0, 'parentID2' => 0])
+        $specialities = Specialty::where(['speciality_type' => 'speciality', 'parentID' => 0, 'parentID2' => 0])
             ->where('status', 'on')
             ->select('no as value', 'title as label')
             ->orderBy('title')
@@ -84,8 +83,7 @@ class TagController extends Controller
      */
     public function edit(Tag $tag)
     {
-        $specialities = DB::table('user_specialty')
-            ->where(['speciality_type' => 'speciality', 'parentID' => 0, 'parentID2' => 0])
+        $specialities = Specialty::where(['speciality_type' => 'speciality', 'parentID' => 0, 'parentID2' => 0])
             ->where('status', 'on')
             ->select('no as value', 'title as label')
             ->orderBy('title')

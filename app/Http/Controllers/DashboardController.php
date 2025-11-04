@@ -80,10 +80,10 @@ class DashboardController extends Controller
     {
         if ($interval == 'till date') {
             // Query to get all login count
-            return DB::table('user_login_history')->count('userID');
+            return UserLoginHistory::count('userID');
         } else {
             // Query to get login count for last X days/months
-            return DB::table('user_login_history')
+            return UserLoginHistory::whereRaw("date(timeStamp) between (DATE_FORMAT(CURRENT_DATE - INTERVAL $interval, '%y-%m-%d')) and CURRENT_DATE()")
                 ->whereRaw("date(timeStamp) between (DATE_FORMAT(CURRENT_DATE - INTERVAL $interval, '%y-%m-%d')) and CURRENT_DATE()")
                 ->count('userID');
         }
@@ -196,7 +196,7 @@ class DashboardController extends Controller
         $activities = [];
         
         // Recent user logins
-        $recentLogins = DB::table('user_login_history')
+        $recentLogins = UserLoginHistory::join('frontend_users', 'user_login_history.userID', '=', 'frontend_users.user_id')
             ->join('frontend_users', 'user_login_history.userID', '=', 'frontend_users.user_id')
             ->select('frontend_users.user_FullName', 'frontend_users.user_email', 'user_login_history.timeStamp')
             ->orderBy('user_login_history.timeStamp', 'DESC')

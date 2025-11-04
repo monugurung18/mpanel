@@ -33,7 +33,7 @@ Route::middleware('auth')->group(function () {
     
     // Episode Management Routes
     Route::resource('episodes', EpisodeController::class);
-    Route::post('/update-episode/{id}', [EpisodeController::class, 'updateEpisode'])->name('episodes.updates');
+    Route::post('/update-episode/{episode}', [EpisodeController::class, 'updateEpisode'])->name('episodes.updates');
     //
     Route::get('/api/speakers', [CommonController::class, 'GetSpeaker'])->name('api.speakers');
     
@@ -61,7 +61,7 @@ Route::middleware('auth')->group(function () {
     
     // Specialty Management Routes
     Route::resource('specialties', SpecialtyController::class);
-    Route::post('/update-specialty/{id}', [SpecialtyController::class, 'updateSpecialty'])->name('specialties.updates');
+    Route::post('/update-specialty/{id}', [SpecialtyController::class, 'updateSpecialty'])->name('specialities.updates');
     
     // Conference Management Routes
     Route::resource('conferences', ConferenceController::class);

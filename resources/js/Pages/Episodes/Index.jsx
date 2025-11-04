@@ -12,13 +12,10 @@ import 'antd/dist/reset.css';
 
 export default function Index({ episodes }) {
     const [loading, setLoading] = useState(false);
-    const [currentPage, setCurrentPage] = useState(1);
     const [searchQuery, setSearchQuery] = useState('');
     const [sortColumn, setSortColumn] = useState(null);
     const [sortDirection, setSortDirection] = useState('asc');
     const { baseImagePath } = usePage().props;
-
-    const pageSize = 25;
 
     const handleDelete = (id) => {
         setLoading(true);
@@ -44,14 +41,17 @@ export default function Index({ episodes }) {
         }
     };
 
+    // Get the actual data array from the paginated object
+    const episodesData = episodes.data || [];
+
     // Filter and sort data
     const filteredAndSortedEpisodes = useMemo(() => {
-        let filtered = episodes.filter((episode) => {
+        let filtered = episodesData.filter((episode) => {
             const searchLower = searchQuery.toLowerCase();
             return (
                 episode.title?.toLowerCase().includes(searchLower) ||
                 episode.desc?.toLowerCase().includes(searchLower) ||
-                episode.type_display?.toLowerCase().includes(searchLower)
+                episode.episode_type?.toLowerCase().includes(searchLower)
             );
         });
 
@@ -72,16 +72,7 @@ export default function Index({ episodes }) {
         }
 
         return filtered;
-    }, [episodes, searchQuery, sortColumn, sortDirection]);
-
-    // Pagination
-    const paginatedEpisodes = useMemo(() => {
-        const start = (currentPage - 1) * pageSize;
-        const end = start + pageSize;
-        return filteredAndSortedEpisodes.slice(start, end);
-    }, [filteredAndSortedEpisodes, currentPage, pageSize]);
-
-    const totalPages = Math.ceil(filteredAndSortedEpisodes.length / pageSize);
+    }, [episodesData, searchQuery, sortColumn, sortDirection]);
 
     // Status badge component
     const StatusBadge = ({ status }) => {
@@ -153,7 +144,7 @@ export default function Index({ episodes }) {
                         {/* Search */}
                         <div className="px-6 flex justify-between items-center gap-4">
                             <div className="text-sm text-muted-foreground">
-                                Showing {((currentPage - 1) * pageSize) + 1} to {Math.min(currentPage * pageSize, filteredAndSortedEpisodes.length)} of {filteredAndSortedEpisodes.length} episodes
+                                Showing {episodes.from || 0} to {episodes.to || 0} of {episodes.total || 0} episodes
                             </div>
                             <div className="relative w-full max-w-md">
                                 <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
@@ -163,7 +154,6 @@ export default function Index({ episodes }) {
                                     value={searchQuery}
                                     onChange={(e) => {
                                         setSearchQuery(e.target.value);
-                                        setCurrentPage(1);
                                     }}
                                     className="pl-10 py-2"
                                 />
@@ -193,7 +183,7 @@ export default function Index({ episodes }) {
                                                     </div>
                                                 </TableCell>
                                             </TableRow>
-                                        ) : paginatedEpisodes.length === 0 ? (
+                                        ) : filteredAndSortedEpisodes.length === 0 ? (
                                             <TableRow>
                                                 <TableCell colSpan={7} className="h-64 text-center">
                                                     <div className="flex flex-col items-center justify-center">
@@ -221,7 +211,7 @@ export default function Index({ episodes }) {
                                                 </TableCell>
                                             </TableRow>
                                         ) : (
-                                            paginatedEpisodes.map((episode) => (
+                                            filteredAndSortedEpisodes.map((episode) => (
                                                 <TableRow
                                                     key={episode.id}
                                                     className="hover:bg-muted/30 transition-colors"
@@ -257,7 +247,7 @@ export default function Index({ episodes }) {
                                                         <StatusBadge status={episode.video_status} />
                                                     </TableCell>
                                                     <TableCell className="text-sm">
-                                                        {episode.type_display || 'Non-Sponsored'}
+                                                        {episode.episode_type || 'Non-Sponsored'}
                                                     </TableCell>
                                                     <TableCell>
                                                         <div className="flex items-center justify-center gap-2">
@@ -296,40 +286,40 @@ export default function Index({ episodes }) {
                             </div>
 
                             {/* Pagination */}
-                            {totalPages > 1 && (
+                            {episodes.last_page > 1 && (
                                 <div className="flex flex-col sm:flex-row items-center justify-between gap-4 border-t px-6 py-4">
                                     <div className="text-sm text-muted-foreground">
-                                        Showing {((currentPage - 1) * pageSize) + 1} to {Math.min(currentPage * pageSize, filteredAndSortedEpisodes.length)} of {filteredAndSortedEpisodes.length} episodes
+                                        Showing {episodes.from || 0} to {episodes.to || 0} of {episodes.total || 0} episodes
                                     </div>
                                     <div className="flex items-center gap-2">
                                         <Button
                                             variant="outline"
                                             size="sm"
-                                            onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
-                                            disabled={currentPage === 1}
+                                            onClick={() => router.visit(episodes.prev_page_url)}
+                                            disabled={!episodes.prev_page_url}
                                         >
                                             Previous
                                         </Button>
 
                                         <div className="flex items-center gap-1">
-                                            {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+                                            {Array.from({ length: Math.min(5, episodes.last_page) }, (_, i) => {
                                                 let pageNum;
-                                                if (totalPages <= 5) {
+                                                if (episodes.last_page <= 5) {
                                                     pageNum = i + 1;
-                                                } else if (currentPage <= 3) {
+                                                } else if (episodes.current_page <= 3) {
                                                     pageNum = i + 1;
-                                                } else if (currentPage >= totalPages - 2) {
-                                                    pageNum = totalPages - 4 + i;
+                                                } else if (episodes.current_page >= episodes.last_page - 2) {
+                                                    pageNum = episodes.last_page - 4 + i;
                                                 } else {
-                                                    pageNum = currentPage - 2 + i;
+                                                    pageNum = episodes.current_page - 2 + i;
                                                 }
 
                                                 return (
                                                     <Button
                                                         key={pageNum}
-                                                        variant={currentPage === pageNum ? "default" : "outline"}
+                                                        variant={episodes.current_page === pageNum ? "default" : "outline"}
                                                         size="sm"
-                                                        onClick={() => setCurrentPage(pageNum)}
+                                                        onClick={() => router.visit(`${window.location.pathname}?page=${pageNum}`)}
                                                         className="w-8 h-8 p-0"
                                                     >
                                                         {pageNum}
@@ -341,8 +331,8 @@ export default function Index({ episodes }) {
                                         <Button
                                             variant="outline"
                                             size="sm"
-                                            onClick={() => setCurrentPage(Math.min(totalPages, currentPage + 1))}
-                                            disabled={currentPage === totalPages}
+                                            onClick={() => router.visit(episodes.next_page_url)}
+                                            disabled={!episodes.next_page_url}
                                         >
                                             Next
                                         </Button>

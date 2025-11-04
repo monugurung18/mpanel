@@ -81,8 +81,8 @@ class PostController extends Controller
      */
     public function create()
     {
-        $specialities = DB::table('user_specialty')
-            ->select('no as value', 'title as label')
+        $specialities = Specialty::select('no as value', 'title as label')
+            ->where('status', 'on')
             ->orderBy('title')
             ->get()
             ->map(fn($spec) => ['value' => (string)$spec->value, 'label' => $spec->label])
@@ -238,9 +238,9 @@ class PostController extends Controller
      */
     public function edit(Post $post)
     {
-        $specialities = DB::table('user_specialty')
-            ->select('no as value', 'title as label')
-            ->orderBy('title')
+        $specialities = Specialty::select('no as value', 'title as label')
+            ->where('status', 'on')
+            ->orderBy('title')  
             ->get()
             ->map(fn($spec) => ['value' => (string)$spec->value, 'label' => $spec->label])
             ->toArray();
@@ -255,8 +255,7 @@ class PostController extends Controller
             ->toArray();
 
         // Fetch specialty titles for display
-        $specialtyTitles = DB::table('user_specialty')
-            ->pluck('title', 'no')
+        $specialtyTitles = Specialty::pluck('title', 'no')
             ->toArray();
 
         // Add specialty titles to the post object for display

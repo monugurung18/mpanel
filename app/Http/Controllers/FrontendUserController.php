@@ -110,8 +110,7 @@ class FrontendUserController extends Controller
         }
 
         // Get specialities for work history form
-        $specialities = DB::table('user_specialty')
-            ->where('status', 'on')
+        $specialities = Speciality::where('status', 'on')
             ->select('no', 'title')
             ->get();
 

@@ -7,6 +7,8 @@ use Illuminate\Support\Facades\Response;
 use App\Models\FrontendUser;
 use Illuminate\Support\Facades\DB;
 use App\Models\EducationPartner;
+use App\Models\Specialty;
+
 
 class CommonController extends Controller
 {
@@ -15,9 +17,7 @@ class CommonController extends Controller
      */
     public function GetSpeaker()
     {
-        $speakers = DB::table('frontend_users')
-            ->where('userType', 'instructor')
-            ->where('userStatus', 'active')
+        $speakers = FrontendUser::where('userStatus', 'active')
             ->select('user_no as value', 'user_FullName as label')
             ->orderBy('user_FullName')
             ->get()
@@ -35,8 +35,7 @@ class CommonController extends Controller
     public function getSpecialities()
     {
         
-       $specialities = DB::table('user_specialty')
-            ->where(['speciality_type'=> 'speciality','parentID'=> 0,'parentID2'=>0])
+       $specialities = Specialty::where(['speciality_type'=> 'speciality','parentID'=> 0,'parentID2'=>0])
             ->where('status', 'on')
             ->select('no as value', 'title as label')
             ->orderBy('title')

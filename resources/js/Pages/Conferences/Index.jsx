@@ -5,8 +5,9 @@ import { useState, useMemo } from 'react';
 import { Button } from '@/Components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/Components/ui/card';
 import Input from '@/Components/Input';
-import { Plus, Users, Pencil, Trash2, Search, Play, Calendar } from 'lucide-react';
+import { Plus, Users, Pencil, Trash2, Search, Play, Calendar, Edit } from 'lucide-react';
 import { Popconfirm } from 'antd';
+
 import 'antd/dist/reset.css';
 
 export default function Index({ conferences }) {
@@ -101,7 +102,7 @@ export default function Index({ conferences }) {
                                         setSearchQuery(e.target.value);
                                         setCurrentPage(1);
                                     }}
-                                    className="pl-10"
+                                    className=""
                                 />
                             </div>
                         </div>
@@ -200,9 +201,9 @@ export default function Index({ conferences }) {
                                                         <div className="flex items-center justify-center gap-2">
                                                             <Link
                                                                 href={route('conferences.edit', conference.id)}
-                                                                className="text-primary hover:text-primary/80"
+                                                                className="inline-flex items-center rounded-md bg-blue-50 px-2 py-2 text-blue-600 hover:bg-blue-100"
                                                             >
-                                                                <Pencil className="h-4 w-4" />
+                                                                <Edit className="h-4 w-4" />
                                                             </Link>
                                                             <Popconfirm
                                                                 title="Delete Conference"
@@ -212,9 +213,13 @@ export default function Index({ conferences }) {
                                                                 cancelText="No"
                                                                 placement="left"
                                                             >
-                                                                <button className="text-destructive hover:text-destructive/80">
+                                                                <Button
+                                                                    variant="outline"
+                                                                    size="sm"
+                                                                    className="inline-flex items-center rounded-md bg-red-50 px-2 py-1 text-red-600 hover:bg-red-100"
+                                                                >
                                                                     <Trash2 className="h-4 w-4" />
-                                                                </button>
+                                                                </Button>
                                                             </Popconfirm>
                                                         </div>
                                                     </TableCell>

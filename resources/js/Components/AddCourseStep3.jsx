@@ -3,6 +3,8 @@ import InputLabel from '@/Components/InputLabel';
 import Input from '@/Components/Input';
 import InputError from '@/Components/InputError';
 import Dropdown from '@/Components/Dropdown';
+import { Textarea } from '@/Components/ui/textarea';
+
 import UploadCard from '@/Components/UploadCard';
 import { Select, Switch } from 'antd';
 import 'antd/dist/reset.css';
@@ -13,7 +15,8 @@ export default function AddCourseStep3({
     setData, 
     errors, 
     speakersList, 
-    loadingSpeakers 
+    loadingSpeakers,
+    specialities
 }) {
     return (
         <div className="space-y-6">
@@ -208,8 +211,8 @@ export default function AddCourseStep3({
                                 placeholder="Select specialties"
                                 value={data.reg_specialty_options}
                                 onChange={(value) => setData('reg_specialty_options', value)}
-                                options={[]} // This will be passed as a prop
-                                className="ml-4 w-48"
+                                options={specialities || []}
+                                className="ml-4 w-full"
                                 showSearch
                             />
                         )}
@@ -325,26 +328,25 @@ export default function AddCourseStep3({
                 
                 <div>
                     <InputLabel htmlFor="note_text" value="Note Text" />
-                    <Input
+                    <Textarea
                         id="note_text"
-                        type="text"
                         value={data.note_text || ''}
                         onChange={(e) => setData('note_text', e.target.value)}
                         placeholder="Enter note text"
                         className="mt-1"
-                    />
+                    />      
                 </div>
                 
                 <div>
                     <InputLabel htmlFor="left_text" value="Left Text" />
-                    <Input
+                    <Textarea
                         id="left_text"
-                        type="text"
                         value={data.left_text || ''}
                         onChange={(e) => setData('left_text', e.target.value)}
                         placeholder="Enter left text"
                         className="mt-1"
-                    />
+                    />          
+                       
                 </div>
             </div>
 
@@ -357,22 +359,15 @@ export default function AddCourseStep3({
                     <div>
                         <InputLabel value="Invite Banner (700x393, Max 1MB)" />
                         <div className="mt-2">
-                            <input
-                                type="file"
-                                name="invite_banner"
-                                onChange={(e) => setData('invite_banner', e.target.files[0])}
-                                className="hidden"
+                            <UploadCard
                                 id="invite_banner"
+                                file={data.invite_banner}
+                                onFileChange={(file) => setData('invite_banner', file)}
+                                onFileRemove={() => setData('invite_banner', null)}
+                                accept=".jpg,.jpeg,.png,.gif,.webp"
+                                maxSize={1048576} // 1MB
+                                dimensions={{ width: 700, height: 393 }}
                             />
-                            <label 
-                                htmlFor="invite_banner"
-                                className="cursor-pointer"
-                            >
-                                <UploadCard 
-                                    title="Upload Invite Banner" 
-                                    description="Dimensions: 700x393px | Max Size: 1MB | Formats: JPG, JPEG, PNG, GIF, WEBP" 
-                                />
-                            </label>
                         </div>
                     </div>
 
@@ -380,22 +375,15 @@ export default function AddCourseStep3({
                     <div>
                         <InputLabel value="Responsive Invite Banner (700x393, Max 1MB)" />
                         <div className="mt-2">
-                            <input
-                                type="file"
-                                name="responsive_invite_banner"
-                                onChange={(e) => setData('responsive_invite_banner', e.target.files[0])}
-                                className="hidden"
+                            <UploadCard
                                 id="responsive_invite_banner"
+                                file={data.responsive_invite_banner}
+                                onFileChange={(file) => setData('responsive_invite_banner', file)}
+                                onFileRemove={() => setData('responsive_invite_banner', null)}
+                                accept=".jpg,.jpeg,.png,.gif,.webp"
+                                maxSize={1048576} // 1MB
+                                dimensions={{ width: 700, height: 393 }}
                             />
-                            <label 
-                                htmlFor="responsive_invite_banner"
-                                className="cursor-pointer"
-                            >
-                                <UploadCard 
-                                    title="Upload Responsive Invite Banner" 
-                                    description="Dimensions: 700x393px | Max Size: 1MB | Formats: JPG, JPEG, PNG, GIF, WEBP" 
-                                />
-                            </label>
                         </div>
                     </div>
 
@@ -403,22 +391,14 @@ export default function AddCourseStep3({
                     <div>
                         <InputLabel value="Timezone Banner (Max 1MB)" />
                         <div className="mt-2">
-                            <input
-                                type="file"
-                                name="timezone_banner"
-                                onChange={(e) => setData('timezone_banner', e.target.files[0])}
-                                className="hidden"
+                            <UploadCard
                                 id="timezone_banner"
+                                file={data.timezone_banner}
+                                onFileChange={(file) => setData('timezone_banner', file)}
+                                onFileRemove={() => setData('timezone_banner', null)}
+                                accept=".jpg,.jpeg,.png,.gif,.webp"
+                                maxSize={1048576} // 1MB
                             />
-                            <label 
-                                htmlFor="timezone_banner"
-                                className="cursor-pointer"
-                            >
-                                <UploadCard 
-                                    title="Upload Timezone Banner" 
-                                    description="Max Size: 1MB | Formats: JPG, JPEG, PNG, GIF, WEBP" 
-                                />
-                            </label>
                         </div>
                     </div>
 
@@ -426,22 +406,14 @@ export default function AddCourseStep3({
                     <div>
                         <InputLabel value="Responsive Timezone Banner (Max 1MB)" />
                         <div className="mt-2">
-                            <input
-                                type="file"
-                                name="responsive_timezone_banner"
-                                onChange={(e) => setData('responsive_timezone_banner', e.target.files[0])}
-                                className="hidden"
+                            <UploadCard
                                 id="responsive_timezone_banner"
+                                file={data.responsive_timezone_banner}
+                                onFileChange={(file) => setData('responsive_timezone_banner', file)}
+                                onFileRemove={() => setData('responsive_timezone_banner', null)}
+                                accept=".jpg,.jpeg,.png,.gif,.webp"
+                                maxSize={1048576} // 1MB
                             />
-                            <label 
-                                htmlFor="responsive_timezone_banner"
-                                className="cursor-pointer"
-                            >
-                                <UploadCard 
-                                    title="Upload Responsive Timezone Banner" 
-                                    description="Max Size: 1MB | Formats: JPG, JPEG, PNG, GIF, WEBP" 
-                                />
-                            </label>
                         </div>
                     </div>
 
@@ -449,22 +421,14 @@ export default function AddCourseStep3({
                     <div>
                         <InputLabel value="Certificate (Max 1MB)" />
                         <div className="mt-2">
-                            <input
-                                type="file"
-                                name="certificate"
-                                onChange={(e) => setData('certificate', e.target.files[0])}
-                                className="hidden"
+                            <UploadCard
                                 id="certificate"
+                                file={data.certificate}
+                                onFileChange={(file) => setData('certificate', file)}
+                                onFileRemove={() => setData('certificate', null)}
+                                accept=".jpg,.jpeg,.png,.gif,.webp"
+                                maxSize={1048576} // 1MB
                             />
-                            <label 
-                                htmlFor="certificate"
-                                className="cursor-pointer"
-                            >
-                                <UploadCard 
-                                    title="Upload Certificate" 
-                                    description="Max Size: 1MB | Formats: JPG, JPEG, PNG, GIF, WEBP" 
-                                />
-                            </label>
                         </div>
                     </div>
 
@@ -472,22 +436,14 @@ export default function AddCourseStep3({
                     <div>
                         <InputLabel value="Video Banner (Max 1MB)" />
                         <div className="mt-2">
-                            <input
-                                type="file"
-                                name="video_banner"
-                                onChange={(e) => setData('video_banner', e.target.files[0])}
-                                className="hidden"
+                            <UploadCard
                                 id="video_banner"
+                                file={data.video_banner}
+                                onFileChange={(file) => setData('video_banner', file)}
+                                onFileRemove={() => setData('video_banner', null)}
+                                accept=".jpg,.jpeg,.png,.gif,.webp"
+                                maxSize={1048576} // 1MB
                             />
-                            <label 
-                                htmlFor="video_banner"
-                                className="cursor-pointer"
-                            >
-                                <UploadCard 
-                                    title="Upload Video Banner" 
-                                    description="Max Size: 1MB | Formats: JPG, JPEG, PNG, GIF, WEBP" 
-                                />
-                            </label>
                         </div>
                     </div>
 
@@ -495,22 +451,14 @@ export default function AddCourseStep3({
                     <div>
                         <InputLabel value="Strip Banner (Max 1MB)" />
                         <div className="mt-2">
-                            <input
-                                type="file"
-                                name="strip_banner"
-                                onChange={(e) => setData('strip_banner', e.target.files[0])}
-                                className="hidden"
+                            <UploadCard
                                 id="strip_banner"
+                                file={data.strip_banner}
+                                onFileChange={(file) => setData('strip_banner', file)}
+                                onFileRemove={() => setData('strip_banner', null)}
+                                accept=".jpg,.jpeg,.png,.gif,.webp"
+                                maxSize={1048576} // 1MB
                             />
-                            <label 
-                                htmlFor="strip_banner"
-                                className="cursor-pointer"
-                            >
-                                <UploadCard 
-                                    title="Upload Strip Banner" 
-                                    description="Max Size: 1MB | Formats: JPG, JPEG, PNG, GIF, WEBP" 
-                                />
-                            </label>
                         </div>
                     </div>
 
@@ -518,22 +466,14 @@ export default function AddCourseStep3({
                     <div>
                         <InputLabel value="Ads Banner (Max 1MB)" />
                         <div className="mt-2">
-                            <input
-                                type="file"
-                                name="ads_banner"
-                                onChange={(e) => setData('ads_banner', e.target.files[0])}
-                                className="hidden"
+                            <UploadCard
                                 id="ads_banner"
+                                file={data.ads_banner}
+                                onFileChange={(file) => setData('ads_banner', file)}
+                                onFileRemove={() => setData('ads_banner', null)}
+                                accept=".jpg,.jpeg,.png,.gif,.webp"
+                                maxSize={1048576} // 1MB
                             />
-                            <label 
-                                htmlFor="ads_banner"
-                                className="cursor-pointer"
-                            >
-                                <UploadCard 
-                                    title="Upload Ads Banner" 
-                                    description="Max Size: 1MB | Formats: JPG, JPEG, PNG, GIF, WEBP" 
-                                />
-                            </label>
                         </div>
                     </div>
                 </div>

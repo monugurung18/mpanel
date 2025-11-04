@@ -112,7 +112,7 @@ class MarketingCampaignController extends Controller
 
                 case 'sponsoredFaq':
                     // Fetch FAQ titles
-                    $faqs = DB::table('post')
+                    $faqs = Post::whereIn('articleID', $targetIds)
                         ->whereIn('articleID', $targetIds)
                         ->pluck('title', 'articleID');
                     foreach ($typeCampaigns as $campaign) {
@@ -122,8 +122,7 @@ class MarketingCampaignController extends Controller
 
                 case 'sponsoredEpisode':
                     // Fetch episode titles
-                    $episodes = DB::table('medtalks_tv')
-                        ->whereIn('id', $targetIds)
+                    $episodes = MedtalksTv::whereIn('id', $targetIds)
                         ->pluck('title', 'id');
                     foreach ($typeCampaigns as $campaign) {
                         $campaign->targetTitle = $episodes->get($campaign->campaignTargetID, 'Unknown Episode');
@@ -132,7 +131,7 @@ class MarketingCampaignController extends Controller
 
                 case 'sponsorMedtalks':
                     // Fetch medtalks titles (similar to episodes)
-                    $medtalks = DB::table('medtalks_tv')
+                    $medtalks = MedtalksTv::whereIn('id', $targetIds)
                         ->whereIn('id', $targetIds)
                         ->pluck('title', 'id');
                     foreach ($typeCampaigns as $campaign) {
@@ -166,20 +165,19 @@ class MarketingCampaignController extends Controller
             ->toArray();
 
         // Get seminars for sponsor seminar
-        $seminars = DB::table('seminar')
-            ->where('video_status', '!=', 'deleted')
+        $seminars = Seminar::where('video_status', '!=', 'deleted')
             ->orderBy('schedule_timestamp', 'DESC')
             ->get(['seminar_no', 'seminar_title'])
             ->toArray();
 
         // Get specialities for speciality sponsor
-        $specialities = DB::table('user_specialty')
-            ->orderBy('title', 'ASC')
+        $specialities = Specialty::orderBy('title', 'ASC')
+            ->where('status', 'on')
             ->get(['no', 'title'])
             ->toArray();
 
         // Get FAQs for sponsored FAQ
-        $faqs = DB::table('post')
+        $faqs = Post::whereIn('articleID', $targetIds)
             ->where('status', 'published')
             ->where('postType', 'FAQ')
             ->whereNotNull('custom_url')
@@ -188,7 +186,7 @@ class MarketingCampaignController extends Controller
             ->toArray();
 
         // Get episodes for sponsored episode
-        $episodes = DB::table('medtalks_tv')
+        $episodes = MedtalksTv::where('video_status', '!=', 'deleted')
             ->where('video_status', '!=', 'deleted')
             ->where('episode_status', 'active')
             ->whereIn('episode_type', ['evening', 'diabetes-prime', '4d'])
@@ -313,20 +311,19 @@ class MarketingCampaignController extends Controller
             ->toArray();
 
         // Get seminars for sponsor seminar
-        $seminars = DB::table('seminar')
+        $seminars = Seminar::where('video_status', '!=', 'deleted')
             ->where('video_status', '!=', 'deleted')
             ->orderBy('schedule_timestamp', 'DESC')
             ->get(['seminar_no', 'seminar_title'])
             ->toArray();
 
         // Get specialities for speciality sponsor
-        $specialities = DB::table('user_specialty')
-            ->orderBy('title', 'ASC')
+        $specialities = Specialty::orderBy('title', 'ASC')
             ->get(['no', 'title'])
             ->toArray();
 
         // Get FAQs for sponsored FAQ
-        $faqs = DB::table('post')
+        $faqs = Post::where('status', 'published')
             ->where('status', 'published')
             ->where('postType', 'FAQ')
             ->whereNotNull('custom_url')
@@ -335,7 +332,7 @@ class MarketingCampaignController extends Controller
             ->toArray();
 
         // Get episodes for sponsored episode
-        $episodes = DB::table('medtalks_tv')
+        $episodes = MedtalksTv::where('video_status', '!=', 'deleted')
             ->where('video_status', '!=', 'deleted')
             ->where('episode_status', 'active')
             ->whereIn('episode_type', ['evening', 'diabetes-prime', '4d'])
@@ -496,7 +493,7 @@ class MarketingCampaignController extends Controller
                 
             case 'seminar':
                 // Fetch records from seminar table where video_status is not 'deleted'
-                $targets = DB::table('seminar')
+                $targets = Seminar::where('video_status', '!=', 'deleted')
                     ->where('video_status', '!=', 'deleted')
                     ->orderBy('schedule_timestamp', 'DESC')
                     ->get(['seminar_no as id', 'seminar_title as title'])

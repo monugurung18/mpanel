@@ -136,8 +136,7 @@ class PageViewController extends Controller
             }
             
             // Get subscription count
-            $subscribeCount = DB::table('zc_subscribe')
-                ->where('ref_id', $item->article_id)
+            $subscribeCount = Subscribe::where('ref_id', $item->article_id)
                 ->where('type', 'faq')
                 ->distinct('user_id')
                 ->count('user_id');
@@ -198,7 +197,7 @@ class PageViewController extends Controller
             $customUrl = "https://hcp.medtalks.in/cme/" . $item->custom_url;
             
             // Get subscription count
-            $subscribeCount = DB::table('zc_subscribe')
+            $subscribeCount = Subscribe::where('ref_id', $item->course_id)
                 ->where('ref_id', $item->course_id)
                 ->where('type', 'cme')
                 ->where('status', 'subscribed')
@@ -258,7 +257,7 @@ class PageViewController extends Controller
             $customUrl = "https://www.medtalks.in/live-seminar/" . $item->custom_url;
             
             // Get subscription count
-            $subscribeCount = DB::table('zc_subscribe')
+            $subscribeCount = Subscribe::where('ref_id', $item->seminar_no)
                 ->where('ref_id', $item->seminar_no)
                 ->where('type', 'seminar')
                 ->distinct('user_id')
@@ -319,7 +318,7 @@ class PageViewController extends Controller
             $customUrl = "https://www.medtalks.in/tv-view/" . $item->custom_url;
             
             // Get subscription count
-            $subscribeCount = DB::table('zc_subscribe')
+            $subscribeCount = Subscribe::where('ref_id', $item->id)
                 ->where('ref_id', $item->id)
                 ->where('type', 'episode')
                 ->distinct('user_id')

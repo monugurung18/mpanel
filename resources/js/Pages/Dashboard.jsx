@@ -62,7 +62,7 @@ export default function Dashboard({ stats, recentActivities, mostViewedContent, 
             <div className="py-6">
                 <div className="mx-auto max-w-7xl sm:px-6 lg:px-8">
                     {/* Stats Cards */}
-                    <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4 mb-6">
+                    <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3 mb-6">
                         <div className="bg-white overflow-hidden shadow rounded-lg">
                             <div className="px-4 py-5 sm:p-6">
                                 <div className="flex items-center">
@@ -134,11 +134,7 @@ export default function Dashboard({ stats, recentActivities, mostViewedContent, 
                                 </div>
                             </div>
                         </div>
-                    </div>
-
-                    {/* Additional Stats */}
-                    <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4 mb-6">
-                        <div className="bg-white overflow-hidden shadow rounded-lg">
+                         <div className="bg-white overflow-hidden shadow rounded-lg">
                             <div className="px-4 py-5 sm:p-6">
                                 <div className="flex items-center">
                                     <div className="flex-shrink-0 bg-red-100 rounded-md p-3">
@@ -173,43 +169,8 @@ export default function Dashboard({ stats, recentActivities, mostViewedContent, 
                                 </div>
                             </div>
                         </div>
-
-                        <div className="bg-white overflow-hidden shadow rounded-lg">
-                            <div className="px-4 py-5 sm:p-6">
-                                <div className="flex items-center">
-                                    <div className="flex-shrink-0 bg-pink-100 rounded-md p-3">
-                                        <i className="fa fa-share-alt text-pink-600 text-xl"></i>
-                                    </div>
-                                    <div className="ml-5 w-0 flex-1">
-                                        <dl>
-                                            <dt className="text-sm font-medium text-gray-500 truncate">Shared Articles</dt>
-                                            <dd className="flex items-baseline">
-                                                <div className="text-2xl font-semibold text-gray-900">{stats.totalSharedArticles}</div>
-                                            </dd>
-                                        </dl>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div className="bg-white overflow-hidden shadow rounded-lg">
-                            <div className="px-4 py-5 sm:p-6">
-                                <div className="flex items-center">
-                                    <div className="flex-shrink-0 bg-cyan-100 rounded-md p-3">
-                                        <i className="fa fa-bar-chart text-cyan-600 text-xl"></i>
-                                    </div>
-                                    <div className="ml-5 w-0 flex-1">
-                                        <dl>
-                                            <dt className="text-sm font-medium text-gray-500 truncate">Current Period</dt>
-                                            <dd className="flex items-baseline">
-                                                <div className="text-lg font-semibold text-gray-900">{formatInterval(interval)}</div>
-                                            </dd>
-                                        </dl>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
                     </div>
+
 
                     {/* Charts Section - Individual Cards for Each Table */}
                     <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
@@ -392,70 +353,7 @@ export default function Dashboard({ stats, recentActivities, mostViewedContent, 
                         </Card>
                     </div>
 
-                    {/* Recent Activities - Individual Cards for Each Table */}
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-                        {/* Recent User Logins Card */}
-                        <Card>
-                            <CardHeader>
-                                <CardTitle className="text-lg">Recent User Logins</CardTitle>
-                            </CardHeader>
-                            <CardContent>
-                                {recentActivities.recentLogins && recentActivities.recentLogins.length > 0 ? (
-                                    <Table>
-                                        <TableHeader>
-                                            <TableRow>
-                                                <TableHead className="text-sm font-medium">Name</TableHead>
-                                                <TableHead className="text-sm font-medium">Email</TableHead>
-                                                <TableHead className="text-sm font-medium">Login Time</TableHead>
-                                            </TableRow>
-                                        </TableHeader>
-                                        <TableBody>
-                                            {recentActivities.recentLogins.slice(0, 10).map((login, index) => (
-                                                <TableRow key={index}>
-                                                    <TableCell className="font-medium text-sm">{login.user_FullName}</TableCell>
-                                                    <TableCell className="text-sm">{login.user_email}</TableCell>
-                                                    <TableCell className="text-sm">{login.timeStamp}</TableCell>
-                                                </TableRow>
-                                            ))}
-                                        </TableBody>
-                                    </Table>
-                                ) : (
-                                    <div className="text-center py-4 text-gray-500 text-sm">No recent logins</div>
-                                )}
-                            </CardContent>
-                        </Card>
-
-                        {/* Recent CMEs Card */}
-                        <Card>
-                            <CardHeader>
-                                <CardTitle className="text-lg">Recent CMEs</CardTitle>
-                            </CardHeader>
-                            <CardContent>
-                                {recentActivities.recentCmes && recentActivities.recentCmes.length > 0 ? (
-                                    <Table>
-                                        <TableHeader>
-                                            <TableRow>
-                                                <TableHead className="text-sm font-medium">Title</TableHead>
-                                                <TableHead className="text-sm font-medium">Instructor</TableHead>
-                                                <TableHead className="text-sm font-medium">Date</TableHead>
-                                            </TableRow>
-                                        </TableHeader>
-                                        <TableBody>
-                                            {recentActivities.recentCmes.slice(0, 10).map((cme, index) => (
-                                                <TableRow key={index}>
-                                                    <TableCell className="font-medium text-sm">{cme.course_title}</TableCell>
-                                                    <TableCell className="text-sm">{cme.user_FullName}</TableCell>
-                                                    <TableCell className="text-sm">{cme.timestamp}</TableCell>
-                                                </TableRow>
-                                            ))}
-                                        </TableBody>
-                                    </Table>
-                                ) : (
-                                    <div className="text-center py-4 text-gray-500 text-sm">No recent CMEs</div>
-                                )}
-                            </CardContent>
-                        </Card>
-                    </div>
+                   
 
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                         {/* Recent Articles Card */}

@@ -109,7 +109,7 @@ export default function TagsIndex({ tags }) {
                                             placeholder="Search by display name or tag name..."
                                             value={searchTerm}
                                             onChange={handleSearch}
-                                            className="pl-10 py-2"
+                                            className=" py-2"
                                         />
                                     </div>
                                 </div>

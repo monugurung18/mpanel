@@ -9,7 +9,7 @@ import RichTextEditor from '@/Components/RichTextEditor';
 import AddCourseStep3 from '@/Components/AddCourseStep3';
 import { Head, Link, useForm, usePage } from '@inertiajs/react';
 import { useState, useEffect } from 'react';
-import { Select, Switch, Upload, message } from 'antd';
+import { Select, Switch, message } from 'antd';
 import { getSeminarImageUrl } from '@/Utils/imageHelper';
 import UploadCard from '@/Components/UploadCard';
 import 'antd/dist/reset.css';
@@ -18,41 +18,41 @@ import '../../../css/antd-custom.css';
 // Helper function to format datetime for datetime-local input
 const formatDateTimeForInput = (dateTimeString) => {
     if (!dateTimeString) return '';
-    
+
     // Parse the datetime string (assuming format: 'YYYY-MM-DD HH:MM:SS')
     const date = new Date(dateTimeString.replace(' ', 'T'));
-    
+
     if (isNaN(date.getTime())) return '';
-    
+
     // Format as 'YYYY-MM-DDTHH:MM' for datetime-local input
     const year = date.getFullYear();
     const month = String(date.getMonth() + 1).padStart(2, '0');
     const day = String(date.getDate()).padStart(2, '0');
     const hours = String(date.getHours()).padStart(2, '0');
     const minutes = String(date.getMinutes()).padStart(2, '0');
-    
+
     return `${year}-${month}-${day}T${hours}:${minutes}`;
 };
 
 // Helper function to convert participants data to the required structure
 const convertParticipantsToIds = (participants) => {
     if (!participants || !Array.isArray(participants)) return [];
-    
+
     // If it's already an array of IDs, return as is
     if (participants.length > 0 && typeof participants[0] === 'string') {
         return participants;
     }
-    
+
     // If it's an array of objects with user_id, extract the IDs
     if (participants.length > 0 && typeof participants[0] === 'object' && participants[0].user_id) {
         return participants.map(p => p.user_id);
     }
-    
+
     return [];
 };
 
 export default function Form({ seminar, specialities }) {
-    console.log("seminarData",seminar);
+    console.log("seminarData", seminar);
     const { props } = usePage();
     const { baseImagePath } = props;
     const isEditing = !!seminar;
@@ -60,10 +60,7 @@ export default function Form({ seminar, specialities }) {
 
     const [speakersList, setSpeakersList] = useState([]);
     const [loadingSpeakers, setLoadingSpeakers] = useState(false);
-    const [imageError, setImageError] = useState(null);
-    const [appBannerError, setAppBannerError] = useState(null);
-    const [appSquareError, setAppSquareError] = useState(null);
-    const [educationPartners, setEducationalPartners]= useState([]);
+    const [educationPartners, setEducationalPartners] = useState([]);
 
     const { data, setData, post, put, errors, processing } = useForm({
         seminar_id: seminar?.id || '',
@@ -139,10 +136,10 @@ export default function Form({ seminar, specialities }) {
         panelists: convertParticipantsToIds(seminar?.panelists) || [],
         speakers: convertParticipantsToIds(seminar?.speakers) || [],
         chief_guests: convertParticipantsToIds(seminar?.chief_guests) || [],
-        image: null,
-        s_image1: null,
-        s_image2: null,
-        currentStep:currentStep
+        image: seminar?.video_image || null,
+        s_image1: seminar?.s_image1 || null,
+        s_image2: seminar?.s_image2 || null,
+        currentStep: currentStep
     });
 
     const [imagePreview, setImagePreview] = useState(
@@ -154,7 +151,7 @@ export default function Form({ seminar, specialities }) {
     const [appSquarePreview, setAppSquarePreview] = useState(
         seminar?.s_image2 ? getSeminarImageUrl(seminar.s_image2, baseImagePath) : null
     );
-    
+
     // Banner image previews from html_json
     const [inviteBannerPreview, setInviteBannerPreview] = useState(seminar?.invite_banner || ''
     );
@@ -167,7 +164,7 @@ export default function Form({ seminar, specialities }) {
     const [responsiveInviteBannerPreview, setResponsiveInviteBannerPreview] = useState(
         seminar?.responsive_invite_banner || ''
     );
-    const [timezoneBannerPreview, setTimezoneBannerPreview] = useState( 
+    const [timezoneBannerPreview, setTimezoneBannerPreview] = useState(
         seminar?.timezone_banner || ''
     );
     const [responsiveTimezoneBannerPreview, setResponsiveTimezoneBannerPreview] = useState(
@@ -198,12 +195,12 @@ export default function Form({ seminar, specialities }) {
         fetchSpeakers();
     }, []);
 
-    useEffect(()=>{
+    useEffect(() => {
         fetchEducationalPartners();
 
-    },[]);
+    }, []);
 
-    const fetchEducationalPartners=async()=>{
+    const fetchEducationalPartners = async () => {
         setLoadingSpeakers(true);
         try {
             const response = await fetch('/api/education-partners');
@@ -231,70 +228,46 @@ export default function Form({ seminar, specialities }) {
         }
     }, [data.seminar_title]);
 
-    const handleImageChange = (e, type = 'featured') => {
-        const file = e.target.files[0];
-        if (!file) return;
-
-        // Define validation rules for each image type
-        const validationRules = {
-            featured: { width: 700, height: 393, label: 'Featured Image' },
-            appBanner: { width: 640, height: 360, label: 'App Banner' },
-            appSquare: { width: 400, height: 400, label: 'App Square' },
-        };
-
-        const rules = validationRules[type];
-        const setError = type === 'featured' ? setImageError :
-            type === 'appBanner' ? setAppBannerError : setAppSquareError;
-
-        // Validate file size (max 1MB)
-        const maxSize = 1 * 1024 * 1024;
-        if (file.size > maxSize) {
-            setError('Image size must be less than 1MB');
-            e.target.value = '';
-            return;
+    // Handle image change for Featured Image
+    const handleImageChange = (file) => {
+        setData('image', file);
+        if (file && file instanceof File) {
+            setImagePreview(URL.createObjectURL(file));
         }
+    };
 
-        // Validate file type
-        const validTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp'];
-        if (!validTypes.includes(file.type)) {
-            setError('Only image files (JPG, JPEG, PNG, GIF, WEBP) are allowed.');
-            e.target.value = '';
-            return;
+    // Handle image removal for Featured Image
+    const handleRemoveImage = () => {
+        setData('image', null);
+        setImagePreview(null);
+    };
+
+    // Handle image change for App Banner
+    const handleAppBannerChange = (file) => {
+        setData('s_image1', file);
+        if (file && file instanceof File) {
+            setAppBannerPreview(URL.createObjectURL(file));
         }
+    };
 
-        // Validate image dimensions
-        const img = new Image();
-        const objectUrl = URL.createObjectURL(file);
-        img.src = objectUrl;
+    // Handle image removal for App Banner
+    const handleRemoveAppBanner = () => {
+        setData('s_image1', null);
+        setAppBannerPreview(null);
+    };
 
-        img.onload = function () {
-            URL.revokeObjectURL(objectUrl);
+    // Handle image change for App Square
+    const handleAppSquareChange = (file) => {
+        setData('s_image2', file);
+        if (file && file instanceof File) {
+            setAppSquarePreview(URL.createObjectURL(file));
+        }
+    };
 
-            if (this.width !== rules.width || this.height !== rules.height) {
-                setError(`${rules.label} dimensions must be exactly ${rules.width} x ${rules.height} pixels. Current: ${this.width} x ${this.height}`);
-                e.target.value = '';
-                return;
-            }
-
-            // All validations passed
-            setError(null);
-            if (type === 'featured') {
-                setData('image', file);
-                setImagePreview(URL.createObjectURL(file));
-            } else if (type === 'appBanner') {
-                setData('s_image1', file);
-                setAppBannerPreview(URL.createObjectURL(file));
-            } else if (type === 'appSquare') {
-                setData('s_image2', file);
-                setAppSquarePreview(URL.createObjectURL(file));
-            }
-        };
-
-        img.onerror = function () {
-            URL.revokeObjectURL(objectUrl);
-            setError('Failed to load image. Please try another file.');
-            e.target.value = '';
-        };
+    // Handle image removal for App Square
+    const handleRemoveAppSquare = () => {
+        setData('s_image2', null);
+        setAppSquarePreview(null);
     };
 
     const handleNext = () => {
@@ -318,7 +291,8 @@ export default function Form({ seminar, specialities }) {
         const formData = new FormData();
         
         // Prepare html_json data for Step 3
-        if (currentStep === 3) {
+        // Always prepare html_json data if we've reached step 3 at any point
+        if (currentStep === 3 || data.currentStep === 3) {
             const htmlJsonData = {
                 // Registration fields configuration
                 title: data.reg_title_enabled ? {
@@ -440,10 +414,11 @@ export default function Form({ seminar, specialities }) {
 
     const handleSubmit = (e) => {
         e.preventDefault();
+        console.log('Form submitted', data)
 
         // Create FormData object to handle file uploads
         const formData = new FormData();
-        
+
         // Prepare html_json data for Step 3
         const htmlJsonData = {
             // Registration fields configuration
@@ -504,7 +479,7 @@ export default function Form({ seminar, specialities }) {
             speakers: data.speakers || [],
             chief_guests: data.chief_guests || []
         };
-        
+
         // Add banner images to html_json if they exist
         if (data.invite_banner) htmlJsonData.invite_banner = data.invite_banner ? { url: data.invite_banner } : { url: "uploaded" };
         if (data.responsive_invite_banner) htmlJsonData.responsive_invite_banner = data.responsive_invite_banner ? { url: data.responsive_invite_banner } : { url: "uploaded" };
@@ -514,13 +489,13 @@ export default function Form({ seminar, specialities }) {
         if (data.video_banner) htmlJsonData.video_banner = data.video_banner ? { url: data.video_banner } : { url: "uploaded" };
         if (data.strip_banner) htmlJsonData.strip_banner = data.strip_banner ? { url: data.strip_banner } : { url: "uploaded" };
         if (data.ads_banner) htmlJsonData.ads_banner = data.ads_banner ? { url: data.ads_banner } : { url: "uploaded" };
-        
+
         formData.append('html_json', JSON.stringify(htmlJsonData));
-        
+
         // Add all data fields
         Object.keys(data).forEach(key => {
-            if (key === 'invite_banner' || key === 'responsive_invite_banner' || 
-                key === 'timezone_banner' || key === 'responsive_timezone_banner' || 
+            if (key === 'invite_banner' || key === 'responsive_invite_banner' ||
+                key === 'timezone_banner' || key === 'responsive_timezone_banner' ||
                 key === 'certificate' || key === 'video_banner' || key === 'strip_banner' || key === 'ads_banner' ||
                 key === 'image' || key === 's_image1' || key === 's_image2') {
                 // Handle file uploads
@@ -607,9 +582,7 @@ export default function Form({ seminar, specialities }) {
                                     ))}
                                 </div>
                             </div>
-
                             <hr className="my-4" />
-
                             <form onSubmit={currentStep === 3 ? handleSubmit : handleSaveAndContinue} className="space-y-6">
                                 {/* Step 1: Basic Information */}
                                 {currentStep === 1 && (
@@ -677,7 +650,8 @@ export default function Form({ seminar, specialities }) {
                                                 {/* Video Status */}
                                                 <div>
                                                     <InputLabel htmlFor="video_status" value="Video Status *" />
-                                                    <Dropdown
+
+                                                    <Select
                                                         options={[
                                                             { value: 'live', label: 'Live' },
                                                             { value: 'schedule', label: 'Scheduled' },
@@ -687,9 +661,9 @@ export default function Form({ seminar, specialities }) {
                                                         value={data.video_status}
                                                         onChange={(value) => setData('video_status', value)}
                                                         placeholder="Select status"
-                                                        icon="fa-circle"
                                                         error={errors.video_status}
-                                                        size="lg"
+                                                        size="large"
+                                                        className="w-full"
                                                     />
                                                 </div>
                                                 {/* Live Stream URL */}
@@ -725,8 +699,9 @@ export default function Form({ seminar, specialities }) {
                                                 {/* Video Source */}
                                                 <div >
                                                     <InputLabel htmlFor="videoSource" value="Video Source *" />
-                                                    <Dropdown
+                                                    <Select
                                                         options={[
+                                                            { value: 'vimeo', label: 'Vimeo' },
                                                             { value: 'youTube', label: 'YouTube' },
                                                             { value: 'faceBook', label: 'Facebook' },
                                                             { value: 'mp4', label: 'MP4' },
@@ -735,9 +710,9 @@ export default function Form({ seminar, specialities }) {
                                                         value={data.videoSource}
                                                         onChange={(value) => setData('videoSource', value)}
                                                         placeholder="Select source"
-                                                        icon="fa-play-circle"
                                                         error={errors.videoSource}
-                                                        size="lg"
+                                                        size="large"
+                                                        className="w-full"
                                                     />
                                                 </div>
                                                 {/* Schedule DateTime */}
@@ -750,42 +725,6 @@ export default function Form({ seminar, specialities }) {
                                                         onChange={(e) => setData('schedule_timestamp', e.target.value)}
                                                         error={errors.schedule_timestamp}
                                                         icon="fa-calendar"
-                                                        size="lg"
-                                                    />
-                                                </div>
-
-                                                {/* Speakers */}
-                                                <div>
-                                                    <InputLabel value="Speakers" />
-                                                    <Select
-                                                        mode="multiple"
-                                                        size="large"
-                                                        placeholder="Select speakers"
-                                                        value={data.speakerids}
-                                                        onChange={(value) => setData('speakerids', value)}
-                                                        loading={loadingSpeakers}
-                                                        options={speakersList}
-                                                        className="w-full"
-                                                        style={{ width: '100%' }}
-                                                        filterOption={(input, option) =>
-                                                            option.label.toLowerCase().includes(input.toLowerCase())
-                                                        }
-                                                        optionFilterProp="label"
-                                                        showSearch
-                                                    />
-                                                    <InputError message={errors.speakerids} />
-                                                </div>
-                                                {/* Speciality */}
-                                                <div>
-                                                    <InputLabel htmlFor="seminar_speciality" value="Speciality" />
-                                                    <Dropdown
-                                                        options={specialities}
-                                                        value={data.seminar_speciality}
-                                                        onChange={(value) => setData('seminar_speciality', value)}
-                                                        placeholder="Select speciality"
-                                                        icon="fa-stethoscope"
-                                                        searchable
-                                                        error={errors.seminar_speciality}
                                                         size="lg"
                                                     />
                                                 </div>
@@ -813,217 +752,58 @@ export default function Form({ seminar, specialities }) {
                                             </div>
                                         </div>
                                         <div className='col-span-2 grid grid-cols-3 gap-4'>
+                                            {/* Featured Image */}
                                             <div>
-                                            <InputLabel value="Featured Image (700 x 393, Max 1MB)" />
-                                            <div className="mt-2 rounded-md border-2 border-dashed border-gray-300">
-                                                <Upload
-                                                    name="image"
-                                                    listType="picture-card"
-                                                    className="avatar-uploader"
-                                                    showUploadList={false}
-                                                    beforeUpload={(file) => {
-                                                        // Validation for file type
-                                                        const isValidType = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp'].includes(file.type);
-                                                        if (!isValidType) {
-                                                            message.error('Only image files (JPG, JPEG, PNG, GIF, WEBP) are allowed.');
-                                                            return false;
-                                                        }
-
-                                                        // Validation for file size (max 1MB)
-                                                        const isLt1M = file.size / 1024 / 1024 < 1;
-                                                        if (!isLt1M) {
-                                                            message.error('Image size must be less than 1MB.');
-                                                            return false;
-                                                        }
-
-                                                        // Create preview
-                                                        const reader = new FileReader();
-                                                        reader.onload = (e) => {
-                                                            // Validate dimensions
-                                                            const img = new Image();
-                                                            img.src = e.target.result;
-                                                            img.onload = () => {
-                                                                if (img.width !== 700 || img.height !== 393) {
-                                                                    message.error(`Featured Image dimensions must be exactly 700 x 393 pixels. Current: ${img.width} x ${img.height}`);
-                                                                    return false;
-                                                                }
-                                                                setImagePreview(e.target.result);
-                                                                setData('image', file);
-                                                                setImageError(null);
-                                                            };
-                                                        };
-                                                        reader.readAsDataURL(file);
-
-                                                        return false; // Prevent automatic upload
-                                                    }}
-                                                    onRemove={() => {
-                                                        setData('image', null);
-                                                        setImagePreview(null);
-                                                    }}
-                                                >
-                                                    {imagePreview ? (
-                                                        <div className="relative w-full">
-                                                            <img src={imagePreview} alt="Preview" className="mx-auto w-full h-[200px] rounded-md" />
-                                                            <button
-                                                                type="button"
-                                                                onClick={(e) => {
-                                                                    e.stopPropagation();
-                                                                    setData('image', null);
-                                                                    setImagePreview(null);
-                                                                }}
-                                                                className="rounded-md bg-red-600 px-2 py-1 text-white hover:bg-red-700 absolute right-1 top-1"
-                                                            >
-                                                                <i className="fa fa-trash h-3 w-3"></i>
-
-                                                            </button>
-                                                        </div>
-                                                    ) : (
-                                                        <div className="text-center">
-                                                            <div className="mb-4">
-                                                                <i className="fa fa-cloud-upload text-4xl text-gray-400"></i>
-                                                            </div>
-                                                            <p className="mb-2 text-sm font-medium text-gray-700">
-                                                                Seminar Featured Image
-                                                            </p>
-                                                            <p className="mb-1 text-xs text-gray-500">
-                                                                Dimensions: <span className="font-semibold">700 x 393 pixels</span>
-                                                            </p>
-                                                            <p className="mb-4 text-xs text-gray-500">
-                                                                Max Size: <span className="font-semibold">1MB</span>
-                                                            </p>
-                                                            <div className="cursor-pointer rounded-md bg-[#00895f] px-4 py-2 text-sm text-white hover:bg-emerald-700">
-                                                                <i className="fa fa-upload mr-2"></i>
-                                                                Upload Featured Image
-                                                            </div>
-                                                        </div>
-                                                    )}
-                                                </Upload>
-                                            </div>
-                                            {imageError && (
-                                                <div className="mt-2 flex items-center space-x-1 text-sm text-red-600">
-                                                    <i className="fa fa-exclamation-circle"></i>
-                                                    <span>{imageError}</span>
+                                                <InputLabel value="Featured Image (700 x 393, Max 1MB)" />
+                                                <div className="mt-2">
+                                                    <UploadCard
+                                                        id="featured_image"
+                                                        file={data.image}
+                                                        onFileChange={handleImageChange}
+                                                        onFileRemove={handleRemoveImage}
+                                                        accept=".jpg,.jpeg,.png,.gif,.webp"
+                                                        maxSize={1048576} // 1MB
+                                                        dimensions={{ width: 700, height: 393 }}
+                                                    />
                                                 </div>
-                                            )}
-                                            <InputError message={errors.image} className="mt-2" />
-                                        </div>
-
-
-
-                                        {/* App Banner */}
-                                        <div>
-                                            <InputLabel value="App Banner (640 x 360, Max 1MB)" />
-                                            <div className="mt-2 rounded-md border-2 border-dashed border-gray-300 p-4">
-                                                <Upload
-                                                    name="s_image1"
-                                                    listType="picture-card"
-                                                    className="avatar-uploader"
-                                                    showUploadList={false}
-                                                    beforeUpload={(file) => {
-                                                        // Validation for file type
-                                                        const isValidType = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp'].includes(file.type);
-                                                        if (!isValidType) {
-                                                            message.error('Only image files (JPG, JPEG, PNG, GIF, WEBP) are allowed.');
-                                                            return false;
-                                                        }
-                                                        
-                                                        // Validation for file size (max 1MB)
-                                                        const isLt1M = file.size / 1024 / 1024 < 1;
-                                                        if (!isLt1M) {
-                                                            message.error('Image size must be less than 1MB.');
-                                                            return false;
-                                                        }
-                                                        
-                                                        // Create preview
-                                                        const reader = new FileReader();
-                                                        reader.onload = (e) => {
-                                                            // Validate dimensions
-                                                            const img = new Image();
-                                                            img.src = e.target.result;
-                                                            img.onload = () => {
-                                                                if (img.width !== 640 || img.height !== 360) {
-                                                                    message.error(`App Banner dimensions must be exactly 640 x 360 pixels. Current: ${img.width} x ${img.height}`);
-                                                                    return false;
-                                                                }
-                                                                setAppBannerPreview(e.target.result);
-                                                                setData('s_image1', file);
-                                                                setAppBannerError(null);
-                                                            };
-                                                        };
-                                                        reader.readAsDataURL(file);
-                                                        
-                                                        return false; // Prevent automatic upload
-                                                    }}
-                                                    onRemove={() => {
-                                                        setData('s_image1', null);
-                                                        setAppBannerPreview(null);
-                                                    }}
-                                                >
-                                                    {appBannerPreview ? (
-                                                        <div className="relative">
-                                                            <img src={appBannerPreview} alt="App Banner" className="mx-auto max-h-32 rounded-md" />
-                                                            <button
-                                                                type="button"
-                                                                onClick={(e) => {
-                                                                    e.stopPropagation();
-                                                                    setData('s_image1', null);
-                                                                    setAppBannerPreview(null);
-                                                                }}
-                                                                className="mt-2 text-xs text-red-600 hover:text-red-800"
-                                                            >
-                                                                Remove
-                                                            </button>
-                                                        </div>
-                                                    ) : (
-                                                        <div className="text-center">
-                                                            <p className="mb-2 text-xs text-gray-500">640 x 360 pixels</p>
-                                                            <div className="cursor-pointer rounded-md bg-gray-600 px-3 py-1 text-sm text-white hover:bg-gray-700">
-                                                                Upload
-                                                            </div>
-                                                        </div>
-                                                    )}
-                                                </Upload>
+                                                <InputError message={errors.image} className="mt-2" />
                                             </div>
-                                            {appBannerError && <div className="mt-1 text-xs text-red-600">{appBannerError}</div>}
+
+                                            {/* App Banner */}
+                                            <div>
+                                                <InputLabel value="App Banner (640 x 360, Max 1MB)" />
+                                                <div className="mt-2">
+                                                    <UploadCard
+                                                        id="app_banner"
+                                                        file={data.s_image1}
+                                                        onFileChange={handleAppBannerChange}
+                                                        onFileRemove={handleRemoveAppBanner}
+                                                        accept=".jpg,.jpeg,.png,.gif,.webp"
+                                                        maxSize={1048576} // 1MB
+                                                        dimensions={{ width: 640, height: 360 }}
+                                                    />
+                                                </div>
+                                                <InputError message={errors.s_image1} className="mt-2" />
+                                            </div>
+
+                                            {/* App Square */}
+                                            <div>
+                                                <InputLabel value="App Square (400 x 400, Max 1MB)" />
+                                                <div className="mt-2">
+                                                    <UploadCard
+                                                        id="app_square"
+                                                        file={data.s_image2}
+                                                        onFileChange={handleAppSquareChange}
+                                                        onFileRemove={handleRemoveAppSquare}
+                                                        accept=".jpg,.jpeg,.png,.gif,.webp"
+                                                        maxSize={1048576} // 1MB
+                                                        dimensions={{ width: 400, height: 400 }}
+                                                    />
+                                                </div>
+                                                <InputError message={errors.s_image2} className="mt-2" />
+                                            </div>
                                         </div>
 
-                                        {/* App Square */}
-                                        <div>
-                                            <InputLabel value="App Square (400 x 400, Max 1MB)" />
-                                            <div className="mt-2 rounded-md border-2 border-dashed border-gray-300 p-4">
-                                                {!appSquarePreview ? (
-                                                    <div className="text-center">
-                                                        <p className="mb-2 text-xs text-gray-500">400 x 400 pixels</p>
-                                                        <label className="cursor-pointer rounded-md bg-gray-600 px-3 py-1 text-sm text-white hover:bg-gray-700">
-                                                            Upload
-                                                            <input
-                                                                type="file"
-                                                                className="hidden"
-                                                                accept="image/*"
-                                                                onChange={(e) => handleImageChange(e, 'appSquare')}
-                                                            />
-                                                        </label>
-                                                    </div>
-                                                ) : (
-                                                    <div className="relative">
-                                                        <img src={appSquarePreview} alt="App Square" className="mx-auto max-h-32 rounded-md" />
-                                                        <button
-                                                            type="button"
-                                                            onClick={() => {
-                                                                setData('s_image2', null);
-                                                                setAppSquarePreview(null);
-                                                            }}
-                                                            className="mt-2 text-xs text-red-600 hover:text-red-800"
-                                                        >
-                                                            Remove
-                                                        </button>
-                                                    </div>
-                                                )}
-                                            </div>
-                                            {appSquareError && <div className="mt-1 text-xs text-red-600">{appSquareError}</div>}
-                                        </div>
-                                        </div>
-                                       
 
                                     </div>
 
@@ -1038,10 +818,9 @@ export default function Form({ seminar, specialities }) {
                                         <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
                                             {/* Speakers */}
                                             <div>
-                                                <h4 className="mb-3 font-semibold text-gray-700">ADD Speakers</h4>
+                                                <InputLabel value="Add Speakers" />
                                                 <Select
                                                     mode="multiple"
-                                                    size="large"
                                                     placeholder="Choose Speakers"
                                                     value={data.speakerids}
                                                     onChange={(value) => setData('speakerids', value)}
@@ -1060,17 +839,23 @@ export default function Form({ seminar, specialities }) {
 
                                             {/* Speciality */}
                                             <div>
-                                                <h4 className="mb-3 font-semibold text-gray-700">Add Speciality</h4>
-                                                <Dropdown
-                                                    options={specialities}
+                                                <InputLabel value="Add Speciality" />
+                                                <Select
+                                                    placeholder="Choose Speciality"
                                                     value={data.seminar_speciality}
                                                     onChange={(value) => setData('seminar_speciality', value)}
-                                                    placeholder="Select Specialties"
-                                                    icon="fa-stethoscope"
-                                                    searchable
-                                                    error={errors.seminar_speciality}
-                                                    size="lg"
+                                                    loading={loadingSpeakers}
+                                                    options={specialities}
+                                                    className="w-full"
+                                                    style={{ width: '100%' }}
+                                                    filterOption={(input, option) =>
+                                                        option.label.toLowerCase().includes(input.toLowerCase())
+                                                    }
+                                                    optionFilterProp="label"
+                                                    showSearch
                                                 />
+                                                <InputError message={errors.seminar_speciality} />
+
                                             </div>
                                         </div>
                                     </div>
@@ -1078,7 +863,7 @@ export default function Form({ seminar, specialities }) {
 
                                 {/* Step 3: Registration Form Configuration */}
                                 {currentStep === 3 && (
-                                    <AddCourseStep3 
+                                    <AddCourseStep3
                                         data={data}
                                         setData={setData}
                                         errors={errors}
@@ -1090,28 +875,36 @@ export default function Form({ seminar, specialities }) {
 
                                 {/* Navigation Buttons */}
                                 <div className="flex justify-between pt-6">
-                                    <SecondaryButton 
-                                        onClick={handlePrevious} 
+                                    <SecondaryButton
+                                        onClick={handlePrevious}
                                         disabled={currentStep === 1}
                                         type="button"
                                     >
-                                        ← Previous
+                                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor" className="size-4">
+                                            <path strokeLinecap="round" strokeLinejoin="round" d="M6.75 15.75 3 12m0 0 3.75-3.75M3 12h18" />
+                                        </svg>
+                                        Previous
                                     </SecondaryButton>
-                                    
+
                                     {currentStep < 3 ? (
-                                        <PrimaryButton 
+                                        <PrimaryButton
                                             type="submit"
                                             disabled={processing}
                                         >
-                                            Save & Continue →
+                                            Save & Continue <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor" class="size-4">
+                                                <path stroke-linecap="round" stroke-linejoin="round" d="M17.25 8.25 21 12m0 0-3.75 3.75M21 12H3" />
+                                            </svg>
                                         </PrimaryButton>
                                     ) : (
-                                        <PrimaryButton 
+                                        <PrimaryButton
                                             type="button"
                                             onClick={handleSubmit}
                                             disabled={processing}
                                         >
-                                            {isEditing ? 'Update Seminar' : 'Create Seminar'}
+                                            Save
+                                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor" class="size-4">
+                                                <path stroke-linecap="round" stroke-linejoin="round" d="M17.25 8.25 21 12m0 0-3.75 3.75M21 12H3" />
+                                            </svg>
                                         </PrimaryButton>
                                     )}
                                 </div>

@@ -8,22 +8,25 @@ import RichTextEditor from '@/Components/RichTextEditor';
 import { Head, Link, useForm, usePage } from '@inertiajs/react';
 import { useState, useEffect } from 'react';
 import { getEpisodeImageUrl } from '@/Utils/imageHelper';
+import { LeftOutlined } from '@ant-design/icons';
 import { Select } from 'antd';
 import 'antd/dist/reset.css';
 import '../../../css/antd-custom.css';
-import { Upload, message } from 'antd';
-import { PlusOutlined } from '@ant-design/icons';
+import UploadCard from '@/Components/UploadCard';
+import { Button } from '@/Components/ui/button';
+
 
 export default function Form({ episode, sponsorPages }) {
+    console.log(episode);
     const isEditing = !!episode;
     const { baseImagePath } = usePage().props;
 
     const [speakers, setSpeakers] = useState([]);
     const [loadingSpeakers, setLoadingSpeakers] = useState(false);
-    const [imageError, setImageError] = useState(null);
     const [specialities, setSpecialities] = useState([]);   
 
     const { data, setData, post, put, errors, processing } = useForm({
+        id: episode?.id || '',
         title: episode?.title || '',
         custom_url: episode?.custom_url || '',
         desc: episode?.desc || '',
@@ -37,7 +40,7 @@ export default function Form({ episode, sponsorPages }) {
         speciality_ids: episode?.speciality_id ? (Array.isArray(episode.speciality_id) ? episode.speciality_id.map(id => String(id).trim()) : episode.speciality_id.split(',').map(id => String(id.trim()))) : [],
         question_required: episode?.question_required || false,
         login_required: episode?.login_required || false,
-        image: null,
+        image: episode?.feature_image_banner || null,
     });
 
     const [imagePreview, setImagePreview] = useState(
@@ -88,51 +91,10 @@ export default function Form({ episode, sponsorPages }) {
         }
     }, [data.title]);
 
-    const handleImageChange = (e) => {
-        const file = e.target.files[0];
-        if (file) {
-            // Validate file size (max 1MB)
-            const maxSize = 1 * 1024 * 1024; // 1MB in bytes
-            if (file.size > maxSize) {
-                setImageError('Image size must be less than 1MB');
-                e.target.value = '';
-                return;
-            }
-
-            // Validate file type
-            const validTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp'];
-            if (!validTypes.includes(file.type)) {
-                setImageError('Only image files (JPG, JPEG, PNG, GIF, WEBP) are allowed.');
-                e.target.value = '';
-                return;
-            }
-
-            // Validate image dimensions (exactly 733 x 370)
-            const img = new Image();
-            const objectUrl = URL.createObjectURL(file);
-            img.src = objectUrl;
-            
-            img.onload = function () {
-                // Clean up the object URL
-                URL.revokeObjectURL(objectUrl);
-                
-                if (this.width !== 733 || this.height !== 370) {
-                    setImageError(`Image dimensions must be exactly 733 x 370 pixels. Current: ${this.width} x ${this.height}`);
-                    e.target.value = '';
-                    return;
-                }
-
-                // All validations passed
-                setImageError(null);
-                setData('image', file);
-                setImagePreview(URL.createObjectURL(file));
-            };
-
-            img.onerror = function () {
-                URL.revokeObjectURL(objectUrl);
-                setImageError('Failed to load image. Please try another file.');
-                e.target.value = '';
-            };
+    const handleImageChange = (file) => {
+        setData('image', file);
+        if (file && file instanceof File) {
+            setImagePreview(URL.createObjectURL(file));
         }
     };
 
@@ -187,7 +149,8 @@ export default function Form({ episode, sponsorPages }) {
                                     href={route('episodes.index')}
                                     className="text-gray-600 hover:text-gray-900"
                                 >
-                                    ← Back to Episodes
+                                    <LeftOutlined className="mr-1" />
+                                    Back to Episodes
                                 </Link>
                             </div>
 
@@ -456,97 +419,33 @@ export default function Form({ episode, sponsorPages }) {
                                         <div className='mt-8'>
                                             <InputLabel value="Featured Image (733 x 370, Max 1MB)" />
                                             <div className="mt-2">
-                                                <Upload
-                                                    accept=".png,.jpg,.jpeg,.gif,.webp"
-                                                    showUploadList={false}
-                                                    maxCount={1}
-                                                    beforeUpload={file => {
-                                                        const maxSize = 1 * 1024 * 1024; // 1MB
-                                                        const validTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp'];
-                                                        if (!validTypes.includes(file.type)) {
-                                                            message.error('Only image files (JPG, JPEG, PNG, GIF, WEBP) are allowed.');
-                                                            return Upload.LIST_IGNORE;
-                                                        }
-                                                        if (file.size > maxSize) {
-                                                            message.error('Image size must be less than 1MB.');
-                                                            return Upload.LIST_IGNORE;
-                                                        }
-                                                        // Validate dimensions async
-                                                        return new Promise(resolve => {
-                                                            const img = new window.Image();
-                                                            img.src = window.URL.createObjectURL(file);
-                                                            img.onload = function() {
-                                                                window.URL.revokeObjectURL(img.src);
-                                                                if (img.width !== 733 || img.height !== 370) {
-                                                                    message.error(`Image dimensions must be 733 x 370 pixels. Current: ${img.width} x ${img.height}`);
-                                                                    resolve(Upload.LIST_IGNORE);
-                                                                } else {
-                                                                    setImageError(null);
-                                                                    setData('image', file);
-                                                                    setImagePreview(window.URL.createObjectURL(file));
-                                                                    resolve(false); // Prevent auto-upload
-                                                                }
-                                                            };
-                                                            img.onerror = function() {
-                                                                message.error('Failed to load image. Please try another file.');
-                                                                resolve(Upload.LIST_IGNORE);
-                                                            };
-                                                        });
-                                                    }}
-                                                >
-                                                    {!imagePreview ? (
-                                                        <button
-                                                            type="button"
-                                                            className="cursor-pointer rounded-md bg-[#00895f] px-4 py-2 text-sm text-white hover:bg-emerald-700 transition-colors inline-block"
-                                                        >
-                                                            <i className="fa fa-upload mr-2"></i> Upload Featured Image
-                                                        </button>
-                                                    ) : null}
-                                                </Upload>
-                                                {imagePreview && (
-                                                    <div>
-                                                        <img
-                                                            src={imagePreview}
-                                                            alt="Preview"
-                                                            className="mx-auto max-h-64 w-full object-contain rounded-lg border border-gray-200"
-                                                        />
-                                                        <button
-                                                            type="button"
-                                                            onClick={handleRemoveImage}
-                                                            className="mt-3 w-full rounded-md bg-red-600 px-4 py-2 text-white hover:bg-red-700 transition-colors"
-                                                        >
-                                                            <i className="fa fa-trash mr-2"></i>
-                                                            Remove Image
-                                                        </button>
-                                                    </div>
-                                                )}
-                                                {imageError && (
-                                                    <div className="mt-2 flex items-center space-x-1 text-sm text-red-600">
-                                                        <i className="fa fa-exclamation-circle"></i>
-                                                        <span>{imageError}</span>
-                                                    </div>
-                                                )}
+                                                <UploadCard
+                                                    id="featured_image"
+                                                    file={data.image}
+                                                    onFileChange={handleImageChange}
+                                                    onFileRemove={handleRemoveImage}
+                                                    accept=".jpg,.jpeg,.png,.gif,.webp"
+                                                    maxSize={1048576} // 1MB
+                                                    dimensions={{ width: 733, height: 370 }}
+                                                />
                                             </div>
                                             <InputError message={errors.image} className="mt-2" />
-                                    </div>
-                                   
-                                       
-
-                                        
-                                
+                                        </div>
                                 </div>
 
                                 {/* Submit Button */}
                                 <div className="flex items-center justify-between gap-4">
                                     <Link
                                         href={route('episodes.index')}
-                                        className="rounded-md bg-gray-300 px-4 py-2 text-gray-700 hover:bg-gray-400 uppercase"
                                     >
-                                        Cancel
+                                         <Button variant="outline" className="uppercase">  
+                                            Cancel</Button>
                                     </Link>
                                     <PrimaryButton disabled={processing}>
-                                        {isEditing ? 'Update Episode' : 'Create Episode'}
-                                        <i className="fa fa-arrow-right ml-2"></i>
+                                         Save
+                                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor" class="size-4">
+                                                <path stroke-linecap="round" stroke-linejoin="round" d="M17.25 8.25 21 12m0 0-3.75 3.75M21 12H3" />
+                                            </svg>
                                     </PrimaryButton>
                                 </div>
                             </form>

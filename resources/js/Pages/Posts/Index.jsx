@@ -159,9 +159,7 @@ export default function Index({ posts }) {
                                 {searchQuery && ` (filtered from ${posts.length} total)`}
                             </div>
                                 <div className="relative w-full max-w-md">
-                                    <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
-                                        <Search className="h-5 w-5 text-gray-400" />
-                                    </div>
+                                  
                                     <input
                                         type="text"
                                         placeholder="Search posts by title, content, category, author..."
@@ -170,7 +168,7 @@ export default function Index({ posts }) {
                                             setSearchQuery(e.target.value);
                                             setCurrentPage(1);
                                         }}
-                                        className="block w-full rounded-lg border border-gray-300 bg-white py-2 pl-10 pr-3 text-sm placeholder-gray-500 focus:border-[#00895f] focus:outline-none focus:ring-1 focus:ring-[#00895f]"
+                                        className="block w-full rounded-lg border border-gray-300 bg-white py-2 pr-3 text-sm placeholder-gray-500 focus:border-[#00895f] focus:outline-none focus:ring-1 focus:ring-[#00895f]"
                                     />
                                 </div>
                             </div>

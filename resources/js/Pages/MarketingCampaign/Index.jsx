@@ -144,7 +144,6 @@ export default function MarketingCampaignsIndex({ campaigns, filters }) {
                                             placeholder="Search campaigns..."
                                             value={searchTerm}
                                             onChange={(e) => setSearchTerm(e.target.value)}
-                                            className="pl-10"
                                         />
                                     </div>
                                     <Button type="submit" className="sm:w-auto text-xs py-2">

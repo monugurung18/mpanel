@@ -4,6 +4,8 @@ namespace App\Http\Controllers;
 
 use App\Models\Conference;
 use App\Models\FrontendUser;
+use App\Models\Specialty;
+
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\File;
@@ -255,8 +257,7 @@ class ConferenceController extends Controller
      */
     private function getSpeakers()
     {
-        $speakers = DB::table('frontend_users')
-            ->where('userType', 'instructor')
+        $speakers = FrontendUser::where('userType', 'instructor')
             ->where('userStatus', 'active')
             ->select(
                 'user_id as value',
@@ -280,8 +281,7 @@ class ConferenceController extends Controller
      */
     private function getSpecialities()
     {
-        $specialities = DB::table('user_specialty')
-            ->where(['speciality_type' => 'speciality', 'parentID' => 0, 'parentID2' => 0])
+        $specialities = Specialty::where(['speciality_type' => 'speciality', 'parentID' => 0, 'parentID2' => 0])
             ->where('status', 'on')
             ->select('no as value', 'title as label')
             ->orderBy('title')

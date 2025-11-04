@@ -18,7 +18,12 @@ export default function Index({ seminars }) {
     const [sortDirection, setSortDirection] = useState('asc');
     const { baseImagePath } = usePage().props;
 
-    const pageSize = 25;
+    // Extract the data array from the paginator object
+    const seminarsData = seminars?.data || [];
+    
+    const pageSize = seminars?.per_page || 25;
+    const totalSeminars = seminars?.total || 0;
+    const lastPage = seminars?.last_page || 1;
 
     const handleDelete = (id) => {
         setLoading(true);
@@ -47,13 +52,13 @@ export default function Index({ seminars }) {
 
     // Filter and sort data
     const filteredAndSortedSeminars = useMemo(() => {
-        let filtered = seminars.filter((seminar) => {
+        let filtered = seminarsData.filter((seminar) => {
             const searchLower = searchQuery.toLowerCase();
-            const plainDesc = stripHtml(seminar.desc);
+            const plainDesc = stripHtml(seminar.desc || seminar.description || '');
             return (
-                seminar.title?.toLowerCase().includes(searchLower) ||
+                (seminar.title || '').toLowerCase().includes(searchLower) ||
                 plainDesc.toLowerCase().includes(searchLower) ||
-                seminar.type_display?.toLowerCase().includes(searchLower)
+                (seminar.type_display || '').toLowerCase().includes(searchLower)
             );
         });
 
@@ -74,7 +79,7 @@ export default function Index({ seminars }) {
         }
 
         return filtered;
-    }, [seminars, searchQuery, sortColumn, sortDirection]);
+    }, [seminarsData, searchQuery, sortColumn, sortDirection]);
 
     // Pagination
     const paginatedSeminars = useMemo(() => {
@@ -118,6 +123,16 @@ export default function Index({ seminars }) {
             </div>
         </TableHead>
     );
+
+    // Handle page change
+    const handlePageChange = (page) => {
+        setCurrentPage(page);
+        // Update URL with page parameter
+        router.visit(route('seminars.index', { page }), {
+            preserveState: true,
+            preserveScroll: true,
+        });
+    };
 
     return (
         <AuthenticatedLayout>
@@ -236,9 +251,9 @@ export default function Index({ seminars }) {
                                                                 {seminar.title}
                                                             </div>
                                                             <div className="text-xs text-gray-500 line-clamp-2">
-                                                                <div contentEditable='true' dangerouslySetInnerHTML={{ __html: stripHtml(seminar.desc).substring(0, 80) || '' }}></div>
+                                                                <div contentEditable='true' dangerouslySetInnerHTML={{ __html: stripHtml(seminar.desc || seminar.description || '').substring(0, 80) || '' }}></div>
 
-                                                                {stripHtml(seminar.desc).length > 80 ? '...' : ''}
+                                                                {stripHtml(seminar.desc || seminar.description || '').length > 80 ? '...' : ''}
                                                             </div>
                                                         </div>
                                                     </TableCell>
@@ -261,7 +276,7 @@ export default function Index({ seminars }) {
                                                         <StatusBadge status={seminar.video_status} />
                                                     </TableCell>
                                                     <TableCell className="text-sm">
-                                                        {seminar.speciality_name || '-'}
+                                                        {seminar.speciality_name || seminar.speciality || '-'}
                                                     </TableCell>
                                                     <TableCell>
                                                         <div className="flex items-center justify-center gap-2">
@@ -307,7 +322,7 @@ export default function Index({ seminars }) {
                                         <Button
                                             variant="outline"
                                             size="sm"
-                                            onClick={() => setCurrentPage(currentPage - 1)}
+                                            onClick={() => handlePageChange(currentPage - 1)}
                                             disabled={currentPage === 1}
                                         >
                                             Previous
@@ -330,7 +345,7 @@ export default function Index({ seminars }) {
                                                         key={pageNum}
                                                         variant={currentPage === pageNum ? "default" : "outline"}
                                                         size="sm"
-                                                        onClick={() => setCurrentPage(pageNum)}
+                                                        onClick={() => handlePageChange(pageNum)}
                                                         className="w-8 h-8 p-0"
                                                     >
                                                         {pageNum}
@@ -341,7 +356,7 @@ export default function Index({ seminars }) {
                                         <Button
                                             variant="outline"
                                             size="sm"
-                                            onClick={() => setCurrentPage(currentPage + 1)}
+                                            onClick={() => handlePageChange(currentPage + 1)}
                                             disabled={currentPage === totalPages}
                                         >
                                             Next
